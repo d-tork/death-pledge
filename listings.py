@@ -1,6 +1,8 @@
 import os
 from bs4 import BeautifulSoup
 
+print(os.getcwd())
+
 fname = 'Matrix.htm'
 raw_html = open(fname, 'r', encoding='utf-8')
 
@@ -17,9 +19,9 @@ def get_addresses(soup):
     return list(addresses)
 
 
-# print(get_addresses(html))
+print(get_addresses(html))
 
-print(html.get_text())
+#print(html.get_text())
 
 
 """

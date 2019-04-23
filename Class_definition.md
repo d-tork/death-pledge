@@ -1,7 +1,7 @@
-h3. What will one instance of your class represent?
+### What will one instance of your class represent?
 * One house
 
-h3. What information should each instance have as instance variables?
+### What information should each instance have as instance variables?
 * Each instance represents one house, and each house has:
   * price
   * address
@@ -14,12 +14,12 @@ h3. What information should each instance have as instance variables?
   * all variables as tuples, where var[0] is the actual value and var[1] is the rating on a 1-3 or 1-5 scale
     * this, at least for variables that need to be rated (like price, room count, year built) vs. non-rated (address)
 
-h3. What instance methods should each instance have?
+### What instance methods should each instance have?
 * get distance to nearest metro and/or bus stop
 * get commuting times to work
 * get distance to nearest grocery store
 * compare to other property
 * calculate monthly price
 
-h3. What should the printed version of an instance look like? 
+### What should the printed version of an instance look like? 
 * Something like "Neighborhood - City, State - price - overall score"

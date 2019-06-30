@@ -7,3 +7,6 @@ __pycache__/
 #Temp files
 *.swp
 *~
+
+# Personal files
+keys.py

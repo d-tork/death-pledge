@@ -1,4 +1,7 @@
 # death-pledge
+From Anglo-Norman _morgage_, Middle French _mortgage_, from Old French _mort gage_ ("death pledge"), after a 
+translation of judicial Medieval Latin _mortuum vadium_ or _mortuum wadium_. So called because the deal dies either
+when the debt is paid or when payment fails.
 
 ## Installation
 Clone this repo, make sure you have [pipenv](https://docs.pipenv.org/en/latest/) installed, then run

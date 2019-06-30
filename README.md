@@ -6,7 +6,12 @@ Clone this repo, make sure you have [pipenv](https://docs.pipenv.org/en/latest/)
 $ cd death-pledge
 $ pipenv install
 ```
-This should install all dependencies needed, and you're ready to run a module. For example:
+This should install all dependencies needed, and you're ready to run a module. Start a subshell within your virtual 
+environment like so:
+```
+$ pipenv shell
+```
+Or run things without explicitly activating the virtual environment: 
 ```
 $ pipenv run python citymapper.py
 ```

@@ -34,3 +34,5 @@ def get_commute_time(startcoords):
     travel_time = str(dt.timedelta(minutes=r_dict['travel_time_minutes']))
     print(travel_time)
     return travel_time
+
+get_commute_time(support.str_coords(coordinates.coords))

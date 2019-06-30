@@ -1,3 +1,5 @@
+"""Get latitude and longitude for an address from Bing geocode."""
+
 import requests
 import keys
 
@@ -10,18 +12,14 @@ address_zip = '22315'
 
 baseurl = r"http://dev.virtualearth.net/REST/v1/Locations"
 url_args = {
-            'countryRegion': 'US',
-            'postalCode': address_zip,
-            'addressLine': address_line,
-            'inclnb': '1',
-            'maxResults': '1',
-            'key': bingMapsKey,
-            #'userMapView': '38.8674478,-77.0405369,38.8674478,-77.0405369'
-            'userLocation': '38.8447476,-77.0519393'
-            }
-for k, v in url_args.items():
-    print(k, '=', v)
-
+    'countryRegion': 'US',
+    'postalCode': address_zip,
+    'addressLine': address_line,
+    'inclnb': '1',
+    'maxResults': '1',
+    'key': bingMapsKey,
+    'userLocation': '38.8447476,-77.0519393'
+}
 response = requests.get(baseurl, params=url_args)
 print(response.url)
 

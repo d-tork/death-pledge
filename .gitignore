@@ -1,0 +1,9 @@
+#Pycharm files
+*.idea
+
+# Caches
+__pycache__/
+
+#Temp files
+*.swp
+*~

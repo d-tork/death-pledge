@@ -14,6 +14,7 @@ HOUSE HUNTING MODULE
 5. Need to have a pre-evaluation score (based on pure stats/numbers scraped), and a post-evaluation score (after I've been able to look through photos closely, or else visit myself)
 6. Export in format that can be dragged into Google Maps
 	with clusters! And ratings!
+7. Write lat/lon coordinates and full address w/ zip back to google sheets (saves me on the API calls)
 
 
 More difficult: 

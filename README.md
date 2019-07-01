@@ -28,6 +28,8 @@ $ pipenv run python citymapper.py
   * [Find a location by address](https://docs.microsoft.com/en-us/bingmaps/rest-services/locations/find-a-location-by-address#examples)
   * [My apps/keys](https://www.bingmapsportal.com/Application)
   * [Sessions, map control, batch geocoding](https://docs.microsoft.com/en-us/bingmaps/getting-started/bing-maps-api-best-practices)
+  * [More options with Bing](https://docs.microsoft.com/en-us/bingmaps/rest-services/routes/)
+    * likely to replace Citymapper with Bing, since the CM API is failing me and times are wildly inconsistent.
 * [Citymapper API](https://citymapper.3scale.net/)
 * [Requests](https://2.python-requests.org/en/master/user/quickstart/)
 * [Pipenv](https://docs.pipenv.org/en/latest/install/)

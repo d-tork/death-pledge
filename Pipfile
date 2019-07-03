@@ -10,6 +10,10 @@ requests = "*"
 pandas = "*"
 numpy = "*"
 fake-useragent = "*"
+google-api-python-client = "*"
+beautifulsoup4 = "*"
+google-auth-oauthlib = "*"
+selenium = "*"
 
 [requires]
 python_version = "3.7"

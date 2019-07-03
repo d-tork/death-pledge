@@ -30,7 +30,6 @@ def get_attribute(soup_obj, attribute):
         return item.get_text().strip().split('     ')[num]
     elif attribute in meta:
         item = soup_obj.select_one('.{}'.format(attribute))
-        # return str(item.string)
         return str(item.contents[0]).strip()
     elif attribute in details:
         tags = soup_obj.select('div > ul > li > p')
@@ -41,15 +40,25 @@ def get_attribute(soup_obj, attribute):
         return
 
 
+def get_details(soup_obj):
+    """Generates a dictionary of the MLS details"""
+    items = soup.find_all('li', attrs={'ng-repeat': 'detail in details'})
+    details_d = {}
+    for tag in items:
+        tag_str = tag.string.strip()
+        tag_key = tag_str[:tag_str.find(':')]
+        tag_val = tag_str[tag_str.find(':')+2:]
+        details_d[tag_key] = tag_val
+    return details_d
+
+
+
 if __name__ == '__main__':
 
     URL = r"https://daniellebiegner.realscout.com/homesearch/listings/p-10217-rolling-green-way-fort-washington-20744-brightmls-158"
     soup, browser = get_soup(URL)
 
     home_dict = {}
-    # home_dict['sale_price'] = soup.find('p', 'price').contents[0]
-    # home_dict['list_price'] = soup.find('p', 'price-listed').contents[0]
-    # home_dict['status'] = soup.find('p', 'status').contents[0]
 
     vitals = ['bed', 'bath', 'sqft']
     meta = ['address', 'city', 'price', 'price-listed', 'status']
@@ -60,6 +69,11 @@ if __name__ == '__main__':
     for i in all_attribs:
         home_dict[i] = get_attribute(soup, i)
 
+    details_dict = get_details(soup)
+    home_dict.update(details_dict)
+    # home_dict_final = {**home_dict, **details_dict}
+
+    # Show Them!
     for k, v in home_dict.items():
         print('{}: {}'.format(k, v))
 

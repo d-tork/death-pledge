@@ -14,7 +14,7 @@ def str_coords(coords):
     return ','.join(str_list)
 
 
-def get_commute_datetime(dayofweek=1):
+def get_commute_datetime(dayofweek=2):
     """Get my work commute time for the next day specified.
 
     By default, work time is 07:00 and day is Tuesday.

@@ -9,7 +9,6 @@ from Code.api_calls import google_sheets, coordinates, citymapper
 from Code import scrape, support
 
 
-
 def process_data(df):
     df1 = df.copy()
     df1['full_address'] = df1['Address'] + ' ' + df1['Locale']
@@ -22,13 +21,13 @@ def get_scraped_data(url_series):
     """Go forth and collect up the MLS data given an array of URLs"""
     # Clean up URLs
     url_series_clean = url_series.apply(lambda x: x[:x.find('?')])
-    wait_time = random.random()*10
     click_wait = 3 + random.random()
 
     browser = scrape.get_browser()
     outer_list = []
     for u in url_series_clean:
-        random.seed(0)
+        random.seed()
+        wait_time = random.random()*10
         # Check if URL is still valid
         result_code = support.check_status_of_website(u)
         if result_code != 200:

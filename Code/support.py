@@ -3,6 +3,7 @@ import random
 from time import sleep
 from fake_useragent import UserAgent
 
+
 def str_coords(coords):
     str_list = [str(x) for x in coords]
     return ','.join(str_list)

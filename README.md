@@ -33,3 +33,5 @@ $ pipenv run python citymapper.py
 * [Citymapper API](https://citymapper.3scale.net/)
 * [Requests](https://2.python-requests.org/en/master/user/quickstart/)
 * [Pipenv](https://docs.pipenv.org/en/latest/install/)
+* gspread
+  * [Write data back to Google sheets](https://github.com/burnash/gspread#authorization-using-oauth2)

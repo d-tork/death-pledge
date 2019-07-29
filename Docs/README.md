@@ -13,7 +13,22 @@ https://www.kaggle.com/c/house-prices-advanced-regression-techniques/data
 ### Airbnb
 
 ### City/county assessor
-https://icare.fairfaxcounty.gov/ffxcare/search/commonsearch.aspx?mode=address
+**Fairfax County:** https://icare.fairfaxcounty.gov/ffxcare/search/commonsearch.aspx?mode=address
+- Franconia
+- Huntington
+- Kingstowne
+- Lincolnia
+- Merrifield
+- Pimmit Hills
+- Tysons
+
+**Prince George's County:** http://sdat.dat.maryland.gov/RealProperty/Pages/default.aspx
+
+**Alexandria:** https://realestate.alexandriava.gov/index.php?action=address
+
+**Arlington County:** https://propertysearch.arlingtonva.us/Home/Search
+
+**Falls Church:** http://property.fallschurchva.gov/Parcelviewer/
 
 ### Crime stats
 * not just violent crimes, but 311 non-emergency complaints, street & sidewalk cleaning, property damage, graffiti, street defects

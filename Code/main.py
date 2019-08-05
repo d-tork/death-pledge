@@ -69,9 +69,9 @@ if __name__ == '__main__':
     df_mod = process_data(df_raw)
 
     # Get full df
-    #df_full = get_data_for_url_list(df_mod['url'])
+    df_full = get_data_for_url_list(df_mod['url'])
     # TESTING:
-    df_full = get_data_for_url_list(df_mod['url'].head(3))
+    #df_full = get_data_for_url_list(df_mod['url'].head(3))
 
     # Cleaning
     df_full['full_address'] = df_full['address'] + ' ' + df_full['city']
@@ -83,7 +83,7 @@ if __name__ == '__main__':
     print('stop here.')
 
     # Add commute times
-    #df_full = get_coords_and_commute(df_full)
+    df_full = get_coords_and_commute(df_full)
 
     # Output
     DATA_FOLDER = os.path.join(dir_path, '..', 'Data')

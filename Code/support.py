@@ -43,7 +43,10 @@ def parse_numbers_from_string(s):
     else:
         func = lambda x: x  # No transformation applied
 
-    return s.apply(func)
+    try:
+        return s.apply(func, convert_dtype=True)
+    except TypeError:
+        return s
 
 
 def clean_columns(df, rename_dict):

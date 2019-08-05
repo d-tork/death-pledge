@@ -15,7 +15,8 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 # The ID and range of my master spreadsheet
 SPREADSHEET_DICT = {
     'spreadsheetId': '1ljlZZRXjMb_BEduXqgfc65hQK7cCximT3ebS6UcQPQ0',
-    'range': 'Master_list!A2:AG'
+    #'range': 'Master_list!A2:AG'
+    'range': 'URLs!A:B'
 }
 
 

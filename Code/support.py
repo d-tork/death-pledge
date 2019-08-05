@@ -16,3 +16,36 @@ def check_status_of_website(url):
     result = requests.get(url, headers=header)
     sleep(random.random()*10)
     return result.status_code
+
+
+def parse_numbers_from_string(s):
+    """Get raw numbers from text fields.
+
+    Best to apply this to all the columns in a loop, or perhaps it can be applied to a dataframe?
+
+    Parameters
+    ----------
+    s.name : pandas Series
+        column to be parsed; different columns will require different rules
+    """
+    if s.name in ['bed', 'bath']:
+        func = lambda x: float(x.split()[0])
+    elif s.name == 'sqft':
+        func = lambda x: float(x.split()[0].replace(',', ''))
+    elif s.name in ['price', 'Price Per SQFT', 'HOA Fee']:
+        func = lambda x: int(x.replace('$', '').replace(',', ''))
+    elif s.name == 'price-listed':
+        func = lambda x: int(x.split()[2].replace('$', '').replace(',', ''))
+    elif s.name == 'Year Built':
+        func = lambda x: int(x)
+    elif s.name == 'Lot Size Acres':
+        func = lambda x: float(x)
+    else:
+        func = lambda x: x  # No transformation applied
+
+    return s.apply(func)
+
+
+def clean_columns(df, rename_dict):
+    df.rename(columns=rename_dict, inplace=True)
+    # TODO: reorder columns

@@ -87,6 +87,8 @@ if __name__ == '__main__':
 
     # Output
     DATA_FOLDER = os.path.join(dir_path, '..', 'Data')
-    output_file = os.path.join(DATA_FOLDER, 'Processed', 'dffull{}.csv'.format(str(datetime.now())))
-    df_full.T.to_csv(output_file, index=True)
+    #output_filename = 'dffull{}.csv'.format(datetime.now().strftime('%Y%m%d-%H_%M_%S'))
+    output_filename = 'scraped_results.csv'
+    output_filepath = os.path.join(DATA_FOLDER, 'Processed', output_filename)
+    df_full.T.to_csv(output_filepath, index=True)
     print('end')

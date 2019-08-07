@@ -26,12 +26,12 @@ def get_browser():
     driver = webdriver.Firefox(executable_path=os.path.join('Drivers', 'geckodriver'))
 
     # Sign in
-    driver.get(r'https://daniellebiegner.realscout.com/users/sign_in')
+    driver.get(keys.website_url)
     username = driver.find_element_by_id('email_field')
     password = driver.find_element_by_id('user_password')
 
-    username.send_keys(keys.realscout_email)
-    password.send_keys(keys.realscout_pw)
+    username.send_keys(keys.website_email)
+    password.send_keys(keys.website_pw)
     sleep(.2)
     driver.find_element_by_name('commit').click()
     try:

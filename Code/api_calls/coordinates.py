@@ -22,7 +22,6 @@ def get_coords(address, zip_code=None):
     }
     url_args = {k: v for k, v in url_dict.items() if v is not None}
     response = requests.get(BASEURL, params=url_args)
-    print(response.url)
 
     resp_dict = response.json()
     #coords = resp_dict['resourceSets'][0]['resources'][0]['point']['coordinates']  # Rooftop coordinates

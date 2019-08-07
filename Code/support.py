@@ -29,17 +29,17 @@ def parse_numbers_from_string(s):
         column to be parsed; different columns will require different rules
     """
     if s.name in ['bed', 'bath']:
-        func = lambda x: float(x.split()[0])
+        func = lambda x: x.split()[0]
     elif s.name == 'sqft':
-        func = lambda x: float(x.split()[0].replace(',', ''))
+        func = lambda x: x.split()[0].replace(',', '')
     elif s.name in ['price', 'Price Per SQFT', 'HOA Fee']:
-        func = lambda x: int(x.replace('$', '').replace(',', ''))
+        func = lambda x: x.replace('$', '').replace(',', '')
     elif s.name == 'price-listed':
-        func = lambda x: int(x.split()[2].replace('$', '').replace(',', ''))
-    elif s.name == 'Year Built':
-        func = lambda x: int(x)
-    elif s.name == 'Lot Size Acres':
-        func = lambda x: float(x)
+        func = lambda x: x.split()[2].replace('$', '').replace(',', '')
+    # elif s.name == 'Year Built':
+    #     func = lambda x: x
+    # elif s.name == 'Lot Size Acres':
+    #     func = lambda x: x
     else:
         func = lambda x: x  # No transformation applied
 

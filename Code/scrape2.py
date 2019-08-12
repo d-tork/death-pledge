@@ -23,7 +23,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 from django.utils.text import slugify
 import Code
-from Code import support
+from Code import support, clean
 from Code.api_calls import keys
 
 
@@ -135,12 +135,12 @@ def get_cards(soup, dic):
 
     dic['basic_info'] = {}
 
-    # First card, no title
+    # First card, no title (basic info)
     tag_basic_info = result[0]
     basic_info_list = tag_basic_info.find_all('div', class_='col-12')
     for i in basic_info_list:
-        attribute_tup = tuple(i.text.split(u':\xa0 '))
-        dic['basic_info'].update(dict([attribute_tup]))
+        attr_tup = tuple(i.text.split(u':\xa0 '))
+        dic['basic_info'].update(dict([attr_tup]))
 
     # All good cards
     for i in result:
@@ -151,13 +151,15 @@ def get_cards(soup, dic):
                 discard = ['Which']
                 if any(x in card_title for x in discard):
                     continue
-                card_attrib_list = i.find_all('div', class_='col-12')
+                card_title = card_title.strip()
 
+                card_attrib_list = i.find_all('div', class_='col-12')
                 # Update subdict
                 dic[card_title] = dic.setdefault(card_title, {})  # ensure it exists
                 for ia in card_attrib_list:
-                    attribute_tup = ia.text.split(u':\xa0 ')
-                    dic[card_title].update([attribute_tup])
+                    attr_tup = ia.text.split(u':\xa0 ')
+                    attr_tup = [x.strip() for x in attr_tup]  # Strip whitespace from k and v
+                    dic[card_title].update([attr_tup])
 
 
 def scrape_soup(soup):
@@ -200,7 +202,7 @@ def add_dict_to_file(dic):
 
     # Check if newest scrape is different from previous one
     if all_scrapes:
-        any_change = all_scrapes[0] == dic
+        any_change = check_if_changed(dic, all_scrapes)
     else:
         any_change = True
     print('\tChange in listing data: {}'.format(any_change))
@@ -212,6 +214,17 @@ def add_dict_to_file(dic):
             f.write(json.dumps(all_scrapes, indent=4))
 
     return all_scrapes
+
+
+def check_if_changed(dic1, old_list):
+    dic2 = old_list[0]
+    if dic1 != dic2:
+        return True
+    for inner1, inner2 in zip(dic1, dic2):
+        if inner1 != inner2:
+            print('Changed: {}'.format(inner1))
+            return True
+    return False
 
 
 def scrape_from_url_list(url_list):

@@ -15,6 +15,7 @@ beautifulsoup4 = "*"
 google-auth-oauthlib = "*"
 selenium = "*"
 gspread = "*"
+django = "*"
 
 [requires]
 python_version = "3.7"

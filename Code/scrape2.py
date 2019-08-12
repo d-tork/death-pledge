@@ -173,7 +173,7 @@ def scrape_soup(soup):
     :returns dict
     """
     # Initialize dict with date record
-    listing_dict = {'_timestamp': {'timestamp': str(datetime.now())}}
+    listing_dict = {'_metadata': {'timestamp': str(datetime.now())}}
 
     # Scrape three sections
     sleep(1)
@@ -207,7 +207,10 @@ def add_dict_to_file(dic):
 
     # Check if newest scrape is different from previous one
     if all_scrapes:
-        any_change = check_if_changed(dic, all_scrapes)
+        try:
+            any_change = check_if_changed(dic, all_scrapes)
+        except KeyError:
+            any_change = True
     else:
         any_change = True
     if not any_change:
@@ -258,6 +261,10 @@ def scrape_from_url_list(url_list):
                 continue
             listing_dict = scrape_soup(soup)
             clean.main(listing_dict)
+
+            # Add URL
+            listing_dict['_metadata'].update({'URL': url})
+
             listing_dicts_all = add_dict_to_file(listing_dict)
             print('Waiting {:.1f} seconds...'.format(wait_time))
             sleep(wait_time)

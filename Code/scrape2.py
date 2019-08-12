@@ -106,8 +106,8 @@ def get_main_box(soup, dic):
                    'baths': vitals[1],
                    'sqft': vitals[2]}
 
-    for i in [badge, address, citystate, vitals]:
-        print(i)
+    for i in [address, citystate, vitals, badge]:
+        print('\t{}'.format(i))
 
 
 def get_price_info(soup, dic):
@@ -177,6 +177,7 @@ def scrape_soup(soup):
 
     # Scrape three sections
     sleep(1)
+    # TODO: WHAT is going on here that causing it to indexerror out?
     get_main_box(soup, listing_dict)
     get_price_info(soup, listing_dict)
     get_cards(soup, listing_dict)

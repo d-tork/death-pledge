@@ -252,6 +252,7 @@ def scrape_from_url_list(url_list):
                 print('\t{}'.format(e))
                 continue
             listing_dict = scrape_soup(soup)
+            clean.main(listing_dict)
             listing_dicts_all = add_dict_to_file(listing_dict)
             print('Waiting {:.1f} seconds...'.format(wait_time))
             sleep(wait_time)
@@ -267,4 +268,5 @@ if __name__ == '__main__':
         sample_soup = get_soup_for_url(keys.sample_url2, browser)
         # prettify_soup(soup)
         scraped_dict = scrape_soup(sample_soup)
+        clean.main(scraped_dict)
         listing_dicts_all = add_dict_to_file(scraped_dict)

@@ -1,6 +1,5 @@
 import json
 import pandas as pd
-import numpy as np
 import os
 import glob
 import math
@@ -53,10 +52,6 @@ class FieldNotScored(Exception):
     pass
 
 
-class FieldNotScraped(Exception):
-    pass
-
-
 def get_score_for_row(index_tuple, value, score_dict):
     try:
         inner_score_dict = score_dict[index_tuple]
@@ -74,9 +69,11 @@ def get_score_for_row(index_tuple, value, score_dict):
 
 def score_state(series, score_dict):
     city_state = series.xs('city_state', level=1).squeeze()
-    print('state??: {}'.format(city_state))
     if 'VA' in city_state:
-        score_dict['state_score'] = 3.5
+        state_score = 3.5
+    else:
+        state_score = 0
+    score_dict.update({'state_score': state_score})
 
 
 def score_a_house(series, score_dict):
@@ -84,13 +81,14 @@ def score_a_house(series, score_dict):
 
     Returns a dict structured like the house dict
     """
-    house_score_dict = {}
+    house_score_dict = {'address': series.xs('address', level=1).squeeze()}
     for i, val in series.itertuples():
         # Go row by row in the dataframe
         # Don't forget that right now, df1 is basically a series of only one house
+        _, k2 = i  # Discard first level of dict (category) for scorecards
         try:
             row_score1 = get_score_for_row(i, val, score_dict)
-            house_score_dict[i] = row_score1
+            house_score_dict[k2] = row_score1
         except FieldNotScored:
             continue
     # Insert additional special scoring functions here
@@ -100,8 +98,11 @@ def score_a_house(series, score_dict):
 
 def sum_scores(house_score_dict):
     total = 0
-    for v in house_score_dict.values():
-        total += v
+    for k, v in house_score_dict.items():
+        try:
+            total += v
+        except TypeError:
+            continue
     return total
 
 
@@ -124,12 +125,13 @@ def score_multiple_house_files(glob_path, score_dict):
 
         # Construct lists
         try:
-            addr = house_dict['info']['address']
+            addr = ', '.join([house_dict['info']['address'], house_dict['info']['city_state']])
             url = house_dict['_metadata']['URL']
         except KeyError:
-            raise FieldNotScraped('Field not in scraped data. Re-run scrape2.py on this listing.')
+            print('\tField not in scraped data. Re-run scrape2.py on this listing.')
             continue
 
+        print(addr)
         total_score = sum_scores(house_scorecard)
         house_list.append((addr, total_score, url))
         house_scorecard_list.append(house_scorecard)
@@ -149,6 +151,7 @@ if __name__ == '__main__':
     all_houses = score_multiple_house_files(listings_glob_path, scorecard)
 
     # Output as dataframe/CSV
-    all_scores = pd.DataFrame(all_houses, columns=['address', 'score', 'URL'])
+    all_scores = (pd.DataFrame(all_houses, columns=['address', 'score', 'URL'])
+                  .sort_values('score', ascending=False))
     outfile = os.path.join(PROJ_PATH, 'Data', 'Processed', 'all_scores.csv')
     all_scores.to_csv(outfile)

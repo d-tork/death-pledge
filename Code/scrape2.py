@@ -11,6 +11,7 @@ of access.
 import os
 import json
 import random
+import gc
 from datetime import datetime
 from time import sleep
 from bs4 import BeautifulSoup
@@ -81,7 +82,11 @@ def get_main_box(soup, dic):
     """Add scrape_soup box details to listing dictionary."""
     # Get tags
     result = soup.find_all('div', attrs={'class': 'col-8 col-sm-8 col-md-7'})
-    main_box = result[0]
+    try:
+        main_box = result[0]
+    except KeyError:
+        sleep(3)
+        main_box = result[0]
     tag_badge = main_box.a
     tag_address = main_box.h1
     tag_citystate = main_box.h2
@@ -171,7 +176,7 @@ def scrape_soup(soup):
     listing_dict = {'_timestamp': {'timestamp': str(datetime.now())}}
 
     # Scrape three sections
-    sleep(.5)
+    sleep(1)
     get_main_box(soup, listing_dict)
     get_price_info(soup, listing_dict)
     get_cards(soup, listing_dict)
@@ -205,7 +210,8 @@ def add_dict_to_file(dic):
         any_change = check_if_changed(dic, all_scrapes)
     else:
         any_change = True
-    print('\tChange in listing data: {}'.format(any_change))
+    if not any_change:
+        print('\tChange in listing data: {}'.format(any_change))
 
     if any_change:
         # Write new (and old) dictionaries to a list in file
@@ -218,12 +224,11 @@ def add_dict_to_file(dic):
 
 def check_if_changed(dic1, old_list):
     dic2 = old_list[0]
-    if dic1 != dic2:
-        return True
-    for inner1, inner2 in zip(dic1, dic2):
-        if inner1 != inner2:
-            print('Changed: {}'.format(inner1))
-            return True
+    for k1, inner_dict in dic1.items():
+        for k2 in [x for x in inner_dict if x != 'timestamp']:
+            if inner_dict[k2] != dic2[k1][k2]:
+                print('\tChanged: {}'.format(k2))
+                return True
     return False
 
 
@@ -256,6 +261,7 @@ def scrape_from_url_list(url_list):
             listing_dicts_all = add_dict_to_file(listing_dict)
             print('Waiting {:.1f} seconds...'.format(wait_time))
             sleep(wait_time)
+            gc.collect()
 
 
 if __name__ == '__main__':
@@ -265,7 +271,7 @@ if __name__ == '__main__':
 
     with webdriver.Firefox(executable_path=Code.GECKODRIVER_PATH) as browser:
         sign_into_website(browser)
-        sample_soup = get_soup_for_url(keys.sample_url2, browser)
+        sample_soup = get_soup_for_url(keys.sample_url3, browser)
         # prettify_soup(soup)
         scraped_dict = scrape_soup(sample_soup)
         clean.main(scraped_dict)

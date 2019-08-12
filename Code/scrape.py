@@ -1,4 +1,9 @@
-"""Scrape listings for data I would normally input myself."""
+"""Scrape listings for data I would normally input myself.
+
+This module is deprecated as of 11 Aug 2019, due to a site
+update that rendered all the previous scraping functions
+obsolete.
+"""
 
 import os
 import sys
@@ -24,21 +29,6 @@ def get_browser():
     options = Options()
     options.headless = True  # to invoke, add options=options to the webdriver call
     driver = webdriver.Firefox(executable_path=os.path.join('Drivers', 'geckodriver'))
-
-    # Sign in
-    driver.get(keys.website_url)
-    username = driver.find_element_by_id('email_field')
-    password = driver.find_element_by_id('user_password')
-
-    username.send_keys(keys.website_email)
-    password.send_keys(keys.website_pw)
-    sleep(.2)
-    driver.find_element_by_name('commit').click()
-    try:
-        element = WebDriverWait(driver, 60).until(
-            EC.title_contains('My Homes'))
-    except TimeoutException:
-        print('Failed to login. No credentials provided.')
     return driver
 
 
@@ -94,25 +84,7 @@ def get_details(soup_obj):
     return details_d
 
 
-def get_full_data_for_url(url, driver, click_wait_time=3.1415):
-    """Get dict of all values for a single URL"""
-    url_suffix = url.rfind('/')+3
-    print('URL: {}'.format(url[url_suffix:]))
-    driver.get(url)
-
-    if 'Listing not found' in driver.page_source:
-        return None
-    sleep(click_wait_time)
-
-    try:
-        element = WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.CLASS_NAME, 'show-more-details'))
-        )
-        driver.find_element_by_class_name('show-more-details').click()
-    except TimeoutException:
-        print('\tShow-more-details button not found.')
-        return None
-    soup = BeautifulSoup(driver.page_source, 'html.parser')
+def get_data_from_soup(soup, url):
     home_dict = {'URL': url}
 
     for i in ALL_ATTRIBS:
@@ -134,7 +106,8 @@ if __name__ == '__main__':
 
     URL = keys.sample_url
     browser = get_browser()
-    sample_dict = get_full_data_for_url(URL, driver=browser)
+    sample_soup = get_soup_for_url(URL, driver=browser)
+    sample_dict = get_data_from_soup(sample_soup, URL)
 
     # Show Them!
     for k, v in sample_dict.items():

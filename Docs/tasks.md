@@ -29,9 +29,9 @@ More difficult:
   * parse them anyway, then make a `sale-price-diff` column
 3. ~~parse numbers from `sqft` field~~
 4. ~~parse numbers from `Price Per SQFT`~~
-  * now it's occurring to me: I should group the attributes by what kind of parsing or checking that needs to be done on them, not some arbitrary meta/details/whatever
+  * ~~now it's occurring to me: I should group the attributes by what kind of parsing or checking that needs to be done on them, not some arbitrary meta/details/whatever~~
 5. ~~parse numbers from bed and bath~~
-6. When running main.py, check if URL already has data. If so, only update price and status (basic fields). Save me a lot of time. Eventually, I want to be reading _and_writing to a google sheet
+6. ~~When running main.py, check if URL already has data. If so, only update price and status (basic fields). Save me a lot of time.~~ Eventually, I want to be reading _and_writing to a google sheet
 
 ## Rate the existing attributes I scraped:
 1. Like `Has HOA`, `HOA Fee` (only if it has it), `Waterfront YN`, `Has Basement`, etc. 

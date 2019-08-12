@@ -4,6 +4,8 @@ import os
 import glob
 import Code
 
+LISTINGS_DIR = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'saved_listings')
+
 
 def dict_to_df(dic):
     """Convert listing dictionary to dataframe.
@@ -15,8 +17,7 @@ def dict_to_df(dic):
 
     df = pd.DataFrame.from_dict(reform, orient='index', columns=['values'])
     df.index = pd.MultiIndex.from_tuples(df.index)
-    df.index.rename(['category', 'subcategory'], inplace=True)
-    df.to_csv('output.csv')
+    df.index.rename(['category', 'field'], inplace=True)
     return df
 
 
@@ -36,7 +37,7 @@ def dict_list_to_df(house_hist):
     return full_df
 
 
-def sample_main(listings_dir):
+def sample_main(listings_dir=LISTINGS_DIR):
     sample_fname = '4304_34TH_ST_S_B2.json'
     sample_path = os.path.join(listings_dir, sample_fname)
 
@@ -46,10 +47,10 @@ def sample_main(listings_dir):
     print(df_sample.head())
 
     df_all = dict_list_to_df(all_entries)
-    print(df_all.head())
+    return most_recent
 
 
-def all_files_to_df(listings_dir):
+def all_files_to_df(listings_dir=LISTINGS_DIR):
     full_df = pd.DataFrame()
     listings_path = os.path.join(listings_dir, '*.json')
     for f in glob.glob(listings_path):
@@ -61,7 +62,6 @@ def all_files_to_df(listings_dir):
 
 
 if __name__ == '__main__':
-    listings_dir = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'saved_listings')
     #sample_main(listings_dir)
-    all_listings = all_files_to_df(listings_dir)
+    all_listings = all_files_to_df(LISTINGS_DIR)
     print(all_listings.head())

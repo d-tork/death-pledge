@@ -10,7 +10,10 @@ def convert_currency_to_int(s):
 
 
 def parse_string_float(s):
-    return float(s.split()[0])
+    if 'bath' in s.split()[1].lower():
+        return float(s.split()[0])
+    else:
+        return int(s.split()[0])
 
 
 def parse_date(s):
@@ -42,8 +45,8 @@ def main(dic):
                 v1[k2] = convert_currency_to_int(v2)
             if k2 in [x[1] for x in int_parse_list]:
                 v1[k2] = parse_string_float(v2)
-            if k2 in [x[1] for x in date_list]:
-                v1[k2] = parse_date(v2)
+            #if k2 in [x[1] for x in date_list]:
+            #    v1[k2] = parse_date(v2)
             try:
                 v1[k2] = int(v2)
             except ValueError:

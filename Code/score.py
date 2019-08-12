@@ -5,7 +5,7 @@ from Code import PROJ_PATH
 
 
 def read_and_prep_data(filename):
-
+    """For reading data from exported CSVs (deprecated)."""
     data = os.path.join(PROJ_PATH, 'Data', 'Processed', filename)
     df = pd.read_csv(data, index_col=0)
 
@@ -37,7 +37,6 @@ def calc_score_for_column(df, df_scores, col):
     df_right = df_scores[[col, score_col]].dropna()
 
     return pd.merge_asof(df, df_right, on=col)
-
 
 
 def laundry_in_appliances(df):

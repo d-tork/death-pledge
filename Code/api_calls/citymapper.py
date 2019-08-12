@@ -19,7 +19,6 @@ def get_commute_datetime(dayofweek=2):
 
     By default, work time is 07:00 and day is Tuesday.
     """
-    import datetime as dt
     now = dt.datetime.now()
     wday = now + dt.timedelta(days=(dayofweek + 7 - now.weekday()))  # SO 6558535
     wtime = dt.time(7, 0)

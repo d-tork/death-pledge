@@ -44,9 +44,9 @@ if __name__ == '__main__':
     urls = process_url_list(df_raw)
 
     # Get full df
-    df_full = scrape2.scrape_from_url_list(urls)
+    #df_full = scrape2.scrape_from_url_list(urls)
     # TESTING:
-    #df_full = scrape2.scrape_from_url_list(urls.head(3))
+    df_full = scrape2.scrape_from_url_list(urls.head(3))
 
     """
     # Cleaning

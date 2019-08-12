@@ -39,6 +39,7 @@ def dict_list_to_df(house_hist):
 
 def sample_main(listings_dir=LISTINGS_DIR):
     sample_fname = '4304_34TH_ST_S_B2.json'
+    sample_fname = '4710_CEDELL_PL.json'
     sample_path = os.path.join(listings_dir, sample_fname)
 
     all_entries = read_list_from_json(sample_path)
@@ -47,7 +48,7 @@ def sample_main(listings_dir=LISTINGS_DIR):
     print(df_sample.head())
 
     df_all = dict_list_to_df(all_entries)
-    return most_recent
+    return most_recent, all_entries
 
 
 def all_files_to_df(listings_dir=LISTINGS_DIR):
@@ -62,6 +63,8 @@ def all_files_to_df(listings_dir=LISTINGS_DIR):
 
 
 if __name__ == '__main__':
-    #sample_main(listings_dir)
-    all_listings = all_files_to_df(LISTINGS_DIR)
-    print(all_listings.head())
+    dic1, list1 = sample_main(LISTINGS_DIR)
+    df1 = dict_list_to_df(list1)
+    #all_listings = all_files_to_df(LISTINGS_DIR)
+
+    print('end here')

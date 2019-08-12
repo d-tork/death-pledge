@@ -11,6 +11,7 @@ __pycache__/
 # Personal files
 keys.py
 Code/token.pickle
+Code/api_calls/token.pickle
 
 # Mac Desktop Services file (folder display options)
 .DS_Store

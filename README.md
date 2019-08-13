@@ -18,6 +18,18 @@ Or run things without explicitly activating the virtual environment:
 ```
 $ pipenv run python citymapper.py
 ```
+
+## Usage
+Only with the proper credentials can this be run:
+* Google OAuth for my spreadsheet, or else feed it your own list of URLs
+* Real estate login
+* Bing Maps API token
+* Citymapper token
+
+1. Run `main.py` to gather details into JSON files
+2. Run `score2.py` to apply scorecard
+3. (unfinished) Run ______ to add coordinates, walk score, commute time, etc.
+
 ## Sources
 * https://homescout.homescouting.com/
 * https://matrix.brightmls.com/DAE.asp?ID=0-184641887-10

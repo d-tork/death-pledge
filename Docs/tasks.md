@@ -1,14 +1,14 @@
 HOUSE HUNTING MODULE
 
 1. Get to where I can plug in an address and get back the walk score
-2. ~~Scrape the important stuff: 
-	- ~~URL
-	- ~~address
-	- ~~city, state
-	- ~~price
-	- ~~square footage
-	- ~~bedrooms, bathrooms
-	- ~~year built
+2. ~~Scrape the important stuff: ~~
+	- ~~URL~~
+	- ~~address~~
+	- ~~city, state~~
+	- ~~price~~
+	- ~~square footage~~
+	- ~~bedrooms, bathrooms~~
+	- ~~year built~~
 3. ~Get commute time from citymapper (at specific times)~
 4. Stats on neighborhood: crime, school distances, bus stops(?), median income, median age, gender breakdown, education
 5. Need to have a pre-evaluation score (based on pure stats/numbers scraped), and a post-evaluation score (after I've been able to look through photos closely, or else visit myself)

@@ -1,7 +1,7 @@
 HOUSE HUNTING MODULE
 
 1. Get to where I can plug in an address and get back the walk score
-2. ~~Scrape the important stuff: ~~
+2. ~~Scrape the important stuff:~~
 	- ~~URL~~
 	- ~~address~~
 	- ~~city, state~~

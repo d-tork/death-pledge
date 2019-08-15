@@ -27,8 +27,15 @@ def get_scorecard(filepath=SCORECARD_PATH):
     scores = pd.read_csv(filepath, index_col=['category', 'field']).sort_index()
     scores = convert_bools(scores)
     scores = convert_dtypes(scores)
+
     # Coerce column headers to numbers
-    scores.columns = [float(x) for x in scores.columns]
+    new_column_names = []
+    for col in scores.columns:
+        try:
+            new_column_names.append(float(col))
+        except ValueError:
+            new_column_names.append(col)
+    scores.columns = new_column_names
 
     # Convert scores to dict
     d_scores = scores.to_dict(orient='index')
@@ -59,11 +66,15 @@ def get_score_for_row(index_tuple, value, score_dict):
         raise FieldNotScored('This field not assigned a 1-3 score.')
     row_score = 0
     for score, criteria in inner_score_dict.items():
+        if score == 'weight':
+            continue
         if value >= criteria:
             row_score = score
             continue
         else:
             break
+    weight = inner_score_dict.get('weight', 1)
+    row_score = row_score * weight
     return row_score
 
 

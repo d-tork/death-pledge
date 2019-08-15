@@ -15,3 +15,6 @@ Code/api_calls/token.pickle
 
 # Mac Desktop Services file (folder display options)
 .DS_Store
+/Data/Processed/saved_listings/
+/Data/Processed/
+/Code/geckodriver.log

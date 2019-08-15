@@ -48,24 +48,6 @@ if __name__ == '__main__':
     # TESTING:
     #df_full = scrape2.scrape_from_url_list(urls.head(3))
 
-    """
-    # Cleaning
-    df_full['full_address'] = df_full['address'] + ' ' + df_full['city']
-    for col in df_full:
-        try:
-            df_full[col] = support.parse_numbers_from_string(df_full[col])
-        except AttributeError:  # trying to split a float or something
-            continue
-    print('stop here.')
-
     # Add commute times
     df_full = get_coords_and_commute(df_full)
 
-    # Output
-    DATA_FOLDER = os.path.join(dir_path, '..', 'Data')
-    #output_filename = 'dffull{}.csv'.format(datetime.now().strftime('%Y%m%d-%H_%M_%S'))
-    output_filename = 'scraped_results.csv'
-    output_filepath = os.path.join(DATA_FOLDER, 'Processed', output_filename)
-    df_full.T.to_csv(output_filepath, index=True)
-    print('end')
-    """

@@ -56,7 +56,7 @@ def main(dic):
             #    v1[k2] = parse_date(v2)
             try:
                 v1[k2] = int(v2)
-            except ValueError:
+            except (ValueError, TypeError):
                 pass
 
 

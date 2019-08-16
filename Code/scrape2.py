@@ -14,6 +14,7 @@ import random
 import gc
 from datetime import datetime
 from time import sleep
+from collections import namedtuple
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
@@ -98,7 +99,7 @@ def get_main_box(soup, dic):
     dic['info'] = {'badge': badge,
                    'address': address,
                    'city_state': citystate,
-                   'full_address': ' '.join(address, citystate),
+                   'full_address': ' '.join([address, citystate]),
                    'beds': vitals[0],
                    'baths': vitals[1],
                    'sqft': vitals[2]}
@@ -130,6 +131,30 @@ def get_price_info(soup, dic):
         pass
 
 
+def scrape_normal_card(attrib_list):
+    """Generate field, attribute tuples from normal cards."""
+    for tag in attrib_list:
+        attr_tup = tag.text.split(u':\xa0 ')
+        attr_tup = [x.strip() for x in attr_tup]  # Strip whitespace from k and v
+        yield attr_tup
+
+
+def scrape_history_card(attrib_list):
+    """Generate rows from the Listing History table.
+
+    :returns named tuple
+    """
+    Row = namedtuple('Row', ['date', 'start', 'end'])
+    row_items = []
+    for i, tag in enumerate(attrib_list):
+        val = tag.text.strip()
+        row_items.append(val)
+        if (i + 1) % 3 == 0:  # Third (last) item)
+            current_row = Row._make(row_items)
+            row_items = []
+            yield current_row
+
+
 def get_cards(soup, dic):
     """Parse all cards and add to listing dictionary."""
     # Get list of card tags
@@ -155,13 +180,15 @@ def get_cards(soup, dic):
                     continue
                 card_title = card_title.strip()
 
-                card_attrib_list = i.find_all('div', class_='col-12')
-                # Update subdict
                 dic[card_title] = dic.setdefault(card_title, {})  # ensure it exists
-                for ia in card_attrib_list:
-                    attr_tup = ia.text.split(u':\xa0 ')
-                    attr_tup = [x.strip() for x in attr_tup]  # Strip whitespace from k and v
-                    dic[card_title].update([attr_tup])
+                card_attrib_list = i.find_all('div', class_='col-12')
+                if card_attrib_list:
+                    for field_attrib in scrape_normal_card(card_attrib_list):
+                        dic[card_title].update([field_attrib])
+                if not card_attrib_list:  # the Listing History card
+                    card_attrib_list = i.find_all('div', class_='col-4')
+                    for row in scrape_history_card(card_attrib_list):
+                        dic[card_title].update({row.date: (row.start, row.end)})
 
 
 def scrape_soup(soup):
@@ -280,4 +307,4 @@ if __name__ == '__main__':
         # prettify_soup(soup)
         scraped_dict = scrape_soup(sample_soup)
         clean.main(scraped_dict)
-        listing_dicts_all = add_dict_to_file(scraped_dict)
+        all_dict_versions = add_dict_to_file(scraped_dict)

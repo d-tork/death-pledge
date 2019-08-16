@@ -7,7 +7,7 @@ from Code import json_handling, scrape2, LISTINGS_GLOB
 def add_coords(dic):
     """Add geocoords to house dictionary"""
     # Grab coordinates from Bing
-    addr = ' '.join([dic['info']['address'], dic['info']['city_state']])
+    addr = dic['info']['full_address']
     coords = coordinates.get_coords(addr, zip_code=addr[-5:])
     print('{} --> {}'.format(addr, coords))
 

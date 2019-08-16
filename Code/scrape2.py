@@ -87,21 +87,18 @@ def get_main_box(soup, dic):
     except KeyError:
         sleep(3)
         main_box = result[0]
-    tag_badge = main_box.a
-    tag_address = main_box.h1
-    tag_citystate = main_box.h2
-    tag_vitals = main_box.h3
 
     # Extract strings from tags
-    badge = tag_badge.string
-    address = tag_address.string
-    citystate = tag_citystate.string
-    vitals = tag_vitals.string.split(' - ')
+    badge = main_box.a.string
+    address = main_box.h1.string
+    citystate = main_box.h2.string
+    vitals = main_box.h3.string.split(' - ')
 
     # Add to dictionary
     dic['info'] = {'badge': badge,
                    'address': address,
                    'city_state': citystate,
+                   'full_address': ' '.join(address, citystate),
                    'beds': vitals[0],
                    'baths': vitals[1],
                    'sqft': vitals[2]}

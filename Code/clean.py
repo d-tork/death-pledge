@@ -4,7 +4,7 @@ import time
 import glob
 import os
 from Code import PROJ_PATH
-from Code import json_to_pandas, scrape2
+from Code import json_handling, scrape2
 
 
 def convert_currency_to_int(s):
@@ -61,10 +61,10 @@ def main(dic):
 
 
 if __name__ == '__main__':
-    #dic1 = json_to_pandas.sample_main()
+    #dic1 = json_to_pandas.sample()
     #main(dic1)
 
     for f in glob.glob(os.path.join(PROJ_PATH, 'Data', 'Processed', 'saved_listings', '*.json')):
-        house = json_to_pandas.read_list_from_json(f)[0]
+        house = json_handling.read_dicts_from_json(f)[0]
         main(house)
         _ = scrape2.add_dict_to_file(house)

@@ -1,7 +1,7 @@
 import os
 import glob
 from Code.api_calls import coordinates, citymapper
-from Code import json_to_pandas, scrape2, LISTINGS_GLOB
+from Code import json_handling, scrape2, LISTINGS_GLOB
 
 
 def add_coords(dic):
@@ -19,14 +19,14 @@ def add_coords(dic):
 def sample():
     sample_file = os.path.join('..', 'Data', 'Processed', 'saved_listings',
                                '3008_GALLOP_WAY.json')
-    sample_house = json_to_pandas.read_list_from_json(sample_file)[0]
+    sample_house = json_handling.read_dicts_from_json(sample_file)[0]
     add_coords(sample_house)
     _ = scrape2.add_dict_to_file(sample_house)
 
 
 def main():
     for f in glob.glob(LISTINGS_GLOB):
-        house = json_to_pandas.read_list_from_json(f)[0]
+        house = json_handling.read_dicts_from_json(f)[0]
 
         # Add modifying functions here:
         add_coords(house)

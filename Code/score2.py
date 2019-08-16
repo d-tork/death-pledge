@@ -4,7 +4,7 @@ import os
 import glob
 import math
 import copy
-from Code import json_to_pandas, PROJ_PATH
+from Code import json_handling, PROJ_PATH
 
 SCORECARD_PATH = os.path.join(PROJ_PATH, 'Code', 'scores.csv')
 
@@ -125,8 +125,8 @@ def score_multiple_house_files(glob_path, score_dict):
     house_list = []
     house_scorecard_list = []
     for house_file in glob.glob(glob_path):
-        house_dict = json_to_pandas.read_list_from_json(house_file)[0]
-        df1 = json_to_pandas.dict_to_df(house_dict)  # What shape is this??
+        house_dict = json_handling.read_dicts_from_json(house_file)[0]
+        df1 = json_handling.dict_to_dataframe(house_dict)  # What shape is this??
         # shape is probably fields as index, houses as columns
         df1 = convert_bools(df1)
         new_df1_cols = df1.xs('address', level=1).iloc[:, 0]  # drop iloc and squeeze() if it will have more than one row

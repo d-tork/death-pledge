@@ -25,7 +25,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 from django.utils.text import slugify
 import Code
-from Code import support, clean
+from Code import support, clean, modify
 from Code.api_calls import keys
 
 
@@ -244,6 +244,7 @@ def add_dict_to_file(dic):
     if any_change:
         # Write new (and old) dictionaries to a list in file
         all_scrapes.insert(0, dic)
+        os.makedirs(os.path.dirname(outfilepath), exist_ok=True)
         with open(outfilepath, 'w') as f:
             f.write(json.dumps(all_scrapes, indent=4))
 
@@ -289,6 +290,8 @@ def scrape_from_url_list(url_list):
 
             # Add URL
             listing_dict['_metadata'].update({'URL': url})
+            # Add geocoords
+            modify.add_coords(listing_dict)
 
             listing_dicts_all = add_dict_to_file(listing_dict)
             print('Waiting {:.1f} seconds...'.format(wait_time))

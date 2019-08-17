@@ -8,12 +8,24 @@ from Code import json_handling, scrape2
 
 
 def convert_currency_to_int(s):
-    return int(s.strip().replace('$', '').replace(',', ''))
+    try:
+        return int(s.strip().replace('$', '').replace(',', ''))
+    except AttributeError:
+        return int(s)
+
+
+def parse_string_int(s):
+    try:
+        return int(s.split()[0])
+    except AttributeError:
+        return int(s)
 
 
 def parse_string_float(s):
-    if 'bath' in s.split()[1].lower():
+    try:
         return float(s.split()[0])
+    except AttributeError:
+        return float(s)
 
 
 def parse_date(s):
@@ -30,8 +42,12 @@ currency_list = [
 ]
 int_parse_list = [
     ('info', 'beds'),
-    ('info', 'baths'),
     ('info', 'sqft'),
+]
+float_parse_list = [
+    ('info', 'baths'),
+    ('basic_info', 'Lot Size Acres'),
+    ('Exterior Information', 'Lot Size Acres'),
 ]
 date_list = [
     ('info', 'sold')
@@ -43,21 +59,18 @@ def main(dic):
     for k1, v1 in dic.items():
         for k2, v2 in v1.items():
             if k2 in [x[1] for x in currency_list]:
-                try:
-                    v1[k2] = convert_currency_to_int(v2)
-                except AttributeError:
-                    pass
-            if k2 in [x[1] for x in int_parse_list]:
-                try:
-                    v1[k2] = parse_string_float(v2)
-                except AttributeError:
-                    pass
-            #if k2 in [x[1] for x in date_list]:
+                v1[k2] = convert_currency_to_int(v2)
+            elif k2 in [x[1] for x in int_parse_list]:
+                v1[k2] = parse_string_int(v2)
+            elif k2 in [x[1] for x in float_parse_list]:
+                v1[k2] = parse_string_float(v2)
+            #elif k2 in [x[1] for x in date_list]:
             #    v1[k2] = parse_date(v2)
-            try:
-                v1[k2] = int(v2)
-            except (ValueError, TypeError):
-                pass
+            else:
+                try:
+                    v1[k2] = int(v2)
+                except (ValueError, TypeError):  # string, or a tuple
+                    continue
 
 
 if __name__ == '__main__':

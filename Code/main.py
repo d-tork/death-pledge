@@ -49,5 +49,5 @@ if __name__ == '__main__':
     #df_full = scrape2.scrape_from_url_list(urls.head(3))
 
     # Add commute times
-    df_full = get_coords_and_commute(df_full)
+    #df_full = get_coords_and_commute(df_full)
 

@@ -306,5 +306,6 @@ if __name__ == '__main__':
         sample_soup = get_soup_for_url(keys.sample_url3, browser)
         # prettify_soup(soup)
         scraped_dict = scrape_soup(sample_soup)
+        scraped_dict['_metadata'].update({'URL': keys.sample_url3})
         clean.main(scraped_dict)
         all_dict_versions = add_dict_to_file(scraped_dict)

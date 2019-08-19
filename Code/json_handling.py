@@ -3,8 +3,60 @@ import pandas as pd
 import os
 import glob
 import Code
+from django.utils.text import slugify
 
 LISTINGS_DIR = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'saved_listings')
+
+
+def add_dict_to_json(dic):
+    """Write listing dict to JSON file. If file already exists, insert the dict.
+
+    :returns list of dicts
+        a list of len 1 or more of all scraped versions
+    """
+    # Define file path
+    outname = dic['info']['address']
+    outname = slugify(outname).replace('-', '_').upper()
+    outfilepath = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'saved_listings',
+                               '{}.json'.format(outname))
+
+    all_scrapes = []
+    # Read existing dictionaries (if file exists)
+    try:
+        with open(outfilepath, 'r') as f:
+            contents = json.load(f)
+            all_scrapes.extend(contents)
+    except FileNotFoundError:
+        pass
+
+    # Check if newest scrape is different from previous one
+    if all_scrapes:
+        try:
+            any_change = check_if_changed(dic, all_scrapes)
+        except KeyError:
+            any_change = True
+    else:
+        any_change = True
+
+    if any_change:
+        # Write new (and old) dictionaries to a list in file
+        all_scrapes.insert(0, dic)
+        os.makedirs(os.path.dirname(outfilepath), exist_ok=True)
+        with open(outfilepath, 'w') as f:
+            f.write(json.dumps(all_scrapes, indent=4))
+    else:
+        print('\tNo change in listing data.')
+    return all_scrapes
+
+
+def check_if_changed(dic, old_list):
+    dic2 = old_list[0]
+    for k1, inner_dict in dic.items():
+        for k2 in [x for x in inner_dict if x != 'timestamp']:
+            if inner_dict[k2] != dic2[k1][k2]:
+                print('\tChanged: {}'.format(k2))
+                return True
+    return False
 
 
 def dict_to_dataframe(dic):

@@ -51,8 +51,10 @@ def add_dict_to_json(dic):
 
 def check_if_changed(dic, old_list):
     dic2 = old_list[0]
-    for k1, inner_dict in dic.items():
-        for k2 in [x for x in inner_dict if x != 'timestamp']:
+    exclude_category = ['_metadata']
+    for k1 in [x for x in dic.keys() if x not in exclude_category]:
+        inner_dict = dic[k1]
+        for k2 in inner_dict:
             if inner_dict[k2] != dic2[k1][k2]:
                 print('\tChanged: {}'.format(k2))
                 return True

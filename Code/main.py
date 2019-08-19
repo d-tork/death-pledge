@@ -1,7 +1,7 @@
 """Run actions on housing search spreadsheet."""
 
 from datetime import datetime
-from Code.api_calls import google_sheets, coordinates, citymapper
+from Code.api_calls import google_sheets, bing, citymapper
 from Code import scrape2
 
 
@@ -26,10 +26,10 @@ def process_url_list(df):
 def get_coords_and_commute(df):
     """Translate address to geographic coordinates and ping Citymapper for commute time."""
     print('Getting coordinates from address...')
-    df['coords'] = df['full_address'].apply(coordinates.get_coords)
+    df['coords'] = df['full_address'].apply(bing.get_coords)
     print('Done')
     print('Getting commute times from coordinates...')
-    df['cm_time'] = df['coords'].apply(citymapper.get_commute_time)
+    df['cm_time'] = df['coords'].apply(citymapper.get_citymapper_commute_time())
     return df
 
 

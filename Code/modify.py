@@ -77,7 +77,7 @@ def sample():
                                '3008_GALLOP_WAY.json')
     sample_house = json_handling.read_dicts_from_json(sample_file)[0]
     add_coords(sample_house)
-    _ = scrape2.add_dict_to_file(sample_house)
+    _ = json_handling.add_dict_to_json(sample_house)
 
 
 def main():
@@ -93,7 +93,7 @@ def main():
         add_frequent_driving(house, keys.favorites_driving)
 
         # Write back out
-        _ = scrape2.add_dict_to_file(house)
+        _ = json_handling.add_dict_to_json(house)
 
 
 if __name__ == '__main__':

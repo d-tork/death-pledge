@@ -18,7 +18,7 @@ def get_coords(address, zip_code=None):
         'inclnb': '1',
         'maxResults': '1',
         'key': BING_MAPS_KEY,
-        'userLocation': '38.8447476,-77.0519393'
+        'userLocation': '38.8447476,-77.0519393'  # a general location so it prioritizes results
     }
     url_args = {k: v for k, v in url_dict.items() if v is not None}
     response = requests.get(BASEURL, params=url_args)

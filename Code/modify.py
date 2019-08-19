@@ -12,8 +12,8 @@ def add_coords(dic):
     print('{} --> {}'.format(addr, coords))
 
     # Add to dictionary
-    dic['external'] = dic.get('external', {})
-    dic['external'].update({'geocoords': coords})
+    dic['_metadata'] = dic.get('_metadata', {})
+    dic['_metadata'].update({'geocoords': coords})
 
 
 def sample():

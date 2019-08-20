@@ -106,14 +106,16 @@ def sample():
 
 
 def main():
-    for f in glob.glob(LISTINGS_GLOB):
+    # for f in glob.glob(LISTINGS_GLOB):
+    for basename in file_list:
+        f = os.path.join('..', 'Data', 'Processed', 'saved_listings', basename)
         house = json_handling.read_dicts_from_json(f)[0]
         print(os.path.basename(f))
 
         # Add modifying functions here:
         add_full_addr(house)
         add_coords(house)
-        #add_citymapper_commute(house)
+        # add_citymapper_commute(house)
         add_bing_commute(house)
         add_nearest_metro(house)
         add_frequent_driving(house, keys.favorites_driving)
@@ -132,6 +134,19 @@ def citymapper_only():
 
 
 if __name__ == '__main__':
-    sample()
-    # main()
+    # sample()
     # citymapper_only()
+
+    file_list = [
+        '800_BRAEBURN_DR.json',
+        '4689_LAWTON_WAY_201.json',
+        '5074_DONOVAN_DR_104.json',
+        '5505_SEMINARY_RD_305N.json',
+        '5663_HARRINGTON_FALLS_LN_E.json',
+        '6172_MORNING_GLORY_RD.json',
+        '6325C_EAGLE_RIDGE_LN_31.json',
+        '6551_GRANGE_LN_302.json',
+        '6614_CUSTER_ST.json',
+        '6921_MARY_CAROLINE_CIR_L.json',
+    ]
+    main()

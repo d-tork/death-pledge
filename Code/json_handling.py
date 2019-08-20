@@ -61,7 +61,7 @@ def check_if_changed(dic1, dic2):
             except KeyError:
                 change_set.add('\tAdded: {}'.format(field))
     if change_set:
-        dic1['_metadata'].update({'changes': change_set})
+        dic1['_metadata'].update({'changes': list(change_set)})
         for i in change_set:
             print(i)
         return True

@@ -8,8 +8,6 @@ if the file already exists) with a key:value pair for the timestamp
 of access.
 
 """
-import os
-import json
 import random
 import gc
 from datetime import datetime
@@ -18,7 +16,6 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
@@ -230,29 +227,22 @@ def scrape_from_url_list(url_list):
                 print('\t{}'.format(e))
                 continue
             listing_dict = scrape_soup(soup)
-            clean.main(listing_dict)
 
-            # Add URL
+            # Clean and add a couple more fields
+            clean.main(listing_dict)
             listing_dict['_metadata'].update({'URL': url})
-            # Add geocoords
             modify.add_coords(listing_dict)
 
-            listing_dicts_all = json_handling.add_dict_to_json(listing_dict)
+            # Merge with previous dict
+            json_handling.check_and_merge_dicts(listing_dict)
+
+            json_handling.add_dict_to_json(listing_dict)
             print('Waiting {:.1f} seconds...'.format(wait_time))
             sleep(wait_time)
             gc.collect()
 
 
 if __name__ == '__main__':
-    filename = 'sold_sample.html'
-    # filename = 'forsale_sample.html'
-    #sample_soup = get_html_from_file(filename)
+    sample_url_list = [keys.sample_url, keys.sample_url2, keys.sample_url3]
+    scrape_from_url_list(sample_url_list)
 
-    with webdriver.Firefox(executable_path=Code.GECKODRIVER_PATH) as browser:
-        sign_into_website(browser)
-        sample_soup = get_soup_for_url(keys.sample_url3, browser)
-        # prettify_soup(soup)
-        scraped_dict = scrape_soup(sample_soup)
-        scraped_dict['_metadata'].update({'URL': keys.sample_url3})
-        clean.main(scraped_dict)
-        all_dict_versions = json_handling.add_dict_to_json(scraped_dict)

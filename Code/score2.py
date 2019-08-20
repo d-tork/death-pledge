@@ -1,3 +1,6 @@
+"""
+Rate the various attributes of a house based on provided criteria.
+"""
 import json
 import pandas as pd
 import os

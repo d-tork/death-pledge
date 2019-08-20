@@ -62,8 +62,7 @@ def get_bing_commute_time(startcoords, endcoords):
     r_dict = response.json()
     try:
         travel_time = r_dict['resourceSets'][0]['resources'][0]['travelDuration']
-    except KeyError as e:
-        print(e)
+    except KeyError:
         print('Could not retrieve commute time for this address.')
         raise support.BadResponse('JSON response does not have travel_time_minutes key.')
     return dt.timedelta(seconds=travel_time)

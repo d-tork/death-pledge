@@ -6,7 +6,24 @@ import glob
 import Code
 from django.utils.text import slugify
 
-LISTINGS_DIR = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'saved_listings')
+
+def read_dicts_from_json(filepath):
+    """Read JSON dictionaries from a house file, as a list of dicts."""
+    with open(filepath, 'r') as f:
+        listing_all = json.load(f)
+    return listing_all
+
+
+def write_dicts_to_json(dict_list, filepath):
+    """Write a version history to a house JSON file.
+
+    A version history is a list of dictionaries.
+    Returns nothing.
+    """
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    with open(filepath, 'w') as f:
+        f.write(json.dumps(dict_list, indent=4))
+    print('Listing data written to {}'.format(os.path.basename(filepath)))
 
 
 def add_dict_to_json(dic):
@@ -24,14 +41,13 @@ def add_dict_to_json(dic):
     all_scrapes = []
     # Read existing dictionaries (if file exists)
     try:
-        with open(outfilepath, 'r') as f:
-            contents = json.load(f)
-            all_scrapes.extend(contents)
+        contents = read_dicts_from_json(outfilepath)
+        all_scrapes.extend(contents)
     except FileNotFoundError:
         pass
 
     # Check if newest scrape is different from previous one
-    if all_scrapes:
+    if all_scrapes:  # previous versions existed
         any_change = check_if_changed(dic, all_scrapes[0])
     else:
         any_change = True
@@ -39,11 +55,10 @@ def add_dict_to_json(dic):
     if any_change:
         # Add modify timestamp
         dic['_metadata'].update({'modify_time': str(datetime.now())})
+
         # Write new (and old) dictionaries to a list in file
         all_scrapes.insert(0, dic)
-        os.makedirs(os.path.dirname(outfilepath), exist_ok=True)
-        with open(outfilepath, 'w') as f:
-            f.write(json.dumps(all_scrapes, indent=4))
+        write_dicts_to_json(all_scrapes, outfilepath)
     else:
         print('\tNo change in listing data.')
     return all_scrapes
@@ -69,6 +84,25 @@ def check_if_changed(dic1, dic2):
         return False
 
 
+def remove_dict_from_json(filepath, quantity=None):
+    """Pop old versions from JSON file.
+
+    When quantity is none, all old versions are removed and only
+    the most recent remains. Otherwise, remove that many versions.
+
+    It will never remove the most recent though. If you want a clean
+    start, just delete the file itself.
+    """
+    all = read_dicts_from_json(filepath)
+    keep = [all.pop(0)]
+    if quantity is None:
+        quantity = len(all)
+    del all[-quantity:]  # delete from end number of items in quantity
+    print('Removed {} old versions from {}'.format(quantity, os.path.basename(filepath)))
+    # Write the kept version back out to JSON
+    write_dicts_to_json(keep, filepath)
+
+
 def dict_to_dataframe(dic):
     """Convert listing dictionary to dataframe.
     Derived from SO 24988131
@@ -83,13 +117,6 @@ def dict_to_dataframe(dic):
     return df
 
 
-def read_dicts_from_json(filepath):
-    """Read JSON dictionaries from a listing file."""
-    with open(filepath, 'r') as f:
-        listing_all = json.load(f)
-    return listing_all
-
-
 def dict_list_to_dataframe(house_hist):
     """Given a list of JSON dicts, convert them all to a single df."""
     full_df = pd.DataFrame()
@@ -101,7 +128,7 @@ def dict_list_to_dataframe(house_hist):
     return full_df
 
 
-def all_files_to_dataframe(listings_dir=LISTINGS_DIR):
+def all_files_to_dataframe(listings_dir):
     full_df = pd.DataFrame()
     listings_path = os.path.join(listings_dir, '*.json')
     for f in glob.glob(listings_path):
@@ -116,7 +143,7 @@ def all_files_to_dataframe(listings_dir=LISTINGS_DIR):
     return full_df
 
 
-def sample(listings_dir=LISTINGS_DIR):
+def sample(listings_dir):
     sample_fname = '4304_34TH_ST_S_B2.json'
     sample_fname = '4710_CEDELL_PL.json'
     sample_path = os.path.join(listings_dir, sample_fname)
@@ -131,9 +158,9 @@ def sample(listings_dir=LISTINGS_DIR):
 
 
 if __name__ == '__main__':
-    sample_recent, sample_all = sample(LISTINGS_DIR)
+    sample_recent, sample_all = sample(Code.LISTINGS_DIR)
     df1 = dict_list_to_dataframe(sample_all)
-    all_listings = all_files_to_dataframe(LISTINGS_DIR)
+    all_listings = all_files_to_dataframe(Code.LISTINGS_DIR)
 
     df1.to_csv('sample_house_allversions.csv')
     all_listings.to_csv('all_houses.csv')

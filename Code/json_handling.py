@@ -95,7 +95,24 @@ def dict_list_to_dataframe(house_hist):
     full_df = pd.DataFrame()
     for scrape in house_hist:
         df = dict_to_dataframe(scrape)
+        # Rename column header from 'values' to MLS Number
+        df.columns = [df.loc[('_metadata', 'modify_time'), 'values']]
         full_df = pd.concat([full_df, df], axis=1)
+    return full_df
+
+
+def all_files_to_dataframe(listings_dir=LISTINGS_DIR):
+    full_df = pd.DataFrame()
+    listings_path = os.path.join(listings_dir, '*.json')
+    for f in glob.glob(listings_path):
+        all_entries = read_dicts_from_json(f)
+        most_recent = all_entries[0]
+        df_indv = dict_to_dataframe(most_recent)
+        # Rename column header from 'values' to MLS Number
+        df_indv.columns = [df_indv.loc[('basic_info', 'MLS Number'), 'values']]
+
+        full_df = pd.concat([full_df, df_indv], axis=1)
+    full_df = full_df.drop('Listing History', level='category')
     return full_df
 
 
@@ -113,20 +130,11 @@ def sample(listings_dir=LISTINGS_DIR):
     return most_recent, all_entries
 
 
-def all_files_to_dataframe(listings_dir=LISTINGS_DIR):
-    full_df = pd.DataFrame()
-    listings_path = os.path.join(listings_dir, '*.json')
-    for f in glob.glob(listings_path):
-        all_entries = read_dicts_from_json(f)
-        most_recent = all_entries[0]
-        df_indv = dict_to_dataframe(most_recent)
-        full_df = pd.concat([full_df, df_indv], axis=1)
-    return full_df
-
-
 if __name__ == '__main__':
-    smaple_recent, sample_all = sample(LISTINGS_DIR)
+    sample_recent, sample_all = sample(LISTINGS_DIR)
     df1 = dict_list_to_dataframe(sample_all)
-    #all_listings = all_files_to_dataframe(LISTINGS_DIR)
+    all_listings = all_files_to_dataframe(LISTINGS_DIR)
 
+    df1.to_csv('sample_house_allversions.csv')
+    all_listings.to_csv('all_houses.csv')
     print('end here')

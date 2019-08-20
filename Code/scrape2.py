@@ -14,7 +14,6 @@ import random
 import gc
 from datetime import datetime
 from time import sleep
-from collections import namedtuple
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
@@ -143,13 +142,12 @@ def scrape_history_card(attrib_list):
 
     :returns named tuple
     """
-    Row = namedtuple('Row', ['date', 'start', 'end'])
     row_items = []
     for i, tag in enumerate(attrib_list):
         val = tag.text.strip()
         row_items.append(val)
         if (i + 1) % 3 == 0:  # Third (last) item)
-            current_row = Row._make(row_items)
+            current_row = (row_items[0], '{} --> {}'.format(row_items[1], row_items[2]))
             row_items = []
             yield current_row
 
@@ -187,7 +185,7 @@ def get_cards(soup, dic):
                 if not card_attrib_list:  # the Listing History card
                     card_attrib_list = i.find_all('div', class_='col-4')
                     for row in scrape_history_card(card_attrib_list):
-                        dic[card_title].update({row.date: (row.start, row.end)})
+                        dic[card_title].update({row[0]: row[1]})
 
 
 def scrape_soup(soup):
@@ -196,11 +194,10 @@ def scrape_soup(soup):
     :returns dict
     """
     # Initialize dict with date record
-    listing_dict = {'_metadata': {'timestamp': str(datetime.now())}}
+    listing_dict = {'_metadata': {'scraped_time': str(datetime.now())}}
 
     # Scrape three sections
     sleep(1)
-    # TODO: WHAT is going on here that causing it to indexerror out?
     get_main_box(soup, listing_dict)
     get_price_info(soup, listing_dict)
     get_cards(soup, listing_dict)

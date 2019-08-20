@@ -1,5 +1,6 @@
 import json
 import pandas as pd
+from datetime import datetime
 import os
 import glob
 import Code
@@ -31,14 +32,13 @@ def add_dict_to_json(dic):
 
     # Check if newest scrape is different from previous one
     if all_scrapes:
-        try:
-            any_change = check_if_changed(dic, all_scrapes)
-        except KeyError:
-            any_change = True
+        any_change = check_if_changed(dic, all_scrapes[0])
     else:
         any_change = True
 
     if any_change:
+        # Add modify timestamp
+        dic['_metadata'].update({'modify_time': str(datetime.now())})
         # Write new (and old) dictionaries to a list in file
         all_scrapes.insert(0, dic)
         os.makedirs(os.path.dirname(outfilepath), exist_ok=True)
@@ -49,16 +49,24 @@ def add_dict_to_json(dic):
     return all_scrapes
 
 
-def check_if_changed(dic, old_list):
-    dic2 = old_list[0]
+def check_if_changed(dic1, dic2):
     exclude_category = ['_metadata']
-    for k1 in [x for x in dic.keys() if x not in exclude_category]:
-        inner_dict = dic[k1]
-        for k2 in inner_dict:
-            if inner_dict[k2] != dic2[k1][k2]:
-                print('\tChanged: {}'.format(k2))
-                return True
-    return False
+    change_set = set()
+    for category in [x for x in dic1.keys() if x not in exclude_category]:
+        category_dict = dic1[category]
+        for field, value in category_dict.items():
+            try:
+                if value != dic2[category][field]:
+                    change_set.add('\tChanged: {}'.format(field))
+            except KeyError:
+                change_set.add('\tAdded: {}'.format(field))
+    if change_set:
+        dic1['_metadata'].update({'changes': change_set})
+        for i in change_set:
+            print(i)
+        return True
+    else:
+        return False
 
 
 def dict_to_dataframe(dic):
@@ -117,8 +125,8 @@ def all_files_to_dataframe(listings_dir=LISTINGS_DIR):
 
 
 if __name__ == '__main__':
-    dic1, list1 = sample(LISTINGS_DIR)
-    df1 = dict_list_to_dataframe(list1)
+    smaple_recent, sample_all = sample(LISTINGS_DIR)
+    df1 = dict_list_to_dataframe(sample_all)
     #all_listings = all_files_to_dataframe(LISTINGS_DIR)
 
     print('end here')

@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
     my_creds = google_sheets.get_creds()
     df_raw = google_sheets.main(my_creds)
-    urls = process_url_list(df_raw)
+    urls = process_url_list(df_raw)[-10:]
 
     # Get full df
     df_full = scrape2.scrape_from_url_list(urls)

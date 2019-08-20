@@ -1,5 +1,6 @@
 import os
 import glob
+from time import sleep
 from Code.api_calls import bing, citymapper, keys
 from Code import json_handling, scrape2, LISTINGS_GLOB
 from Code.support import BadResponse
@@ -25,14 +26,20 @@ def add_coords(dic):
 
 
 def add_citymapper_commute(dic):
-    """Add the citymapper transit time for work to the listing dict"""
+    """Add the citymapper transit time for work to the listing dict.
+
+    Sleeps because of the API limits.
+    """
     house_coords = dic['_metadata']['geocoords']
     try:
         cmtime = citymapper.get_citymapper_commute_time(house_coords, keys.work_coords)
-    except BadResponse:
+    except BadResponse as e:
+        print(e)
         cmtime = 'Unavailable'
     finally:
-        dic['Local Travel']['citymapper_commute'] = str(cmtime)
+        dic['Local Travel']['Work commute (Citymapper)'] = str(cmtime)
+        print('\tSleeping for 90 seconds')
+        sleep(90)
 
 
 def add_bing_commute(dic):
@@ -40,10 +47,11 @@ def add_bing_commute(dic):
     house_coords = dic['_metadata']['geocoords']
     try:
         bingtime = bing.get_bing_commute_time(house_coords, keys.work_coords)
-    except BadResponse:
+    except BadResponse as e:
+        print(e)
         bingtime = 'Unavailable'
     finally:
-        dic['external']['bing_commute'] = str(bingtime)
+        dic['Local Travel']['Work commute (Bing)'] = str(bingtime)
 
 
 def add_nearest_metro(dic):
@@ -54,7 +62,7 @@ def add_nearest_metro(dic):
     except BadResponse:
         station_list = ['Unavailable']
     finally:
-        dic['external']['metro_stations'] = station_list
+        dic['Local Travel']['Nearby Metro on foot'] = station_list
 
 
 def add_frequent_driving(dic, favorites_dic):
@@ -83,11 +91,12 @@ def sample():
 def main():
     for f in glob.glob(LISTINGS_GLOB):
         house = json_handling.read_dicts_from_json(f)[0]
+        print(os.path.basename(f))
 
         # Add modifying functions here:
         add_full_addr(house)
         add_coords(house)
-        add_citymapper_commute(house)
+        #add_citymapper_commute(house)
         add_bing_commute(house)
         add_nearest_metro(house)
         add_frequent_driving(house, keys.favorites_driving)
@@ -96,6 +105,16 @@ def main():
         _ = json_handling.add_dict_to_json(house)
 
 
+def citymapper_only():
+    for f in glob.glob(LISTINGS_GLOB):
+        house = json_handling.read_dicts_from_json(f)[0]
+        print(os.path.basename(f))
+        add_citymapper_commute(house)
+        # Write back out
+        _ = json_handling.add_dict_to_json(house)
+
+
 if __name__ == '__main__':
     # sample()
-    main()
+    # main()
+    citymapper_only()

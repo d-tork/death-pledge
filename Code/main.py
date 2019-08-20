@@ -33,8 +33,6 @@ def get_coords_and_commute(df):
     return df
 
 
-# TODO: add exception handlers
-
 if __name__ == '__main__':
     start_time = datetime.now()
     print(start_time)

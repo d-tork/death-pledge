@@ -23,9 +23,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
-from django.utils.text import slugify
 import Code
-from Code import support, clean, modify
+from Code import support, clean, modify, json_handling
 from Code.api_calls import keys
 
 
@@ -209,58 +208,6 @@ def scrape_soup(soup):
     return listing_dict
 
 
-def add_dict_to_file(dic):
-    """Write listing dict to JSON file. If file already exists, insert the dict.
-
-    :returns list of dicts
-        a list of len 1 or more of all scraped versions
-    """
-    # Define file path
-    outname = dic['info']['address']
-    outname = slugify(outname).replace('-', '_').upper()
-    outfilepath = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'saved_listings',
-                               '{}.json'.format(outname))
-
-    all_scrapes = []
-    # Read existing dictionaries (if file exists)
-    try:
-        with open(outfilepath, 'r') as f:
-            contents = json.load(f)
-            all_scrapes.extend(contents)
-    except FileNotFoundError:
-        pass
-
-    # Check if newest scrape is different from previous one
-    if all_scrapes:
-        try:
-            any_change = check_if_changed(dic, all_scrapes)
-        except KeyError:
-            any_change = True
-    else:
-        any_change = True
-    if not any_change:
-        print('\tChange in listing data: {}'.format(any_change))
-
-    if any_change:
-        # Write new (and old) dictionaries to a list in file
-        all_scrapes.insert(0, dic)
-        os.makedirs(os.path.dirname(outfilepath), exist_ok=True)
-        with open(outfilepath, 'w') as f:
-            f.write(json.dumps(all_scrapes, indent=4))
-
-    return all_scrapes
-
-
-def check_if_changed(dic1, old_list):
-    dic2 = old_list[0]
-    for k1, inner_dict in dic1.items():
-        for k2 in [x for x in inner_dict if x != 'timestamp']:
-            if inner_dict[k2] != dic2[k1][k2]:
-                print('\tChanged: {}'.format(k2))
-                return True
-    return False
-
-
 def scrape_from_url_list(url_list):
     """Given an array of URLs, use soup scraper to save JSONs of the listing data.
 
@@ -293,7 +240,7 @@ def scrape_from_url_list(url_list):
             # Add geocoords
             modify.add_coords(listing_dict)
 
-            listing_dicts_all = add_dict_to_file(listing_dict)
+            listing_dicts_all = json_handling.add_dict_to_json(listing_dict)
             print('Waiting {:.1f} seconds...'.format(wait_time))
             sleep(wait_time)
             gc.collect()
@@ -309,5 +256,6 @@ if __name__ == '__main__':
         sample_soup = get_soup_for_url(keys.sample_url3, browser)
         # prettify_soup(soup)
         scraped_dict = scrape_soup(sample_soup)
+        scraped_dict['_metadata'].update({'URL': keys.sample_url3})
         clean.main(scraped_dict)
-        all_dict_versions = add_dict_to_file(scraped_dict)
+        all_dict_versions = json_handling.add_dict_to_json(scraped_dict)

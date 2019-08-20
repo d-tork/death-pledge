@@ -26,6 +26,13 @@ def write_dicts_to_json(dict_list, filepath):
     print('Listing data written to {}'.format(os.path.basename(filepath)))
 
 
+def create_filename_from_dict(dic):
+    """Generate a JSON filename from address in dict."""
+    addr = dic['info']['address']
+    clean_name = slugify(addr).replace('-', '_').upper()
+    return '{}.json'.format(clean_name)
+
+
 def add_dict_to_json(dic):
     """Write listing dict to JSON file. If file already exists, insert the dict.
 
@@ -33,10 +40,8 @@ def add_dict_to_json(dic):
         a list of len 1 or more of all scraped versions
     """
     # Define file path
-    outname = dic['info']['address']
-    outname = slugify(outname).replace('-', '_').upper()
-    outfilepath = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'saved_listings',
-                               '{}.json'.format(outname))
+    basename = create_filename_from_dict(dic)
+    outfilepath = os.path.join(Code.LISTINGS_DIR, basename)
 
     all_scrapes = []
     # Read existing dictionaries (if file exists)
@@ -101,6 +106,34 @@ def remove_dict_from_json(filepath, quantity=None):
     print('Removed {} old versions from {}'.format(quantity, os.path.basename(filepath)))
     # Write the kept version back out to JSON
     write_dicts_to_json(keep, filepath)
+
+
+def check_and_merge_dicts(dic1):
+    """Add fields which are missing in a dictionary.
+
+    When scraping from a URL, but a JSON already exists for that house
+    with external data, merge the two after the fresh scraping so I don't
+    have to re-run modify.py to add in commute times, distances, etc.
+
+    :arg
+        dic1 (dict): shorter, newly-scraped dict
+
+    :returns None; modifies dic1 in place, or not at all
+    """
+    # Look for an existing file with a dict in it
+    basename = create_filename_from_dict(dic1)
+    filepath = os.path.join(Code.LISTINGS_DIR, basename)
+    try:
+        dic2 = read_dicts_from_json(filepath)[0]
+    except FileNotFoundError:
+        return
+
+    # If file was found, proceed with comparison to dic2
+    for category, category_dict in dic2.items():
+        dic1[category] = dic1.get(category, category_dict)
+        for field, value in category_dict.items():
+            dic1[category][field] = dic1[category].get(field, value)
+    print('\tAdditional categories carried over from previous version.')
 
 
 def dict_to_dataframe(dic):

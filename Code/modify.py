@@ -15,7 +15,12 @@ def add_full_addr(dic):
 def add_coords(dic):
     """Add geocoords to house dictionary"""
     # Grab coordinates from Bing
-    addr = dic['info']['full_address']
+    try:
+        'full_address' in dic['info']
+    except KeyError:
+        add_full_addr(dic)
+    finally:
+        addr = dic['info']['full_address']
     coords = bing.get_coords(addr, zip_code=addr[-5:])
 
     # Add to dictionary

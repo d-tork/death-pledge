@@ -57,13 +57,13 @@ def check_if_changed(dic1, dic2):
         for field, value in category_dict.items():
             try:
                 if value != dic2[category][field]:
-                    change_set.add('\tChanged: {}'.format(field))
+                    change_set.add('Changed: {}'.format(field))
             except KeyError:
-                change_set.add('\tAdded: {}'.format(field))
+                change_set.add('Added: {}'.format(field))
     if change_set:
         dic1['_metadata'].update({'changes': list(change_set)})
         for i in change_set:
-            print(i)
+            print('\t{}'.format(i))
         return True
     else:
         return False

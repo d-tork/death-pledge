@@ -124,7 +124,7 @@ def find_nearest_metro(startcoords):
             url_last_slash = web.rfind('/')
             url_page_extension = web.rfind('.')
             name = web[url_last_slash + 1:url_page_extension]
-        coords = result['point']['coordinates']  # TODO: are these rooftop??
+        coords = result['point']['coordinates']
         walk_info = get_walking_info(startcoords, coords)
         metro_list.append((name.upper(),  walk_info))
     return sorted(metro_list, key=lambda x: x[1][0])
@@ -170,4 +170,4 @@ if __name__ == '__main__':
     print('Commute to work: {}'.format(sample_commute_time))
     print('Nearest metro stations:')
     for i in sample_metro:
-        print(i[0], i[2])
+        print(i[0], i[1])

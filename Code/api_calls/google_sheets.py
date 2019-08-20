@@ -43,8 +43,7 @@ def get_creds():
     return creds
 
 
-
-def main(google_creds, spreadsheet_dict=SPREADSHEET_DICT):
+def get_url_dataframe(google_creds, spreadsheet_dict=SPREADSHEET_DICT):
     """Shows basic usage of the Sheets API.
     Prints values from a sample spreadsheet.
 
@@ -76,6 +75,31 @@ def main(google_creds, spreadsheet_dict=SPREADSHEET_DICT):
     return df
 
 
+def process_url_list(df):
+    """Make adjustments to URL dataframe before passing as series."""
+    def trim_url(url_str):
+        """Remove extra params from URL"""
+        q_mark = url_str.find('?')
+        if q_mark > -1:
+            return url_str[:q_mark]
+        else:
+            return url_str
+
+    # Trim urls to their base
+    df['url'] = df['url'].apply(trim_url)
+
+    # drop rows that I've marked inactive
+    url_series = df.loc[df['inactive'] == '']['url']
+    return url_series
+
+
+def get_url_list():
+    """Get list of URLs to scrape from google sheets."""
+    my_creds = get_creds()
+    df_raw = get_url_dataframe(my_creds)
+    return process_url_list(df_raw)[-5:]
+
+
 if __name__ == '__main__':
-    MY_CREDS = get_creds()
-    df_raw = main(MY_CREDS, SPREADSHEET_DICT)
+    sample_url_list = get_url_list()
+    print(sample_url_list)

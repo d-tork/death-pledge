@@ -25,21 +25,33 @@ def add_coords(dic):
     dic['Local Travel'] = dic.get('Local Travel', {})
 
 
-def add_citymapper_commute(dic):
+def add_citymapper_commute(dic, force=False):
     """Add the citymapper transit time for work to the listing dict.
 
     Sleeps because of the API limits.
     """
-    house_coords = dic['_metadata']['geocoords']
-    try:
-        cmtime = citymapper.get_citymapper_commute_time(house_coords, keys.work_coords)
-    except BadResponse as e:
-        print(e)
-        cmtime = 'Unavailable'
-    finally:
-        dic['Local Travel']['Work commute (Citymapper)'] = str(cmtime)
-        print('\tSleeping for 90 seconds')
-        sleep(90)
+    key_name = 'Work commute (Citymapper)'
+    if key_name not in dic['Local Travel']:
+        force = True
+    elif dic['Local Travel'][key_name] == 'Unavailable':
+        force = True
+    else:  # It's in the dict as a real value, defer to force parameter
+        pass
+
+    if force:
+        house_coords = dic['_metadata']['geocoords']
+        try:
+            cmtime = citymapper.get_citymapper_commute_time(house_coords, keys.work_coords)
+        except BadResponse as e:
+            print(e)
+            cmtime = 'Unavailable'
+        finally:
+            dic['Local Travel'][key_name] = str(cmtime)
+            print('\tSleeping for 90 seconds')
+            sleep(90)
+    else:
+        print('\tCitymapper commute time already exists. Use force=True to override.')
+        return
 
 
 def add_bing_commute(dic):
@@ -82,9 +94,9 @@ def add_frequent_driving(dic, favorites_dic):
 
 def sample():
     sample_file = os.path.join('..', 'Data', 'Processed', 'saved_listings',
-                               '3008_GALLOP_WAY.json')
+                               '13406_PISCATAWAY_DR.json')
     sample_house = json_handling.read_dicts_from_json(sample_file)[0]
-    add_coords(sample_house)
+    add_citymapper_commute(sample_house)
     _ = json_handling.add_dict_to_json(sample_house)
 
 
@@ -115,6 +127,6 @@ def citymapper_only():
 
 
 if __name__ == '__main__':
-    # sample()
+    sample()
     # main()
-    citymapper_only()
+    # citymapper_only()

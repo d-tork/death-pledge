@@ -6,8 +6,6 @@ from time import sleep
 from Code.api_calls import keys
 from Code import support
 
-CITYMAPPER_KEY = keys.citymapperKey
-
 
 def get_citymapper_commute_time(startcoords, endcoords):
     """Get commute travel time between two lat/lon tuples from Citymapper API.
@@ -28,10 +26,10 @@ def get_citymapper_commute_time(startcoords, endcoords):
         'endcoord': support.str_coords(endcoords),
         'time': support.get_commute_datetime('cm'),
         'time_type': 'arrival',
-        'key': CITYMAPPER_KEY
+        'key': keys.citymapperKey
     }
     response = requests.get(baseurl, params=url_args)
-    # TODO: if it starts skipping multiple listings again, let it sleep for 5-10 sec here
+    print(response.url)
     if response.status_code != 200:
         print('Could not retrieve commute time for this address.')
         raise support.BadResponse('Response code from citymapper not 200.')

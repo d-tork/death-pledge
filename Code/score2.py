@@ -3,8 +3,10 @@ Rate the various attributes of a house based on provided criteria.
 """
 import json
 import pandas as pd
+import numpy as np
 import os
 import glob
+import datetime as dt
 import Code
 from Code import json_handling
 
@@ -86,6 +88,7 @@ def score_house_dict(dic, scorecard):
 
     # Insert additional special scoring functions here
     score_state(dic, house_sc)
+    score_nearest_metro(dic, house_sc)
     return house_sc
 
 
@@ -112,6 +115,23 @@ def score_state(dic, house_sc):
     house_sc['state_score'] = state_score
 
 
+def score_nearest_metro(dic, house_sc):
+    """Evaluate distance to nearest metro"""
+    metro = dic['Local Travel']['Nearby Metro on foot'][0]  # returns a list of [station, (dist, time)]
+    dur = dt.datetime.strptime(metro[1][1], '%H:%M:%S')
+    delta = dt.timedelta(hours=dur.hour, minutes=dur.minute, seconds=dur.second)
+    secs = delta.total_seconds()
+
+    # Derived from SO 17118350 and 43095739
+    sec_array = np.arange(120, 1, -10)*60
+    score = sec_array.size - np.searchsorted(sec_array[::-1], secs, side='right')
+    # Subtract 8 so that the commute times longer than 40 min give it a negative score
+    score = float(score) - 6
+    # Add weighting (because a close metro is muy importante
+    score *= 4
+    house_sc['metro_walk_score'] = score
+
+
 def sum_scores(house_sc):
     total = 0
     item_list = [x for x in house_sc.keys() if x != 'MLS Number']
@@ -133,9 +153,11 @@ def main():
         house_scorecard = score_house_dict(house_dict, my_scorecard)
         house_scorecard_list.append(house_scorecard)
 
+        total_score = sum_scores(house_scorecard)
+        house_scorecard['TOTAL_SCORE'] = total_score
+
         url = house_dict['_metadata']['URL']
         addr = house_dict['info']['full_address']
-        total_score = sum_scores(house_scorecard)
         house_list.append((addr, total_score, url))
     write_scorecards_to_file(house_scorecard_list)
 

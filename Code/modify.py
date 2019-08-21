@@ -2,7 +2,7 @@ import os
 import glob
 from time import sleep
 from Code.api_calls import bing, citymapper, keys
-from Code import json_handling, scrape2, LISTINGS_GLOB
+from Code import json_handling, LISTINGS_GLOB
 from Code.support import BadResponse
 
 
@@ -106,9 +106,9 @@ def sample():
 
 
 def main():
-    # for f in glob.glob(LISTINGS_GLOB):
-    for basename in file_list:
-        f = os.path.join('..', 'Data', 'Processed', 'saved_listings', basename)
+    for f in glob.glob(LISTINGS_GLOB):
+    # for basename in file_list:
+        # f = os.path.join('..', 'Data', 'Processed', 'saved_listings', basename)
         house = json_handling.read_dicts_from_json(f)[0]
         print(os.path.basename(f))
 

@@ -7,6 +7,8 @@ from Code import scrape2, score2, modify
 def main():
     urls = google_sheets.get_url_list()
     scrape2.scrape_from_url_list(urls)
+    modify.main()
+    score2.main()
 
 
 def single_sample():
@@ -15,5 +17,5 @@ def single_sample():
 
 
 if __name__ == '__main__':
-    # main()
-    single_sample()
+    main()
+    # single_sample()

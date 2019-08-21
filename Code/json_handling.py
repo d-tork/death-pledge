@@ -188,14 +188,13 @@ def sample(listings_dir):
     print(df_sample.head())
 
     df_all = dict_list_to_dataframe(all_entries)
-    return most_recent, all_entries
+    return most_recent, df_all
 
 
 if __name__ == '__main__':
     sample_recent, sample_all = sample(Code.LISTINGS_DIR)
-    df1 = dict_list_to_dataframe(sample_all)
     all_listings = all_files_to_dataframe(Code.LISTINGS_DIR)
 
-    df1.to_csv('sample_house_allversions.csv')
+    sample_all.to_csv('sample_house_allversions.csv')
     all_listings.to_csv('all_houses.csv')
     print('end here')

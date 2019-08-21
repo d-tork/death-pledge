@@ -32,6 +32,10 @@ def parse_date(s):
     return time.strptime(s, '%m/%d/%Y')
 
 
+def keep_string(s):
+    return str(s)
+
+
 currency_list = [
     ('info', 'list_price'),
     ('info', 'sale_price'),
@@ -52,6 +56,9 @@ float_parse_list = [
 date_list = [
     ('info', 'sold')
 ]
+string_list = [
+    ('basic_info', 'MLS Number')
+]
 
 
 def main(dic):
@@ -66,6 +73,8 @@ def main(dic):
                 v1[k2] = parse_string_float(v2)
             #elif k2 in [x[1] for x in date_list]:
             #    v1[k2] = parse_date(v2)
+            elif k2 in [x[1] for x in string_list]:
+                v1[k2] = keep_string(v2)
             else:
                 try:
                     v1[k2] = int(v2)

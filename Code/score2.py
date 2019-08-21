@@ -7,50 +7,17 @@ import os
 import glob
 import math
 import copy
-from Code import json_handling, PROJ_PATH
+import Code
+from Code import json_handling
 
-SCORECARD_PATH = os.path.join(PROJ_PATH, 'Code', 'scores.csv')
+SCORECARD_PATH = os.path.join(Code.PROJ_PATH, 'Data', 'scorecard.json')
 
 
 def get_scorecard(filepath=SCORECARD_PATH):
-    """Create scorecard dictionary from CSV input. Returns a dict."""
-
-    def clean_scorecard_dict(dic):
-        """Pop empty criteria-score pairs"""
-        dic_copy = copy.deepcopy(dic)  # a shallow copy will modify it mid-loop
-        for k1, v1 in dic.items():
-            for k2, v2 in v1.items():
-                try:
-                    if math.isnan(v2):
-                        dic_copy[k1].pop(k2)  # remove the dict entry
-                except TypeError:  # it's a string
-                    continue
-        return dic_copy
-
-    scores = pd.read_csv(filepath, index_col=['category', 'field']).sort_index()
-    scores = convert_bools(scores)
-    scores = convert_dtypes(scores)
-
-    # Coerce column headers to numbers
-    new_column_names = []
-    for col in scores.columns:
-        try:
-            new_column_names.append(float(col))
-        except ValueError:
-            new_column_names.append(col)
-    scores.columns = new_column_names
-
-    # Convert scores to dict
-    d_scores = scores.to_dict(orient='index')
-    d_scores = clean_scorecard_dict(d_scores)
-    return d_scores
-
-
-def convert_dtypes(df):
-    """Re-acquire datatypes from JSON after converting to dataframe and transposing."""
-    for col in df:
-        df[col] = pd.to_numeric(df[col], errors='ignore')
-    return df
+    """Create scorecard dictionary from JSON file."""
+    with open(filepath, 'r') as f:
+        scores = json.loads(f.read())
+    return scores
 
 
 def convert_bools(df):
@@ -63,64 +30,71 @@ class FieldNotScored(Exception):
 
 
 def get_score_for_row(index_tuple, value, score_dict):
+    """Score each row in a listing dataframe.
+
+    The listing is a single-column dataframe where the index is a (category, field)
+    MultiIndex and the column is the values for the house.
+
+    The inner_score_dict becomes a simple dictionary in the form:
+        {point value: attribute value}, but with a final item of
+        {'weight': integer}
+
+    """
+    field_name = index_tuple[1]
     try:
-        inner_score_dict = score_dict[index_tuple]
+        inner_score_dict = score_dict[field_name]
     except KeyError:
         raise FieldNotScored('This field not assigned a 1-3 score.')
-    row_score = 0
-    for score, criteria in inner_score_dict.items():
-        if score == 'weight':
-            continue
-        if value >= criteria:
-            row_score = score
-            continue
-        else:
-            break
-    weight = inner_score_dict.get('weight', 1)
-    row_score = row_score * weight
+
+    try:
+        row_score = inner_score_dict[str(value)]  # exact match
+    except KeyError:
+        row_score = find_closest_key(str(value), inner_score_dict)
+    finally:
+        weight = inner_score_dict.get('weight', 1)
+        row_score = row_score * weight
     return row_score
 
 
-def score_state(series, score_dict):
-    city_state = series.xs('city_state', level=1).squeeze()
-    if 'VA' in city_state:
-        state_score = 3.5
-    else:
-        state_score = 0
-    score_dict.update({'state_score': state_score})
+def find_closest_key(val, dic):
+    """Find the closest match to the val in the dict's keys.
+
+    So far, I believe that 'Yes' will always be greater than 'No', so I don't
+    need to convert them to bools or ints. However, if I come up with any ordered
+    criteria that's not an exact match, this may not turn out correctly.
+    """
+    row_score = 0
+    for key, pt_value in dic.items():
+        if key == '_weight':
+            continue
+        elif val > key:
+            row_score = pt_value
+            continue
+        else:
+            return row_score
 
 
-def score_a_house(series, score_dict):
+def score_a_house(df, scorecard):
     """Evaluate house values against scorecard.
 
     Returns a dict structured like the house dict
     """
-    house_score_dict = {'address': series.xs('address', level=1).squeeze()}
-    for i, val in series.itertuples():
+    house_score_dict = {'address': df.xs('address', level=1).squeeze()}
+    for i, val in df.itertuples():
         # Go row by row in the dataframe
         # Don't forget that right now, df1 is basically a series of only one house
         _, k2 = i  # Discard first level of dict (category) for scorecards
         try:
-            row_score1 = get_score_for_row(i, val, score_dict)
-            house_score_dict[k2] = row_score1
+            row_score = get_score_for_row(i, val, scorecard)
+            house_score_dict[k2] = row_score
         except FieldNotScored:
             continue
     # Insert additional special scoring functions here
-    score_state(series, house_score_dict)
+    score_state(df, house_score_dict)
     return house_score_dict
 
 
-def sum_scores(house_score_dict):
-    total = 0
-    for k, v in house_score_dict.items():
-        try:
-            total += v
-        except TypeError:
-            continue
-    return total
-
-
-def score_multiple_house_files(glob_path, score_dict):
+def score_multiple_house_files(glob_path, scorecard):
     """Read in a group of files and score each house.
 
     Returns a list of (house, score) tuples
@@ -129,13 +103,12 @@ def score_multiple_house_files(glob_path, score_dict):
     house_scorecard_list = []
     for house_file in glob.glob(glob_path):
         house_dict = json_handling.read_dicts_from_json(house_file)[0]
-        df1 = json_handling.dict_to_dataframe(house_dict)  # What shape is this??
-        # shape is probably fields as index, houses as columns
-        df1 = convert_bools(df1)
-        new_df1_cols = df1.xs('address', level=1).iloc[:, 0]  # drop iloc and squeeze() if it will have more than one row
+        df1 = json_handling.dict_to_dataframe(house_dict)
+        # shape is (category, field) as MultiIndex, house as column
+        new_df1_cols = df1.xs('MLS Number', level=1).iloc[:, 0]
         df1.columns = new_df1_cols
 
-        house_scorecard = score_a_house(df1, score_dict)
+        house_scorecard = score_a_house(df1, scorecard)
 
         # Construct lists
         try:
@@ -151,21 +124,47 @@ def score_multiple_house_files(glob_path, score_dict):
         house_scorecard_list.append(house_scorecard)
 
     # Dump scorecards into single file
-    json_output_file = os.path.join(PROJ_PATH, 'Data', 'Processed', 'scorecards.json')
+    json_output_file = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'scorecards.json')
     with open(json_output_file, 'w') as f:
         f.write(json.dumps(house_scorecard_list, indent=4))
     return house_list
 
 
-if __name__ == '__main__':
-    scorecard = get_scorecard()
+def score_state(series, score_dict):
+    city_state = series.xs('city_state', level=1).squeeze()
+    if 'VA' in city_state:
+        state_score = 3.5
+    else:
+        state_score = 0
+    score_dict.update({'state_score': state_score})
+
+
+def sum_scores(house_score_dict):
+    total = 0
+    for k, v in house_score_dict.items():
+        try:
+            total += v
+        except TypeError:
+            continue
+    return total
+
+
+def main():
+    my_scorecard = get_scorecard()
 
     # All files
-    listings_glob_path = "../Data/Processed/saved_listings/*.json"
-    all_houses = score_multiple_house_files(listings_glob_path, scorecard)
+    all_houses = score_multiple_house_files(Code.LISTINGS_GLOB, my_scorecard)
 
     # Output as dataframe/CSV
     all_scores = (pd.DataFrame(all_houses, columns=['address', 'score', 'URL'])
                   .sort_values('score', ascending=False))
-    outfile = os.path.join(PROJ_PATH, 'Data', 'Processed', 'all_scores.csv')
+    outfile = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'all_scores.csv')
     all_scores.to_csv(outfile)
+
+
+def sample():
+    my_scorecard = get_scorecard()
+
+
+if __name__ == '__main__':
+    main()

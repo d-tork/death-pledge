@@ -108,6 +108,11 @@ def remove_dict_from_json(filepath, quantity=None):
     write_dicts_to_json(keep, filepath)
 
 
+def clear_all_json_histories(fileglob):
+    for f in glob.glob(fileglob):
+        remove_dict_from_json(f)
+
+
 def check_and_merge_dicts(dic1):
     """Add fields which are missing in a dictionary.
 
@@ -165,10 +170,9 @@ def dict_list_to_dataframe(house_hist):
     return full_df
 
 
-def all_files_to_dataframe(listings_dir):
+def all_files_to_dataframe(listings_glob):
     full_df = pd.DataFrame()
-    listings_path = os.path.join(listings_dir, '*.json')
-    for f in glob.glob(listings_path):
+    for f in glob.glob(listings_glob):
         all_entries = read_dicts_from_json(f)
         most_recent = all_entries[0]
         df_indv = dict_to_dataframe(most_recent)
@@ -188,13 +192,17 @@ def sample(listings_dir):
     print(df_sample.head())
 
     df_all = dict_list_to_dataframe(all_entries)
-    return most_recent, df_all
+
+    all_listings = all_files_to_dataframe(Code.LISTINGS_DIR)
+
+    df_all.to_csv('sample_house_allversions.csv')
+    all_listings.to_csv('all_houses.csv')
+    return
 
 
 if __name__ == '__main__':
-    sample_recent, sample_all = sample(Code.LISTINGS_DIR)
-    all_listings = all_files_to_dataframe(Code.LISTINGS_DIR)
+    # sample(Code.LISTINGS_DIR)
+    # clear_all_json_histories(Code.LISTINGS_GLOB)
 
-    sample_all.to_csv('sample_house_allversions.csv')
-    all_listings.to_csv('all_houses.csv')
-    print('end here')
+    df1 = all_files_to_dataframe(Code.LISTINGS_GLOB).T
+    df1.to_csv(os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'all_listings.csv'))

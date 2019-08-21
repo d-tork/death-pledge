@@ -144,9 +144,12 @@ def dict_to_dataframe(dic):
     reform = {(outerKey, innerKey): values for outerKey, innerDict in dic.items() for innerKey, values in
               innerDict.items()}
 
+    # Convert to dataframe, then MultiIndex from the tuple keys
     df = pd.DataFrame.from_dict(reform, orient='index', columns=['values'])
     df.index = pd.MultiIndex.from_tuples(df.index)
     df.index.rename(['category', 'field'], inplace=True)
+    # Rename the columns to MLS numbers
+    df.columns = [df.loc[('basic_info', 'MLS Number'), 'values']]
     return df
 
 
@@ -155,9 +158,10 @@ def dict_list_to_dataframe(house_hist):
     full_df = pd.DataFrame()
     for scrape in house_hist:
         df = dict_to_dataframe(scrape)
-        # Rename column header from 'values' to MLS Number
-        df.columns = [df.loc[('_metadata', 'modify_time'), 'values']]
         full_df = pd.concat([full_df, df], axis=1)
+    # Rename column headers from their MLS number to their order in the file
+    new_col_headers = list(reversed(range(len(full_df.columns))))
+    full_df.columns = new_col_headers
     return full_df
 
 
@@ -168,17 +172,14 @@ def all_files_to_dataframe(listings_dir):
         all_entries = read_dicts_from_json(f)
         most_recent = all_entries[0]
         df_indv = dict_to_dataframe(most_recent)
-        # Rename column header from 'values' to MLS Number
-        df_indv.columns = [df_indv.loc[('basic_info', 'MLS Number'), 'values']]
-
         full_df = pd.concat([full_df, df_indv], axis=1)
+    # Drop listing history rows, because they don't line up for all houses and are unwieldy
     full_df = full_df.drop('Listing History', level='category')
     return full_df
 
 
 def sample(listings_dir):
-    sample_fname = '4304_34TH_ST_S_B2.json'
-    sample_fname = '4710_CEDELL_PL.json'
+    sample_fname = '6551_GRANGE_LN_302.json'
     sample_path = os.path.join(listings_dir, sample_fname)
 
     all_entries = read_dicts_from_json(sample_path)

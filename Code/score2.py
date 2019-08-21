@@ -126,17 +126,17 @@ def sum_scores(house_sc):
 def main():
     my_scorecard = get_scorecard()
 
-    house_list = []
-    house_scorecard_list = []
+    house_list = []  # for simple CSV output
+    house_scorecard_list = []  # for JSON output
     for house_file in glob.glob(Code.LISTINGS_GLOB):
         house_dict = json_handling.read_dicts_from_json(house_file)[0]
         house_scorecard = score_house_dict(house_dict, my_scorecard)
+        house_scorecard_list.append(house_scorecard)
 
         url = house_dict['_metadata']['URL']
         addr = house_dict['info']['full_address']
         total_score = sum_scores(house_scorecard)
         house_list.append((addr, total_score, url))
-        house_scorecard_list.append(house_scorecard)
     write_scorecards_to_file(house_scorecard_list)
 
     # Output as dataframe/CSV

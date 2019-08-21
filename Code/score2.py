@@ -5,8 +5,6 @@ import json
 import pandas as pd
 import os
 import glob
-import math
-import copy
 import Code
 from Code import json_handling
 
@@ -46,28 +44,31 @@ def get_score_for_row(index_tuple, value, score_dict):
     except KeyError:
         raise FieldNotScored('This field not assigned a 1-3 score.')
 
+    # Make certain field values negative (like prices) for comparison because the lower the better
+    reversed_groups = ['price', 'fee']
+    if any(x in field_name.lower() for x in reversed_groups):
+        try:
+            value = -value
+        except TypeError:
+            pass
+
     try:
-        row_score = inner_score_dict[str(value)]  # exact match
+        row_score = inner_score_dict[str(value)]  # exact match (strings, Yes/No, etc.)
     except KeyError:
-        row_score = find_closest_key(str(value), inner_score_dict)
+        row_score = find_closest_key(float(value), inner_score_dict)
     finally:
-        weight = inner_score_dict.get('weight', 1)
+        weight = inner_score_dict.get('_weight', 1)
         row_score = row_score * weight
     return row_score
 
 
 def find_closest_key(val, dic):
-    """Find the closest match to the val in the dict's keys.
-
-    So far, I believe that 'Yes' will always be greater than 'No', so I don't
-    need to convert them to bools or ints. However, if I come up with any ordered
-    criteria that's not an exact match, this may not turn out correctly.
-    """
+    """Find the closest match to the val in the dict's keys."""
     row_score = 0
     for key, pt_value in dic.items():
         if key == '_weight':
             continue
-        elif val > key:
+        elif val > float(key):
             row_score = pt_value
             continue
         else:
@@ -79,7 +80,8 @@ def score_a_house(df, scorecard):
 
     Returns a dict structured like the house dict
     """
-    house_score_dict = {'address': df.xs('address', level=1).squeeze()}
+    house_score_dict = {'address': df.xs('full_address', level=1).squeeze()}
+    house_score_dict['MLS Number'] = df.xs('MLS Number', level=1).squeeze()
     for i, val in df.itertuples():
         # Go row by row in the dataframe
         # Don't forget that right now, df1 is basically a series of only one house
@@ -122,12 +124,17 @@ def score_multiple_house_files(glob_path, scorecard):
         total_score = sum_scores(house_scorecard)
         house_list.append((addr, total_score, url))
         house_scorecard_list.append(house_scorecard)
+        write_scorecards_to_file(house_scorecard_list)
+    return house_list
 
-    # Dump scorecards into single file
+
+def write_scorecards_to_file(cards):
+    """Dump scorecard(s) into single file."""
+    if isinstance(cards, dict):
+        cards = [cards]
     json_output_file = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'scorecards.json')
     with open(json_output_file, 'w') as f:
-        f.write(json.dumps(house_scorecard_list, indent=4))
-    return house_list
+        f.write(json.dumps(cards, indent=4))
 
 
 def score_state(series, score_dict):
@@ -164,7 +171,15 @@ def main():
 
 def sample():
     my_scorecard = get_scorecard()
+    sample_fname = '6551_GRANGE_LN_302.json'
+    sample_path = os.path.join(Code.LISTINGS_DIR, sample_fname)
+    house = json_handling.read_dicts_from_json(sample_path)[0]
+    df_house = json_handling.dict_to_dataframe(house)
+    house_scorecard = score_a_house(df_house, my_scorecard)
+    house_scorecard['TOTAL_SCORE'] = sum_scores(house_scorecard)
+    write_scorecards_to_file(house_scorecard)
 
 
 if __name__ == '__main__':
-    main()
+    # main()
+    sample()

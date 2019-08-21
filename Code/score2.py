@@ -27,7 +27,7 @@ class FieldNotScored(Exception):
     pass
 
 
-def get_score_for_row(index_tuple, value, score_dict):
+def get_score_for_row(field_name, value, inner_score_dict):
     """Score each row in a listing dataframe.
 
     The listing is a single-column dataframe where the index is a (category, field)
@@ -38,12 +38,6 @@ def get_score_for_row(index_tuple, value, score_dict):
         {'weight': integer}
 
     """
-    field_name = index_tuple[1]
-    try:
-        inner_score_dict = score_dict[field_name]
-    except KeyError:
-        raise FieldNotScored('This field not assigned a 1-3 score.')
-
     # Make certain field values negative (like prices) for comparison because the lower the better
     reversed_groups = ['price', 'fee']
     if any(x in field_name.lower() for x in reversed_groups):
@@ -58,7 +52,10 @@ def get_score_for_row(index_tuple, value, score_dict):
         row_score = find_closest_key(float(value), inner_score_dict)
     finally:
         weight = inner_score_dict.get('_weight', 1)
-        row_score = row_score * weight
+        try:
+            row_score = row_score * weight
+        except TypeError:
+            print('\t{0}: {1}'.format(field_name, value))
     return row_score
 
 
@@ -72,60 +69,24 @@ def find_closest_key(val, dic):
             row_score = pt_value
             continue
         else:
-            return row_score
+            break
+    return row_score
 
 
-def score_a_house(df, scorecard):
-    """Evaluate house values against scorecard.
+def score_house_dict(dic, scorecard):
+    """Evaluates a house dictionary against scorecard."""
+    house_sc = {'address': dic['info']['full_address'],
+                'MLS Number': str(dic['basic_info']['MLS Number'])}
+    print(house_sc['address'])
+    for k1, v1 in dic.items():
+        for field, house_val in v1.items():
+            if field in scorecard:
+                field_score = get_score_for_row(field, house_val, scorecard[field])
+                house_sc[field] = field_score
 
-    Returns a dict structured like the house dict
-    """
-    house_score_dict = {'address': df.xs('full_address', level=1).squeeze()}
-    house_score_dict['MLS Number'] = df.xs('MLS Number', level=1).squeeze()
-    for i, val in df.itertuples():
-        # Go row by row in the dataframe
-        # Don't forget that right now, df1 is basically a series of only one house
-        _, k2 = i  # Discard first level of dict (category) for scorecards
-        try:
-            row_score = get_score_for_row(i, val, scorecard)
-            house_score_dict[k2] = row_score
-        except FieldNotScored:
-            continue
     # Insert additional special scoring functions here
-    score_state(df, house_score_dict)
-    return house_score_dict
-
-
-def score_multiple_house_files(glob_path, scorecard):
-    """Read in a group of files and score each house.
-
-    Returns a list of (house, score) tuples
-    """
-    house_list = []
-    house_scorecard_list = []
-    for house_file in glob.glob(glob_path):
-        house_dict = json_handling.read_dicts_from_json(house_file)[0]
-        df1 = json_handling.dict_to_dataframe(house_dict)
-        # shape is (category, field) as MultiIndex, house as column
-        new_df1_cols = df1.xs('MLS Number', level=1).iloc[:, 0]
-        df1.columns = new_df1_cols
-
-        house_scorecard = score_a_house(df1, scorecard)
-
-        # Construct lists
-        try:
-            addr = ', '.join([house_dict['info']['address'], house_dict['info']['city_state']])
-            url = house_dict['_metadata']['URL']
-        except KeyError:
-            print('\tField not in scraped data. Re-run scrape2.py on this listing.')
-            continue
-
-        print(addr)
-        total_score = sum_scores(house_scorecard)
-        house_list.append((addr, total_score, url))
-        house_scorecard_list.append(house_scorecard)
-        write_scorecards_to_file(house_scorecard_list)
-    return house_list
+    score_state(dic, house_sc)
+    return house_sc
 
 
 def write_scorecards_to_file(cards):
@@ -135,20 +96,26 @@ def write_scorecards_to_file(cards):
     json_output_file = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'scorecards.json')
     with open(json_output_file, 'w') as f:
         f.write(json.dumps(cards, indent=4))
+    print('Scorecards written to {}'.format(json_output_file))
 
 
-def score_state(series, score_dict):
-    city_state = series.xs('city_state', level=1).squeeze()
-    if 'VA' in city_state:
+def score_state(dic, house_sc):
+    """Assign a score based on whether it's in VA or MD.
+    Eventually, I'll get this down to a city or zip code level with other
+    parameters.
+    """
+    city_state = dic['info']['city_state']
+    if 'VA' in city_state.upper():
         state_score = 3.5
     else:
         state_score = 0
-    score_dict.update({'state_score': state_score})
+    house_sc['state_score'] = state_score
 
 
-def sum_scores(house_score_dict):
+def sum_scores(house_sc):
     total = 0
-    for k, v in house_score_dict.items():
+    item_list = [x for x in house_sc.keys() if x != 'MLS Number']
+    for k, v in house_sc.items():
         try:
             total += v
         except TypeError:
@@ -159,14 +126,25 @@ def sum_scores(house_score_dict):
 def main():
     my_scorecard = get_scorecard()
 
-    # All files
-    all_houses = score_multiple_house_files(Code.LISTINGS_GLOB, my_scorecard)
+    house_list = []
+    house_scorecard_list = []
+    for house_file in glob.glob(Code.LISTINGS_GLOB):
+        house_dict = json_handling.read_dicts_from_json(house_file)[0]
+        house_scorecard = score_house_dict(house_dict, my_scorecard)
+
+        url = house_dict['_metadata']['URL']
+        addr = house_dict['info']['full_address']
+        total_score = sum_scores(house_scorecard)
+        house_list.append((addr, total_score, url))
+        house_scorecard_list.append(house_scorecard)
+    write_scorecards_to_file(house_scorecard_list)
 
     # Output as dataframe/CSV
-    all_scores = (pd.DataFrame(all_houses, columns=['address', 'score', 'URL'])
+    all_scores = (pd.DataFrame(house_list, columns=['address', 'score', 'URL'])
                   .sort_values('score', ascending=False))
     outfile = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'all_scores.csv')
     all_scores.to_csv(outfile)
+    return
 
 
 def sample():
@@ -174,12 +152,16 @@ def sample():
     sample_fname = '6551_GRANGE_LN_302.json'
     sample_path = os.path.join(Code.LISTINGS_DIR, sample_fname)
     house = json_handling.read_dicts_from_json(sample_path)[0]
-    df_house = json_handling.dict_to_dataframe(house)
-    house_scorecard = score_a_house(df_house, my_scorecard)
+
+    house_scorecard = score_house_dict(house, my_scorecard)
     house_scorecard['TOTAL_SCORE'] = sum_scores(house_scorecard)
+
     write_scorecards_to_file(house_scorecard)
+    df = pd.DataFrame.from_dict(house_scorecard, orient='index').T
+    df.set_index('MLS Number', inplace=True)
+    print(df)
 
 
 if __name__ == '__main__':
-    # main()
-    sample()
+    main()
+    # sample()

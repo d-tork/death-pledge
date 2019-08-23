@@ -97,7 +97,7 @@ def get_url_list():
     """Get list of URLs to scrape from google sheets."""
     my_creds = get_creds()
     df_raw = get_url_dataframe(my_creds)
-    return process_url_list(df_raw)[-5:]
+    return process_url_list(df_raw)
 
 
 if __name__ == '__main__':

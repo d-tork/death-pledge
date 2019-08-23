@@ -207,15 +207,15 @@ def continuous_score(value, min_value, max_value, weight,
 def all_continuous_scoring(dic, house_sc):
     price = dic['_info']['list_price']
     house_sc['price_score'] = continuous_score(
-        price, 300e3, 500e3, ascending=False, norm_by=4) * 3
+        price, 300e3, 500e3, weight=3, ascending=False, norm_by=4)
 
     commute_time = dic['quickstats']['commute_transit_mins']
     house_sc['commute_score'] = continuous_score(
-        commute_time, 10, 105, ascending=False, norm_by=4, zero_pt=.47) * 3
+        commute_time, 10, 105, weight=3, ascending=False, norm_by=4, zero_pt=.47)
 
     metro_walk = dic['quickstats']['metro_walk_mins']
     house_sc['metro_walk_score'] = continuous_score(
-        metro_walk, 0, 120, ascending=False, norm_by=4, zero_pt=.75) * 3
+        metro_walk, 0, 120, weight=3, ascending=False, norm_by=4, zero_pt=.75)
 
 
 def sum_scores(house_sc):

@@ -54,6 +54,9 @@ def add_citymapper_commute(dic, force=False):
 
     Sleeps because of the API limits.
     """
+    # Ensure 'local travel' already exists
+    dic['local travel'] = dic.setdefault('local travel', {})
+
     key_name = 'Work commute (Citymapper)'
     if key_name not in dic['local travel']:
         force = True
@@ -71,7 +74,7 @@ def add_citymapper_commute(dic, force=False):
             cmtime = 'Unavailable'
         finally:
             update_house_dict(dic, ('local travel', key_name), str(cmtime))
-            print('\tSleeping for 90 seconds')
+            print('\tSleeping for 90 seconds') # TODO: WHY does it wait first??
             sleep(90)
     else:
         print('\tCitymapper commute time already exists. Use force=True to override.')
@@ -145,10 +148,6 @@ def single(filename):
     house = json_handling.read_dicts_from_json(filepath)[0]
 
     # Add modifying functions here:
-    try:
-        rename_key(house, 'info', '_info', 1)
-    except KeyError:
-        print("Outer key 'info' not found.")
     add_full_addr(house)
     add_coords(house)
     add_citymapper_commute(house)
@@ -165,7 +164,8 @@ def main():
     for f in glob.glob(Code.LISTINGS_GLOB):
         try:  # TODO: temporary for unsupervised run!
             single(f)
-        except:
+        except Exception as e:
+            print('some error occurred: {}'.format(e))
             continue
 
 
@@ -194,5 +194,5 @@ if __name__ == '__main__':
         '6614_CUSTER_ST.json',
         '6921_MARY_CAROLINE_CIR_L.json',
     ]
-    # main()
-    single('4304_34TH_ST_S_B2.json')
+    main()
+    # single('4304_34TH_ST_S_B2.json')

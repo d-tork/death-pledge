@@ -85,7 +85,10 @@ def get_walking_info(startcoords, endcoords):
     r_dict = response.json()
     distance = r_dict['resourceSets'][0]['resources'][0]['travelDistance']
     duration = r_dict['resourceSets'][0]['resources'][0]['travelDuration']
-    return distance, str(dt.timedelta(seconds=duration))
+    # pretty print
+    distance = '{:.2} miles'.format(distance)
+    duration = '{} walking'.format(str(dt.timedelta(seconds=duration)))
+    return distance, duration
 
 
 def find_nearest_metro(startcoords):
@@ -155,7 +158,7 @@ def get_driving_info(startcoords, endcoords, dayofweek=None, hrmin=None):
     duration = r_dict['resourceSets'][0]['resources'][0]['travelDuration']
     # pretty print
     distance = '{:.2} miles'.format(distance)
-    duration = '{} walking'.format(str(dt.timedelta(seconds=duration)))
+    duration = str(dt.timedelta(seconds=duration))
     return distance, duration
 
 

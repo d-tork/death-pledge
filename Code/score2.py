@@ -8,12 +8,11 @@ import os
 import glob
 import datetime as dt
 import Code
-from Code import json_handling
-
-SCORECARD_PATH = os.path.join(Code.PROJ_PATH, 'Data', 'scorecard.json')
+from Code import json_handling, support, modify
 
 
-def get_scorecard(filepath=SCORECARD_PATH):
+
+def get_scorecard(filepath=Code.SCORECARD_PATH):
     """Create scorecard dictionary from JSON file."""
     with open(filepath, 'r') as f:
         scores = json.loads(f.read())

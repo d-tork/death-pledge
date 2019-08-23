@@ -1,8 +1,9 @@
 import os
 import glob
 from time import sleep
+import Code
+from Code import json_handling, support
 from Code.api_calls import bing, citymapper, keys
-from Code import json_handling, LISTINGS_GLOB
 from Code.support import BadResponse
 
 
@@ -99,9 +100,24 @@ def add_frequent_driving(dic, favorites_dic):
         try:
             distance, duration = bing.get_driving_info(house_coords, place_coords, day, starttime)
         except BadResponse:
-            station_list = ('Unavailable', 'Unavailable')
+            distance, duration = ('Unavailable', 'Unavailable')
         finally:
             update_dict(dic, ('keys.bingMapsKey', place), (distance, duration))
+
+
+def travel_quick_stats(dic):
+    """Convert some Local Travel numbers for easier scoring."""
+    # Grab top metro station's time
+    metro = dic['Local Travel'].get('Nearby Metro on foot')  # returns list of multiple [station, (dist, time)]
+    metro_mins = support.str_time_to_min(metro[0][1][1])  # subscripting: first station > values tuple > time
+
+    # Grab bing commute time
+    commute = dic['Local Travel'].get('Work commute (Bing)')
+    commute_mins = support.str_time_to_min(commute)
+
+    # Add to new dict
+    update_dict(dic, ('quickstats', 'metro_walk_mins'), metro_mins)
+    update_dict(dic, ('quickstats', 'commute_transit_mins'), commute_mins)
 
 
 def sample():
@@ -113,7 +129,7 @@ def sample():
 
 
 def main():
-    for f in glob.glob(LISTINGS_GLOB):
+    for f in glob.glob(Code.LISTINGS_GLOB):
         house = json_handling.read_dicts_from_json(f)[0]
         print(os.path.basename(f))
 
@@ -130,7 +146,7 @@ def main():
 
 
 def citymapper_only():
-    for f in glob.glob(LISTINGS_GLOB):
+    for f in glob.glob(Code.LISTINGS_GLOB):
         house = json_handling.read_dicts_from_json(f)[0]
         print(os.path.basename(f))
         add_citymapper_commute(house)

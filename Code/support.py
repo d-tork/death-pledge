@@ -55,6 +55,16 @@ def get_commute_datetime(mode, dayofweek=1, hrmin='06:30'):
         return work_datetime.strftime('%m/%d/%Y %H:%M:%S')
 
 
+def str_time_to_min(s):
+    """Converts a HH:MM:SS string to decimal minutes."""
+    try:
+        dur = dt.datetime.strptime(s, '%H:%M:%S')
+    except (TypeError, ValueError):
+        return None
+    delta = dt.timedelta(hours=dur.hour, minutes=dur.minute, seconds=dur.second)
+    return delta.total_seconds()/60
+
+
 def clean_columns(df, rename_dict):
     df.rename(columns=rename_dict, inplace=True)
     # TODO: reorder columns

@@ -41,9 +41,9 @@ def add_citymapper_commute(dic, force=False):
     Sleeps because of the API limits.
     """
     key_name = 'Work commute (Citymapper)'
-    if key_name not in dic['Local Travel']:
+    if key_name not in dic['keys.bingMapsKey']:
         force = True
-    elif dic['Local Travel'][key_name] == 'Unavailable':
+    elif dic['keys.bingMapsKey'][key_name] == 'Unavailable':
         force = True
     else:  # It's in the dict as a real value, defer to force parameter
         pass
@@ -56,7 +56,7 @@ def add_citymapper_commute(dic, force=False):
             print(e)
             cmtime = 'Unavailable'
         finally:
-            update_dict(dic, ('Local Travel', key_name), str(cmtime))
+            update_dict(dic, ('keys.bingMapsKey', key_name), str(cmtime))
             print('\tSleeping for 90 seconds')
             sleep(90)
     else:
@@ -73,8 +73,8 @@ def add_bing_commute(dic):
         print(e)
         bingtime = 'Unavailable'
     finally:
-        dic['Local Travel']['Work commute (Bing)'] = str(bingtime)
-        update_dict(dic, ('Local Travel', 'Work commute (Bing)'), str(bingtime))
+        dic['keys.bingMapsKey']['Work commute (Bing)'] = str(bingtime)
+        update_dict(dic, ('keys.bingMapsKey', 'Work commute (Bing)'), str(bingtime))
 
 
 def add_nearest_metro(dic):
@@ -85,8 +85,8 @@ def add_nearest_metro(dic):
     except BadResponse:
         station_list = ['Unavailable']
     finally:
-        dic['Local Travel']['Nearby Metro on foot'] = station_list
-        update_dict(dic, ('Local Travel', 'Nearby Metro on foot'), station_list)
+        dic['keys.bingMapsKey']['Nearby Metro'] = station_list
+        update_dict(dic, ('keys.bingMapsKey', 'Nearby Metro'), station_list)
 
 
 def add_frequent_driving(dic, favorites_dic):
@@ -101,7 +101,7 @@ def add_frequent_driving(dic, favorites_dic):
         except BadResponse:
             station_list = ('Unavailable', 'Unavailable')
         finally:
-            update_dict(dic, ('Local Travel', place), (distance, duration))
+            update_dict(dic, ('keys.bingMapsKey', place), (distance, duration))
 
 
 def sample():

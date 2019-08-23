@@ -170,7 +170,7 @@ def get_cards(soup, dic):
                 discard = ['Which']
                 if any(x in card_title for x in discard):
                     continue
-                card_title = card_title.strip()
+                card_title = card_title.strip().lower()
 
                 dic[card_title] = dic.setdefault(card_title, {})  # ensure it exists
                 card_attrib_list = i.find_all('div', class_='col-12')

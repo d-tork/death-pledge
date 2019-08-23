@@ -5,9 +5,6 @@ import datetime as dt
 from Code.api_calls import keys
 from Code import support
 
-# Constants
-BING_MAPS_KEY = keys.bingMapsKey
-
 
 def get_coords(address, zip_code=None):
     """Geocode a mailing address"""
@@ -19,7 +16,7 @@ def get_coords(address, zip_code=None):
         'addressLine': address,
         'inclnb': '1',
         'maxResults': '1',
-        'key': BING_MAPS_KEY,
+        'key': keys.bingMapsKey,
         'userLocation': '38.8447476,-77.0519393'  # a general location so it prioritizes results
     }
     url_args = {k: v for k, v in url_dict.items() if v is not None}
@@ -52,7 +49,7 @@ def get_bing_commute_time(startcoords, endcoords):
         'timeType': 'Arrival',
         'dateTime': support.get_commute_datetime('bing'),
         'distanceUnit': 'mi',
-        'key': BING_MAPS_KEY
+        'key': keys.bingMapsKey
     }
     url_args = {k: v for k, v in url_dict.items() if v is not None}
     response = requests.get(baseurl, params=url_args)
@@ -81,7 +78,7 @@ def get_walking_info(startcoords, endcoords):
         'wp.1': support.str_coords(endcoords),
         'optimize': 'time',
         'distanceUnit': 'mi',
-        'key': BING_MAPS_KEY
+        'key': keys.bingMapsKey
     }
     url_args = {k: v for k, v in url_dict.items() if v is not None}
     response = requests.get(baseurl, params=url_args)
@@ -106,7 +103,7 @@ def find_nearest_metro(startcoords):
         'query': 'metro station',
         'userLocation': support.str_coords(startcoords),
         'maxResults': 3,
-        'key': BING_MAPS_KEY
+        'key': keys.bingMapsKey
     }
     url_args = {k: v for k, v in url_dict.items() if v is not None}
     response = requests.get(BASEURL, params=url_args)
@@ -145,7 +142,7 @@ def get_driving_info(startcoords, endcoords, dayofweek=None, hrmin=None):
         'distanceUnit': 'mi',
         'optimize': 'timeWithTraffic',
         'datetime': support.get_commute_datetime('bing', *commute_datetime_args),
-        'key': BING_MAPS_KEY
+        'key': keys.bingMapsKey
         }
     url_args = {k: v for k, v in url_dict.items() if v is not None}
     response = requests.get(baseurl, params=url_args)

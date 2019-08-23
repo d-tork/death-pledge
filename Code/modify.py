@@ -87,8 +87,7 @@ def add_bing_commute(dic):
         print(e)
         bingtime = 'Unavailable'
     finally:
-        dic['keys.bingMapsKey']['Work commute (Bing)'] = str(bingtime)
-        update_house_dict(dic, ('keys.bingMapsKey', 'Work commute (Bing)'), str(bingtime))
+        update_house_dict(dic, ('local travel', 'Work commute (Bing)'), str(bingtime))
 
 
 def add_nearest_metro(dic):
@@ -99,8 +98,7 @@ def add_nearest_metro(dic):
     except BadResponse:
         station_list = ['Unavailable']
     finally:
-        dic['keys.bingMapsKey']['Nearby Metro'] = station_list
-        update_house_dict(dic, ('keys.bingMapsKey', 'Nearby Metro'), station_list)
+        update_house_dict(dic, ('local travel', 'Nearby Metro'), station_list)
 
 
 def add_frequent_driving(dic, favorites_dic):
@@ -115,7 +113,7 @@ def add_frequent_driving(dic, favorites_dic):
         except BadResponse:
             distance, duration = ('Unavailable', 'Unavailable')
         finally:
-            update_house_dict(dic, ('keys.bingMapsKey', place), (distance, duration))
+            update_house_dict(dic, ('local travel', place), (distance, duration))
 
 
 def travel_quick_stats(dic):

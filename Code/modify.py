@@ -6,28 +6,33 @@ from Code import json_handling, LISTINGS_GLOB
 from Code.support import BadResponse
 
 
+def update_dict(dic, keys_tuple, value):
+    """Safely add or update any value in house dict.
+
+    Args:
+        dic (dict): house dictionary
+        keys_tuple (tuple): a tuple of (category, field)
+        value (str, int, float, iterable): whatever's being stored
+
+    """
+    # Check if outer key (category) exists; if not, create it
+    dic.setdefault(keys_tuple[0], {})
+    # Update with new {field: value}
+    dic[keys_tuple[0]].update({keys_tuple[1]: round(value, 1)})
+
+
 def add_full_addr(dic):
     """Combine address and city_state into full address"""
     full_addr = ' '.join([dic['info']['address'], dic['info']['city_state']])
-    dic['info']['full_address'] = full_addr
+    update_dict(dic, ('info', 'full_address'), full_addr)
 
 
 def add_coords(dic):
     """Add geocoords to house dictionary"""
     # Grab coordinates from Bing
-    try:
-        'full_address' in dic['info']
-    except KeyError:
-        add_full_addr(dic)
-    finally:
-        addr = dic['info']['full_address']
+    addr = dic['info']['full_address']
     coords = bing.get_coords(addr, zip_code=addr[-5:])
-
-    # Add to dictionary
-    dic['_metadata'] = dic.get('_metadata', {})
-    dic['_metadata'].update({'geocoords': coords})
-    # Ensure other dictionaries exist
-    dic['Local Travel'] = dic.get('Local Travel', {})
+    update_dict(dic, ('_metadata', 'geocoords'), coords)
 
 
 def add_citymapper_commute(dic, force=False):
@@ -51,7 +56,7 @@ def add_citymapper_commute(dic, force=False):
             print(e)
             cmtime = 'Unavailable'
         finally:
-            dic['Local Travel'][key_name] = str(cmtime)
+            update_dict(dic, ('Local Travel', key_name), str(cmtime))
             print('\tSleeping for 90 seconds')
             sleep(90)
     else:
@@ -69,6 +74,7 @@ def add_bing_commute(dic):
         bingtime = 'Unavailable'
     finally:
         dic['Local Travel']['Work commute (Bing)'] = str(bingtime)
+        update_dict(dic, ('Local Travel', 'Work commute (Bing)'), str(bingtime))
 
 
 def add_nearest_metro(dic):
@@ -80,6 +86,7 @@ def add_nearest_metro(dic):
         station_list = ['Unavailable']
     finally:
         dic['Local Travel']['Nearby Metro on foot'] = station_list
+        update_dict(dic, ('Local Travel', 'Nearby Metro on foot'), station_list)
 
 
 def add_frequent_driving(dic, favorites_dic):
@@ -94,7 +101,7 @@ def add_frequent_driving(dic, favorites_dic):
         except BadResponse:
             station_list = ('Unavailable', 'Unavailable')
         finally:
-            dic['Local Travel'][place] = (distance, duration)
+            update_dict(dic, ('Local Travel', place), (distance, duration))
 
 
 def sample():
@@ -107,8 +114,6 @@ def sample():
 
 def main():
     for f in glob.glob(LISTINGS_GLOB):
-    # for basename in file_list:
-        # f = os.path.join('..', 'Data', 'Processed', 'saved_listings', basename)
         house = json_handling.read_dicts_from_json(f)[0]
         print(os.path.basename(f))
 

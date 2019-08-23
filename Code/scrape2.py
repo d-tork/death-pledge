@@ -111,8 +111,6 @@ def get_price_info(soup, dic):
     price = box.h2.text
     dic['info'].update({'list_price': price})
 
-    # TODO: get days on site
-
     try:
         badge = box.p
         if 'sold' in badge.text.lower():

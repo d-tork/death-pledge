@@ -8,8 +8,7 @@ import os
 import glob
 import datetime as dt
 import Code
-from Code import json_handling, support, modify
-
+from Code import json_handling, modify
 
 
 def get_scorecard(filepath=Code.SCORECARD_PATH):
@@ -76,7 +75,7 @@ def find_closest_key(val, dic):
 
 def score_house_dict(dic, scorecard):
     """Evaluates a house dictionary against scorecard."""
-    house_sc = {'address': dic['info']['full_address'],
+    house_sc = {'address': dic['_info']['full_address'],
                 'MLS Number': str(dic['basic_info']['MLS Number'])}
     print(house_sc['address'])
     for k1, v1 in dic.items():
@@ -88,6 +87,7 @@ def score_house_dict(dic, scorecard):
     # Insert additional special scoring functions here
     score_state(dic, house_sc)
     score_nearest_metro(dic, house_sc)
+    all_continuous_scoring(dic, house_sc)
     return house_sc
 
 
@@ -97,7 +97,7 @@ def write_scorecards_to_file(cards):
         cards = [cards]
     json_output_file = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'scorecards.json')
     with open(json_output_file, 'w') as f:
-        f.write(json.dumps(cards, indent=4, sorted=True))
+        f.write(json.dumps(cards, indent=4, sort_keys=True))
     print('Scorecards written to {}'.format(json_output_file))
 
 
@@ -106,7 +106,7 @@ def score_state(dic, house_sc):
     Eventually, I'll get this down to a city or zip code level with other
     parameters.
     """
-    city_state = dic['info']['city_state']
+    city_state = dic['_info']['city_state']
     if 'VA' in city_state.upper():
         state_score = 3.5
     else:
@@ -122,7 +122,7 @@ def score_nearest_metro(dic, house_sc):
     secs = delta.total_seconds()
 
     # Derived from SO 17118350 and 43095739
-    sec_array = np.arange(120, 1, -10)*60
+    sec_array = np.arange(120, 1, -10) * 60
     score = sec_array.size - np.searchsorted(sec_array[::-1], secs, side='right')
     # Subtract 8 so that the commute times longer than 40 min give it a negative score
     score = float(score) - 6
@@ -131,7 +131,8 @@ def score_nearest_metro(dic, house_sc):
     house_sc['metro_walk_score'] = score
 
 
-def continuous_score(value, min_value, max_value, ascending=True, norm_by=None, zero_pt=0):
+def continuous_score(value, min_value, max_value, weight,
+                     ascending=True, norm_by=None, zero_pt=0):
     """Score a value based on a min/max range.
 
     The scale that determines these scores is arbitrary, and shifts depending on A) the range
@@ -152,6 +153,7 @@ def continuous_score(value, min_value, max_value, ascending=True, norm_by=None, 
         value (num): number to be scored
         min_value (num): bottom of range of potential/expected values in dataset
         max_value (num): top of range of potential/expected values in dataset
+        weight (int or float): weighting factor
         ascending (bool): whether to look left-to-right or right-to-left, default True
             Use false when a lower value is scored higher (i.e. price)
         norm_by (int): scale by which to normalize the scores (i.e. 4, 10, 100)
@@ -198,8 +200,22 @@ def continuous_score(value, min_value, max_value, ascending=True, norm_by=None, 
 
     # multiply it by (x/50) to normalize on a 0-10 scale (or whatever scale specified)
     if norm_by:
-        score = score * (norm_by / num) - (zero_pt * norm_by)
+        score = score * (norm_by / num) - (zero_pt * norm_by) * weight
     return score.round(1)
+
+
+def all_continuous_scoring(dic, house_sc):
+    price = dic['_info']['list_price']
+    house_sc['price_score'] = continuous_score(
+        price, 300e3, 500e3, ascending=False, norm_by=4) * 3
+
+    commute_time = dic['quickstats']['commute_transit_mins']
+    house_sc['commute_score'] = continuous_score(
+        commute_time, 10, 105, ascending=False, norm_by=4, zero_pt=.47) * 3
+
+    metro_walk = dic['quickstats']['metro_walk_mins']
+    house_sc['metro_walk_score'] = continuous_score(
+        metro_walk, 0, 120, ascending=False, norm_by=4, zero_pt=.75) * 3
 
 
 def sum_scores(house_sc):
@@ -227,7 +243,7 @@ def main():
         house_scorecard['TOTAL_SCORE'] = total_score
 
         url = house_dict['_metadata']['URL']
-        addr = house_dict['info']['full_address']
+        addr = house_dict['_info']['full_address']
         house_list.append((addr, total_score, url))
     write_scorecards_to_file(house_scorecard_list)
 

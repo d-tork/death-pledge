@@ -19,19 +19,32 @@ def update_house_dict(dic, keys_tuple, value):
     # Check if outer key (category) exists; if not, create it
     dic.setdefault(keys_tuple[0], {})
     # Update with new {field: value}
-    dic[keys_tuple[0]].update({keys_tuple[1]: round(value, 1)})
+    dic[keys_tuple[0]].update({keys_tuple[1]: value})
+
+
+def rename_key(dic, old, new, level):
+    if level == 1:
+        dic[new] = dic.pop(old)
+    elif level == 2:
+        for k, v in dic.items():
+            try:
+                v[new] = v.pop(old)
+            except KeyError:
+                continue
+    else:
+        raise ValueError("Not a valid level in the dictionary.")
 
 
 def add_full_addr(dic):
     """Combine address and city_state into full address"""
-    full_addr = ' '.join([dic['info']['address'], dic['info']['city_state']])
-    update_house_dict(dic, ('info', 'full_address'), full_addr)
+    full_addr = ' '.join([dic['_info']['address'], dic['_info']['city_state']])
+    update_house_dict(dic, ('_info', 'full_address'), full_addr)
 
 
 def add_coords(dic):
     """Add geocoords to house dictionary"""
     # Grab coordinates from Bing
-    addr = dic['info']['full_address']
+    addr = dic['_info']['full_address']
     coords = bing.get_coords(addr, zip_code=addr[-5:])
     update_house_dict(dic, ('_metadata', 'geocoords'), coords)
 
@@ -128,21 +141,28 @@ def sample():
     _ = json_handling.add_dict_to_json(sample_house)
 
 
+def single(filename):
+    print(filename)
+    filepath = os.path.join(Code.LISTINGS_DIR, filename)
+    house = json_handling.read_dicts_from_json(filepath)[0]
+
+    # Add modifying functions here:
+    rename_key(house, 'info', '_info', 1)
+    add_full_addr(house)
+    add_coords(house)
+    # add_citymapper_commute(house)
+    add_bing_commute(house)
+    add_nearest_metro(house)
+    add_frequent_driving(house, keys.favorites_driving)
+    travel_quick_stats(house)
+
+    # Write back out
+    _ = json_handling.add_dict_to_json(house)
+
+
 def main():
     for f in glob.glob(Code.LISTINGS_GLOB):
-        house = json_handling.read_dicts_from_json(f)[0]
-        print(os.path.basename(f))
-
-        # Add modifying functions here:
-        add_full_addr(house)
-        add_coords(house)
-        # add_citymapper_commute(house)
-        add_bing_commute(house)
-        add_nearest_metro(house)
-        add_frequent_driving(house, keys.favorites_driving)
-
-        # Write back out
-        _ = json_handling.add_dict_to_json(house)
+        single(f)
 
 
 def citymapper_only():
@@ -170,4 +190,5 @@ if __name__ == '__main__':
         '6614_CUSTER_ST.json',
         '6921_MARY_CAROLINE_CIR_L.json',
     ]
-    main()
+    # main()
+    single('4304_34TH_ST_S_B2.json')

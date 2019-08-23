@@ -12,10 +12,10 @@ def main():
 
 
 def single_sample():
-    url_list = [keys.sample_url3]
+    url_list = [keys.sample_url4]
     scrape2.scrape_from_url_list(url_list)
 
 
 if __name__ == '__main__':
-    main()
-    # single_sample()
+    # main()
+    single_sample()

@@ -22,13 +22,13 @@ def write_dicts_to_json(dict_list, filepath):
     """
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
     with open(filepath, 'w') as f:
-        f.write(json.dumps(dict_list, indent=4, sorted=True))
+        f.write(json.dumps(dict_list, indent=4, sort_keys=True))
     print('Listing data written to {}'.format(os.path.basename(filepath)))
 
 
 def create_filename_from_dict(dic):
     """Generate a JSON filename from address in dict."""
-    addr = dic['info']['address']
+    addr = dic['_info']['address']
     clean_name = slugify(addr).replace('-', '_').upper()
     return '{}.json'.format(clean_name)
 

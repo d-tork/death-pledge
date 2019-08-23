@@ -62,7 +62,7 @@ def sign_into_website(driver):
 
 def get_soup_for_url(url, driver, click_wait_time=3.1415):
     """Get BeautifulSoup object for single URL"""
-    url_suffix = url.rfind('/')+3
+    url_suffix = url.rfind('/') + 3
     print('URL: {}'.format(url[url_suffix:]))
     driver.get(url)
 
@@ -91,13 +91,13 @@ def get_main_box(soup, dic):
     vitals = main_box.h3.string.split(' - ')
 
     # Add to dictionary
-    dic['info'] = {'badge': badge,
-                   'address': address,
-                   'city_state': citystate,
-                   'full_address': ' '.join([address, citystate]),
-                   'beds': vitals[0],
-                   'baths': vitals[1],
-                   'sqft': vitals[2]}
+    dic['_info'] = {'badge': badge,
+                    'address': address,
+                    'city_state': citystate,
+                    'full_address': ' '.join([address, citystate]),
+                    'beds': vitals[0],
+                    'baths': vitals[1],
+                    'sqft': vitals[2]}
 
     for i in [address, citystate, vitals, badge]:
         print('\t{}'.format(i))
@@ -109,14 +109,14 @@ def get_price_info(soup, dic):
     result = soup.find_all('div', attrs={'class': 'col-4 col-sm-4 col-md-5 text-right'})
     box = result[0]
     price = box.h2.text
-    dic['info'].update({'list_price': price})
+    dic['_info'].update({'list_price': price})
 
     try:
         badge = box.p
         if 'sold' in badge.text.lower():
             date_sold = badge.text.split(': ')[-1]
             list_price = box.small.text.split()[-1]
-            dic['info'].update({'sold': date_sold,
+            dic['_info'].update({'sold': date_sold,
                                 'sale_price': price,
                                 'list_price': list_price})
     except AttributeError:
@@ -170,7 +170,7 @@ def get_cards(soup, dic):
                 discard = ['Which']
                 if any(x in card_title for x in discard):
                     continue
-                card_title = card_title.strip().lower()
+                card_title = card_title.lower().strip()
 
                 dic[card_title] = dic.setdefault(card_title, {})  # ensure it exists
                 card_attrib_list = i.find_all('div', class_='col-12')
@@ -209,7 +209,7 @@ def scrape_from_url_list(url_list):
         sign_into_website(wd)
         for url in url_list:
             random.seed()
-            wait_time = random.random()*7
+            wait_time = random.random() * 7
             click_wait = 2 + random.random()
 
             # Check if URL is still valid
@@ -243,4 +243,3 @@ def scrape_from_url_list(url_list):
 if __name__ == '__main__':
     sample_url_list = [keys.sample_url, keys.sample_url2, keys.sample_url3]
     scrape_from_url_list(sample_url_list)
-

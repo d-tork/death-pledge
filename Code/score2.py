@@ -97,7 +97,7 @@ def write_scorecards_to_file(cards):
         cards = [cards]
     json_output_file = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'scorecards.json')
     with open(json_output_file, 'w') as f:
-        f.write(json.dumps(cards, indent=4))
+        f.write(json.dumps(cards, indent=4, sorted=True))
     print('Scorecards written to {}'.format(json_output_file))
 
 
@@ -129,6 +129,77 @@ def score_nearest_metro(dic, house_sc):
     # Add weighting (because a close metro is muy importante
     score *= 4
     house_sc['metro_walk_score'] = score
+
+
+def continuous_score(value, min_value, max_value, ascending=True, norm_by=None, zero_pt=0):
+    """Score a value based on a min/max range.
+
+    The scale that determines these scores is arbitrary, and shifts depending on A) the range
+    of possible values specified, B) how or if it is normalized, and C) whether or not a zero
+    point is set and what it is set to. Therefore the relationship between the scores for
+    various values is _relative_, and can be adjusted later by multiplying it by a weighting
+    factor.
+
+    My usual weighting scale is between 1 and 3.5 (1 and 3 really, with an extra .5 for values
+    that are f***ing outstanding). But if this function returns scores that are all less than
+    1, a more appropriate weighting can be applied.
+
+    Finding a good zero point percentage is as easy as
+        x = (zerovalue - min) / (max - min)  # for ascending, setting from left
+        x = 1 - (zerovalue - min) / (max - min)  # for descending, setting from right
+
+    Args:
+        value (num): number to be scored
+        min_value (num): bottom of range of potential/expected values in dataset
+        max_value (num): top of range of potential/expected values in dataset
+        ascending (bool): whether to look left-to-right or right-to-left, default True
+            Use false when a lower value is scored higher (i.e. price)
+        norm_by (int): scale by which to normalize the scores (i.e. 4, 10, 100)
+        zero_pt (float): if norm_by, percentage at which to set the zero
+            Anything left of the zero point (asc) or right of it (desc) becomes negative and
+            detracts from a score, rather than just being a lower score.
+
+    Examples:
+        For scoring the listing price, where lower prices are better, and I reasonably
+        expect all my prices to be within 275k and 550k:
+        >>> import numpy as np
+        >>> prices = np.array([350e3, 400e3, 450e3, 500e3])
+        >>> continuous_score(prices, 275e3, 550e3, ascending=False, norm_by=10)
+        array([7.2, 5.4, 3.6, 1.8])
+
+        Set the zero point at 50% so that the upper half of the price scale becomes
+        negative:
+        >>>continuous_score(prices, 275e3, 550e3, ascending=False, norm_by=10, zero_pt=.5)
+        array([ 2.2,  0.4, -1.4, -3.2])
+
+        An ascending example, as with the number of bedrooms. Zero point set to
+        illustrate that 2 beds is expected, more is increasingly better, but 1 is
+        unacceptable and should subtract from the overall score so as to disqualify it.
+        >>> beds = np.array([1, 2, 3, 4, 5])
+        >>> continuous_score(beds, 1, 5, ascending=True, norm_by=4, zero_pt=.2)
+        array([-0.8,  0. ,  0.8,  1.6,  2.4])
+
+    Returns:
+        int64 or array of int64
+            the scores of the value(s) passed
+
+    """
+    spread = (max_value - min_value)
+    if spread < 50:
+        num = spread + 1
+    else:
+        num = 50
+    a = np.linspace(min_value, max_value, num=num)
+
+    if ascending:
+        score = np.searchsorted(a, value, side='left')
+    else:
+        score = np.searchsorted(-a[::-1], -value, side='right')
+
+    # multiply it by (x/50) to normalize on a 0-10 scale (or whatever scale specified)
+    if norm_by:
+        score = score * (norm_by / num) - (zero_pt * norm_by)
+    return score.round(1)
 
 
 def sum_scores(house_sc):

@@ -7,7 +7,7 @@ from Code.api_calls import bing, citymapper, keys
 from Code.support import BadResponse
 
 
-def update_dict(dic, keys_tuple, value):
+def update_house_dict(dic, keys_tuple, value):
     """Safely add or update any value in house dict.
 
     Args:
@@ -25,7 +25,7 @@ def update_dict(dic, keys_tuple, value):
 def add_full_addr(dic):
     """Combine address and city_state into full address"""
     full_addr = ' '.join([dic['info']['address'], dic['info']['city_state']])
-    update_dict(dic, ('info', 'full_address'), full_addr)
+    update_house_dict(dic, ('info', 'full_address'), full_addr)
 
 
 def add_coords(dic):
@@ -33,7 +33,7 @@ def add_coords(dic):
     # Grab coordinates from Bing
     addr = dic['info']['full_address']
     coords = bing.get_coords(addr, zip_code=addr[-5:])
-    update_dict(dic, ('_metadata', 'geocoords'), coords)
+    update_house_dict(dic, ('_metadata', 'geocoords'), coords)
 
 
 def add_citymapper_commute(dic, force=False):
@@ -57,7 +57,7 @@ def add_citymapper_commute(dic, force=False):
             print(e)
             cmtime = 'Unavailable'
         finally:
-            update_dict(dic, ('keys.bingMapsKey', key_name), str(cmtime))
+            update_house_dict(dic, ('keys.bingMapsKey', key_name), str(cmtime))
             print('\tSleeping for 90 seconds')
             sleep(90)
     else:
@@ -75,7 +75,7 @@ def add_bing_commute(dic):
         bingtime = 'Unavailable'
     finally:
         dic['keys.bingMapsKey']['Work commute (Bing)'] = str(bingtime)
-        update_dict(dic, ('keys.bingMapsKey', 'Work commute (Bing)'), str(bingtime))
+        update_house_dict(dic, ('keys.bingMapsKey', 'Work commute (Bing)'), str(bingtime))
 
 
 def add_nearest_metro(dic):
@@ -87,7 +87,7 @@ def add_nearest_metro(dic):
         station_list = ['Unavailable']
     finally:
         dic['keys.bingMapsKey']['Nearby Metro'] = station_list
-        update_dict(dic, ('keys.bingMapsKey', 'Nearby Metro'), station_list)
+        update_house_dict(dic, ('keys.bingMapsKey', 'Nearby Metro'), station_list)
 
 
 def add_frequent_driving(dic, favorites_dic):
@@ -102,7 +102,7 @@ def add_frequent_driving(dic, favorites_dic):
         except BadResponse:
             distance, duration = ('Unavailable', 'Unavailable')
         finally:
-            update_dict(dic, ('keys.bingMapsKey', place), (distance, duration))
+            update_house_dict(dic, ('keys.bingMapsKey', place), (distance, duration))
 
 
 def travel_quick_stats(dic):
@@ -116,8 +116,8 @@ def travel_quick_stats(dic):
     commute_mins = support.str_time_to_min(commute)
 
     # Add to new dict
-    update_dict(dic, ('quickstats', 'metro_walk_mins'), metro_mins)
-    update_dict(dic, ('quickstats', 'commute_transit_mins'), commute_mins)
+    update_house_dict(dic, ('quickstats', 'metro_walk_mins'), metro_mins)
+    update_house_dict(dic, ('quickstats', 'commute_transit_mins'), commute_mins)
 
 
 def sample():

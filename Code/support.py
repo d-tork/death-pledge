@@ -58,7 +58,7 @@ def get_commute_datetime(mode, dayofweek=1, hrmin='06:30'):
 def str_time_to_min(s):
     """Converts a HH:MM:SS string to decimal minutes."""
     try:
-        dur = dt.datetime.strptime(s, '%H:%M:%S')
+        dur = dt.datetime.strptime(s.split()[0], '%H:%M:%S')
     except (TypeError, ValueError):
         return None
     delta = dt.timedelta(hours=dur.hour, minutes=dur.minute, seconds=dur.second)

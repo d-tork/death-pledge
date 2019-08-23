@@ -55,9 +55,9 @@ def add_citymapper_commute(dic, force=False):
     Sleeps because of the API limits.
     """
     key_name = 'Work commute (Citymapper)'
-    if key_name not in dic['keys.bingMapsKey']:
+    if key_name not in dic['local travel']:
         force = True
-    elif dic['keys.bingMapsKey'][key_name] == 'Unavailable':
+    elif dic['local travel'][key_name] == 'Unavailable':
         force = True
     else:  # It's in the dict as a real value, defer to force parameter
         pass
@@ -70,7 +70,7 @@ def add_citymapper_commute(dic, force=False):
             print(e)
             cmtime = 'Unavailable'
         finally:
-            update_house_dict(dic, ('keys.bingMapsKey', key_name), str(cmtime))
+            update_house_dict(dic, ('local travel', key_name), str(cmtime))
             print('\tSleeping for 90 seconds')
             sleep(90)
     else:
@@ -119,16 +119,16 @@ def add_frequent_driving(dic, favorites_dic):
 def travel_quick_stats(dic):
     """Convert some Local Travel numbers for easier scoring."""
     # Grab top metro station's time
-    metro = dic['Local Travel'].get('Nearby Metro on foot')  # returns list of multiple [station, (dist, time)]
+    metro = dic['local travel'].get('Nearby Metro')  # returns list of multiple [station, (dist, time)]
     metro_mins = support.str_time_to_min(metro[0][1][1])  # subscripting: first station > values tuple > time
 
     # Grab bing commute time
-    commute = dic['Local Travel'].get('Work commute (Bing)')
+    commute = dic['local travel'].get('Work commute (Bing)')
     commute_mins = support.str_time_to_min(commute)
 
     # Add to new dict
-    update_house_dict(dic, ('quickstats', 'metro_walk_mins'), metro_mins)
-    update_house_dict(dic, ('quickstats', 'commute_transit_mins'), commute_mins)
+    update_house_dict(dic, ('quickstats', 'metro_walk_mins'), round(metro_mins, 1))
+    update_house_dict(dic, ('quickstats', 'commute_transit_mins'), round(commute_mins, 1))
 
 
 def sample():
@@ -145,10 +145,13 @@ def single(filename):
     house = json_handling.read_dicts_from_json(filepath)[0]
 
     # Add modifying functions here:
-    rename_key(house, 'info', '_info', 1)
+    try:
+        rename_key(house, 'info', '_info', 1)
+    except KeyError:
+        print("Outer key 'info' not found.")
     add_full_addr(house)
     add_coords(house)
-    # add_citymapper_commute(house)
+    add_citymapper_commute(house)
     add_bing_commute(house)
     add_nearest_metro(house)
     add_frequent_driving(house, keys.favorites_driving)
@@ -160,7 +163,10 @@ def single(filename):
 
 def main():
     for f in glob.glob(Code.LISTINGS_GLOB):
-        single(f)
+        try:  # TODO: temporary for unsupervised run!
+            single(f)
+        except:
+            continue
 
 
 def citymapper_only():

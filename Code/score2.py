@@ -117,7 +117,7 @@ def score_state(dic, house_sc):
 def score_nearest_metro(dic, house_sc):
     """Evaluate distance to nearest metro"""
     metro = dic['local travel']['Nearby Metro'][0]  # returns a list of [station, (dist, time)]
-    dur = dt.datetime.strptime(metro[1][1], '%H:%M:%S')
+    dur = dt.datetime.strptime(metro[1][1].split()[0], '%H:%M:%S')
     delta = dt.timedelta(hours=dur.hour, minutes=dur.minute, seconds=dur.second)
     secs = delta.total_seconds()
 

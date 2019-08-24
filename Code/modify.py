@@ -50,12 +50,14 @@ def remove_key(dic, key, level):
     if level == 1:
         try:
             dic.pop(key)
+            print('\tRemoved: {} from level {}'.format(key, level))
         except KeyError:
             pass
     elif level == 2:
         for k, v in dic.items():
             try:
                 v.pop(key)
+                print("\tRemoved: '{}' from level {}".format(key, level))
             except KeyError:
                 continue
     else:
@@ -207,6 +209,7 @@ def modify_one(house, loop=False):
     travel_quick_stats(house)
 
     remove_key(house, 'basic_info', level=1)
+    remove_key(house, 'open houses', level=1)
 
     # Write back out
     _ = json_handling.add_dict_to_json(house)
@@ -217,7 +220,7 @@ def modify_all():
         print(f)
         filepath = os.path.join(Code.LISTINGS_DIR, f)
         house = json_handling.read_dicts_from_json(filepath)[0]
-        modify_one(house)
+        modify_one(house, loop=True)
 
 
 if __name__ == '__main__':

@@ -235,29 +235,34 @@ def sum_scores(house_sc):
     return round(total, 1)
 
 
+def score_dict_list_to_dataframe(sc_list):
+    """Given a list of JSON dicts, convert them all to a single df."""
+    full_df = pd.DataFrame()
+    for sc in sc_list:
+        df = pd.DataFrame.from_dict(sc, orient='index').T.set_index('MLS Number')
+        full_df = pd.concat([full_df, df], axis=0, sort=False)
+    # Rename column headers from their MLS number to their order in the file
+    return full_df
+
+
+def single(house, scorecard):
+    """Score a single house"""
+    house_sc = score_house_dict(house, scorecard)
+    total_score = sum_scores(house_sc)
+    house_sc['TOTAL_SCORE'] = total_score
+    return house_sc
+
+
 def main():
     my_scorecard = get_scorecard()
 
-    house_list = []  # for simple CSV output
-    house_scorecard_list = []  # for JSON output
+    house_sc_list = []  # for JSON output
     for house_file in glob.glob(Code.LISTINGS_GLOB):
         house_dict = json_handling.read_dicts_from_json(house_file)[0]
-        house_scorecard = score_house_dict(house_dict, my_scorecard)
-        house_scorecard_list.append(house_scorecard)
+        house_sc = single(house_dict, my_scorecard)
+        house_sc_list.append(house_sc)
 
-        total_score = sum_scores(house_scorecard)
-        house_scorecard['TOTAL_SCORE'] = total_score
-
-        url = house_dict['_metadata']['URL']
-        addr = house_dict['_info']['full_address']
-        house_list.append((addr, total_score, url))
-    write_scorecards_to_file(house_scorecard_list)
-
-    # Output as dataframe/CSV
-    all_scores = (pd.DataFrame(house_list, columns=['address', 'score', 'URL'])
-                  .sort_values('score', ascending=False))
-    outfile = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'all_scores.csv')
-    all_scores.to_csv(outfile)
+    write_scorecards_to_file(house_sc_list)
     return
 
 
@@ -265,17 +270,14 @@ def sample():
     my_scorecard = get_scorecard()
     sample_fname = '6551_GRANGE_LN_302.json'
     sample_path = os.path.join(Code.LISTINGS_DIR, sample_fname)
-    house = json_handling.read_dicts_from_json(sample_path)[0]
+    sample_house = json_handling.read_dicts_from_json(sample_path)[0]
 
-    house_scorecard = score_house_dict(house, my_scorecard)
-    house_scorecard['TOTAL_SCORE'] = sum_scores(house_scorecard)
+    sample_house_sc = single(sample_house, my_scorecard)
 
-    write_scorecards_to_file(house_scorecard)
-    df = pd.DataFrame.from_dict(house_scorecard, orient='index').T
-    df.set_index('MLS Number', inplace=True)
-    print(df)
-
+    write_scorecards_to_file(sample_house_sc)
+    sample_df = score_dict_list_to_dataframe([sample_house_sc])
+    print(sample_df)
 
 if __name__ == '__main__':
-    main()
-    # sample()
+    # main()
+    sample()

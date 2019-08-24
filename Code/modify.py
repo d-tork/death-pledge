@@ -139,6 +139,26 @@ def travel_quick_stats(dic):
     update_house_dict(dic, ('quickstats', 'commute_transit_mins'), round(commute_mins, 1))
 
 
+def split_comma_delimited_fields(dic):
+    """Create lists out of comma-separated values in certain fields."""
+    field_list = [
+        'HOA/Condo/Coop Amenities',
+        'HOA/Condo/Coop Fee Includes',
+        'Appliances',
+        'Interior Features',
+        'Room List',
+        'Exterior Features',
+        'Garage Features',
+        'Lot Features'
+    ]
+    for k1, v1 in dic.items():
+        for field in [x for x in field_list if x in v1]:
+            val_list = v1[field].split(', ')
+            # Replace 'and' in final element
+            val_list[-1] = val_list[-1].replace('and ', '')
+            v1[field] = val_list
+
+
 def single(filename):
     print(filename)
     filepath = os.path.join(Code.LISTINGS_DIR, filename)
@@ -146,6 +166,7 @@ def single(filename):
 
     # Add modifying functions here:
     add_coords(house)
+    split_comma_delimited_fields(house)
     try:
         add_citymapper_commute(house)
     except citymapper.Sleepytime:
@@ -167,6 +188,7 @@ def main():
 
         # Add modifying functions here:
         add_coords(house)
+        split_comma_delimited_fields(house)
         try:
             add_citymapper_commute(house)
         except citymapper.Sleepytime:
@@ -177,15 +199,6 @@ def main():
         add_frequent_driving(house, keys.favorites_driving)
         travel_quick_stats(house)
 
-        # Write back out
-        _ = json_handling.add_dict_to_json(house)
-
-
-def citymapper_only():
-    for f in glob.glob(Code.LISTINGS_GLOB):
-        house = json_handling.read_dicts_from_json(f)[0]
-        print(os.path.basename(f))
-        add_citymapper_commute(house)
         # Write back out
         _ = json_handling.add_dict_to_json(house)
 

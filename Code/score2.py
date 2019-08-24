@@ -217,6 +217,9 @@ def all_continuous_scoring(dic, house_sc):
     house_sc['metro_walk_score'] = continuous_score(
         metro_walk, 0, 120, weight=3, ascending=False, norm_by=4, zero_pt=.75)
 
+    # Add tax amount
+    # Add year built
+
 
 def sum_scores(house_sc):
     total = 0

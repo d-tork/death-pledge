@@ -1,5 +1,6 @@
 """Run actions on housing search spreadsheet."""
 
+import os
 import Code
 from Code.api_calls import google_sheets, keys
 from Code import scrape2, score2, modify, json_handling
@@ -21,8 +22,15 @@ def main():
 
 
 def single_sample():
-    url_list = [keys.sample_url4]
-    scrape2.scrape_from_url_list(url_list)
+    sample_url_list = [keys.sample_url3]
+    temp_glob = os.path.join(Code.LISTINGS_DIR, '6551_GRANGE_LN_302.json')
+    # json_handling.clear_all_json_histories(temp_glob)
+    # scrape2.scrape_from_url_list(sample_url_list)
+    sample_house = json_handling.read_dicts_from_json(temp_glob)[0]
+    modify.modify_one(sample_house)
+    my_sc = score2.get_scorecard()
+    sample_sc = score2.score_single(sample_house, my_sc)
+    score2.write_scorecards_to_file(sample_sc)
 
 
 if __name__ == '__main__':

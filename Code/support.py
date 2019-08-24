@@ -30,6 +30,7 @@ def initialize_listing_dict():
         'utilities',
         'listing history',
         'local travel',
+        'comments',
         'quickstats'
     ]
     dic = {}

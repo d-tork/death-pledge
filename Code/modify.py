@@ -217,14 +217,14 @@ def modify_one(house, loop=False):
 
 def modify_all():
     for f in glob.glob(Code.LISTINGS_GLOB):
-        print(f)
+        print(os.path.basename(f))
         filepath = os.path.join(Code.LISTINGS_DIR, f)
         house = json_handling.read_dicts_from_json(filepath)[0]
         modify_one(house, loop=True)
 
 
 if __name__ == '__main__':
-    # modify_all()
+    modify_all()
     sample_path = os.path.join(Code.LISTINGS_DIR, '4304_34TH_ST_S_B2.json')
     sample_house = json_handling.read_dicts_from_json(sample_path)[0]
-    modify_one(sample_house)
+    # modify_one(sample_house)

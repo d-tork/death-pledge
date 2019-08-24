@@ -160,19 +160,19 @@ def continuous_score(value, min_value, max_value, weight,
         expect all my prices to be within 275k and 550k:
         >>> import numpy as np
         >>> prices = np.array([350e3, 400e3, 450e3, 500e3])
-        >>> continuous_score(prices, 275e3, 550e3, ascending=False, norm_by=10)
+        >>> continuous_score(prices, 275e3, 550e3, weight=3, ascending=False, norm_by=10)
         array([7.2, 5.4, 3.6, 1.8])
 
         Set the zero point at 50% so that the upper half of the price scale becomes
         negative:
-        >>>continuous_score(prices, 275e3, 550e3, ascending=False, norm_by=10, zero_pt=.5)
-        array([ 2.2,  0.4, -1.4, -3.2])
+        >>> continuous_score(prices, 275e3, 550e3, weight=3, ascending=False, norm_by=10, zero_pt=.5)
+        array([ -7.8,  -9.6, -11.4, -13.2])
 
         An ascending example, as with the number of bedrooms. Zero point set to
         illustrate that 2 beds is expected, more is increasingly better, but 1 is
         unacceptable and should subtract from the overall score so as to disqualify it.
         >>> beds = np.array([1, 2, 3, 4, 5])
-        >>> continuous_score(beds, 1, 5, ascending=True, norm_by=4, zero_pt=.2)
+        >>> continuous_score(beds, 1, 5, weight=1, ascending=True, norm_by=4, zero_pt=.2)
         array([-0.8,  0. ,  0.8,  1.6,  2.4])
 
     Returns:
@@ -269,7 +269,7 @@ def score_all():
 
 def sample():
     my_scorecard = get_scorecard()
-    sample_fname = '6551_GRANGE_LN_302.json'
+    sample_fname = '4304_34TH_ST_S_B2.json'
     sample_path = os.path.join(Code.LISTINGS_DIR, sample_fname)
     sample_house = json_handling.read_dicts_from_json(sample_path)[0]
 

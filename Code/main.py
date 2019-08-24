@@ -14,7 +14,7 @@ from Code import scrape2, score2, modify
 def main():
     urls = google_sheets.get_url_list()
     scrape2.scrape_from_url_list(urls)
-    modify.main()
+    modify.modify_all()
     score2.main()
 
 

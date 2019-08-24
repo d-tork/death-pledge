@@ -1,3 +1,13 @@
+"""
+Module for modifying the contents of a house listing dictionary.
+
+Most often they come directly from scrape2.py, or are read in
+from a locally saved JSON file via functions in json_handling.py.
+
+The majority of these functions are dedicated to adding the values
+and attributes that come from external data sources, or else are
+transformations of existing attributes, post-scraping.
+"""
 import os
 import glob
 from time import sleep
@@ -29,6 +39,23 @@ def rename_key(dic, old, new, level):
         for k, v in dic.items():
             try:
                 v[new] = v.pop(old)
+            except KeyError:
+                continue
+    else:
+        raise ValueError("Not a valid level in the dictionary.")
+
+
+def remove_key(dic, key, level):
+    """Remove a key from the listing dict. Use sparingly."""
+    if level == 1:
+        try:
+            dic.pop(key)
+        except KeyError:
+            pass
+    elif level == 2:
+        for k, v in dic.items():
+            try:
+                v.pop(key)
             except KeyError:
                 continue
     else:
@@ -153,71 +180,48 @@ def split_comma_delimited_fields(dic):
     ]
     for k1, v1 in dic.items():
         for field in [x for x in field_list if x in v1]:
-            val_list = v1[field].split(', ')
+            try:
+                val_list = v1[field].split(', ')
+            except AttributeError:  # no longer a string
+                continue
             # Replace 'and' in final element
             val_list[-1] = val_list[-1].replace('and ', '')
             v1[field] = val_list
 
 
-def single(filename):
-    print(filename)
-    filepath = os.path.join(Code.LISTINGS_DIR, filename)
-    house = json_handling.read_dicts_from_json(filepath)[0]
-
+def modify_one(house, loop=False):
     # Add modifying functions here:
     add_coords(house)
     split_comma_delimited_fields(house)
     try:
         add_citymapper_commute(house)
     except citymapper.Sleepytime:
-        pass
+        if loop:
+            print('sleeping for 90 seconds.')
+            sleep(90)
+        else:
+            pass
     add_bing_commute(house)
     add_nearest_metro(house)
     add_frequent_driving(house, keys.favorites_driving)
     travel_quick_stats(house)
 
+    remove_key(house, 'basic_info', level=1)
+
     # Write back out
     _ = json_handling.add_dict_to_json(house)
 
 
-def main():
+def modify_all():
     for f in glob.glob(Code.LISTINGS_GLOB):
         print(f)
         filepath = os.path.join(Code.LISTINGS_DIR, f)
         house = json_handling.read_dicts_from_json(filepath)[0]
-
-        # Add modifying functions here:
-        add_coords(house)
-        split_comma_delimited_fields(house)
-        try:
-            add_citymapper_commute(house)
-        except citymapper.Sleepytime:
-            print('sleeping for 90 seconds.')
-            sleep(90)
-        add_bing_commute(house)
-        add_nearest_metro(house)
-        add_frequent_driving(house, keys.favorites_driving)
-        travel_quick_stats(house)
-
-        # Write back out
-        _ = json_handling.add_dict_to_json(house)
+        modify_one(house)
 
 
 if __name__ == '__main__':
-    # sample()
-    # citymapper_only()
-
-    file_list = [
-        '800_BRAEBURN_DR.json',
-        '4689_LAWTON_WAY_201.json',
-        '5074_DONOVAN_DR_104.json',
-        '5505_SEMINARY_RD_305N.json',
-        '5663_HARRINGTON_FALLS_LN_E.json',
-        '6172_MORNING_GLORY_RD.json',
-        '6325C_EAGLE_RIDGE_LN_31.json',
-        '6551_GRANGE_LN_302.json',
-        '6614_CUSTER_ST.json',
-        '6921_MARY_CAROLINE_CIR_L.json',
-    ]
-    # main()
-    single('4304_34TH_ST_S_B2.json')
+    # modify_all()
+    sample_path = os.path.join(Code.LISTINGS_DIR, '4304_34TH_ST_S_B2.json')
+    sample_house = json_handling.read_dicts_from_json(sample_path)[0]
+    modify_one(sample_house)

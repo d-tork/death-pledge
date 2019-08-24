@@ -21,6 +21,8 @@ def get_coords(address, zip_code=None):
     }
     url_args = {k: v for k, v in url_dict.items() if v is not None}
     response = requests.get(baseurl, params=url_args)
+    if response.status_code != 200:
+        raise support.BadResponse('Response code from bing not 200.')
 
     resp_dict = response.json()
     #coords = resp_dict['resourceSets'][0]['resources'][0]['point']['coordinates']  # Rooftop coordinates
@@ -54,13 +56,11 @@ def get_bing_commute_time(startcoords, endcoords):
     url_args = {k: v for k, v in url_dict.items() if v is not None}
     response = requests.get(baseurl, params=url_args)
     if response.status_code != 200:
-        print('Could not retrieve commute time for this address.')
-        raise support.BadResponse('Response code from citymapper not 200.')
+        raise support.BadResponse('Response code from bing not 200.')
     r_dict = response.json()
     try:
         travel_time = r_dict['resourceSets'][0]['resources'][0]['travelDuration']
     except KeyError:
-        print('Could not retrieve commute time for this address.')
         raise support.BadResponse('JSON response does not have travel_time_minutes key.')
     return dt.timedelta(seconds=travel_time)
 
@@ -83,6 +83,7 @@ def get_walking_info(startcoords, endcoords):
     url_args = {k: v for k, v in url_dict.items() if v is not None}
     response = requests.get(baseurl, params=url_args)
     r_dict = response.json()
+
     distance = r_dict['resourceSets'][0]['resources'][0]['travelDistance']
     duration = r_dict['resourceSets'][0]['resources'][0]['travelDuration']
     # pretty print
@@ -113,7 +114,7 @@ def find_nearest_metro(startcoords):
 
     if response.status_code != 200:
         print('Request for metro stations failed.')
-        raise support.BadResponse
+        raise support.BadResponse('Response code for metro stations not 200.')
 
     r_dict = response.json()
     metro_list = []

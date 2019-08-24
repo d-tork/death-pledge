@@ -40,13 +40,15 @@ def add_coords(dic, force=False):
     # Check for existing value
     coords = dic['_metadata'].setdefault('geocoords', None)
     if (coords is None) or force:
-        print('TESTING: getting coords')
         # Grab coordinates from Bing
         addr = dic['_info']['full_address']
-        coords = bing.get_coords(addr, zip_code=addr[-5:])
+        try:
+            coords = bing.get_coords(addr, zip_code=addr[-5:])
+        except BadResponse as e:
+            print('Could not retrieve geocoords for this address.')
+            print(e)
+            coords = None
         update_house_dict(dic, ('_metadata', 'geocoords'), coords)
-    else:
-        print('TESTING: *not* getting coords')
 
 
 def add_citymapper_commute(dic, force=False):
@@ -70,27 +72,23 @@ def add_citymapper_commute(dic, force=False):
         finally:
             update_house_dict(dic, ('local travel', key_name), str(cmtime))
             raise citymapper.Sleepytime
-    else:
-        print('\tCitymapper commute time already exists. Use force=True to override.')
-        return
 
 
 def add_bing_commute(dic, force=False):
     """Add the bing transit time to listing dict"""
+    key_name = 'Work commute (Bing)'
     # Check for existing value
-    bingtime = dic['local travel'].setdefault('Work commute (Bing)', None)
+    bingtime = dic['local travel'].setdefault(key_name, None)
     if (bingtime is None) or force:
-        print('TESTING: getting bing commute')
         house_coords = dic['_metadata']['geocoords']
         try:
             bingtime = bing.get_bing_commute_time(house_coords, keys.work_coords)
         except BadResponse as e:
+            print('Could not retrieve commute time for this address.')
             print(e)
-            bingtime = 'Unavailable'
+            bingtime = None
         finally:
-            update_house_dict(dic, ('local travel', 'Work commute (Bing)'), str(bingtime))
-    else:
-        print('TESTING: *not* getting bing commute')
+            update_house_dict(dic, ('local travel', key_name), str(bingtime))
 
 
 def add_nearest_metro(dic, force=False):
@@ -98,16 +96,14 @@ def add_nearest_metro(dic, force=False):
     # Check for existing value
     station_list = dic['local travel'].setdefault('Nearby Metro', None)
     if (station_list is None) or force:
-        print('TESTING: getting nearest metro')
         house_coords = dic['_metadata']['geocoords']
         try:
             station_list = bing.find_nearest_metro(house_coords)
-        except BadResponse:
+        except BadResponse as e:
+            print(e)
             station_list = None
         finally:
             update_house_dict(dic, ('local travel', 'Nearby Metro'), station_list)
-    else:
-        print('TESTING: *not* getting bing commute')
 
 
 def add_frequent_driving(dic, favorites_dic, force=False):
@@ -117,18 +113,15 @@ def add_frequent_driving(dic, favorites_dic, force=False):
         # Check for existing value
         place_coords = dic['local travel'].setdefault(place, None)
         if (place_coords is None) or force:
-            print('TESTING: getting {} coords'.format(place))
             place_coords = bing.get_coords(attribs['addr'])
             day = attribs.get('day', None)
             starttime = attribs.get('time', None)
             try:
                 distance, duration = bing.get_driving_info(house_coords, place_coords, day, starttime)
             except BadResponse:
-                distance, duration = ('Unavailable', 'Unavailable')
+                distance, duration = None
             finally:
                 update_house_dict(dic, ('local travel', place), (distance, duration))
-        else:
-            print('TESTING: *not* getting place coords')
 
 
 def travel_quick_stats(dic):

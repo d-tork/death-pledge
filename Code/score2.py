@@ -232,7 +232,7 @@ def sum_scores(house_sc):
             total += house_sc[k]
         except TypeError:
             continue
-    return total
+    return round(total, 1)
 
 
 def main():

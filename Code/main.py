@@ -3,6 +3,13 @@
 from Code.api_calls import google_sheets, keys
 from Code import scrape2, score2, modify
 
+# Scrape all URLs from google
+# Re-scrape all on-market JSONS
+# Supplement all
+# Score all
+# Pull from Google
+# Push all to Google
+
 
 def main():
     urls = google_sheets.get_url_list()

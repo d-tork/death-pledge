@@ -35,88 +35,100 @@ def rename_key(dic, old, new, level):
         raise ValueError("Not a valid level in the dictionary.")
 
 
-def add_full_addr(dic):
-    """Combine address and city_state into full address"""
-    full_addr = ' '.join([dic['_info']['address'], dic['_info']['city_state']])
-    update_house_dict(dic, ('_info', 'full_address'), full_addr)
-
-
-def add_coords(dic):
+def add_coords(dic, force=False):
     """Add geocoords to house dictionary"""
-    # Grab coordinates from Bing
-    addr = dic['_info']['full_address']
-    coords = bing.get_coords(addr, zip_code=addr[-5:])
-    update_house_dict(dic, ('_metadata', 'geocoords'), coords)
+    # Check for existing value
+    coords = dic['_metadata'].setdefault('geocoords', None)
+    if (coords is None) or force:
+        print('TESTING: getting coords')
+        # Grab coordinates from Bing
+        addr = dic['_info']['full_address']
+        coords = bing.get_coords(addr, zip_code=addr[-5:])
+        update_house_dict(dic, ('_metadata', 'geocoords'), coords)
+    else:
+        print('TESTING: *not* getting coords')
 
 
 def add_citymapper_commute(dic, force=False):
     """Add the citymapper transit time for work to the listing dict.
 
-    Sleeps because of the API limits.
+    Raises a sleep reminder exception because of the API limits. When
+    using this function on a single listing, catch the exception but
+    let it pass. However, when running in a loop of multiple listings,
+    catch it and let the program sleep for 90 seconds.
     """
-    # Ensure 'local travel' already exists
-    dic['local travel'] = dic.setdefault('local travel', {})
-
     key_name = 'Work commute (Citymapper)'
-    if key_name not in dic['local travel']:
-        force = True
-    elif dic['local travel'][key_name] == 'Unavailable':
-        force = True
-    else:  # It's in the dict as a real value, defer to force parameter
-        pass
-
-    if force:
+    # Check for existing value
+    cmtime = dic['local travel'].setdefault(key_name, None)
+    if (cmtime is None) or force:
         house_coords = dic['_metadata']['geocoords']
         try:
             cmtime = citymapper.get_citymapper_commute_time(house_coords, keys.work_coords)
         except BadResponse as e:
             print(e)
-            cmtime = 'Unavailable'
+            cmtime = None
         finally:
             update_house_dict(dic, ('local travel', key_name), str(cmtime))
-            print('\tSleeping for 90 seconds') # TODO: WHY does it wait first??
-            sleep(90)
+            raise citymapper.Sleepytime
     else:
         print('\tCitymapper commute time already exists. Use force=True to override.')
         return
 
 
-def add_bing_commute(dic):
+def add_bing_commute(dic, force=False):
     """Add the bing transit time to listing dict"""
-    house_coords = dic['_metadata']['geocoords']
-    try:
-        bingtime = bing.get_bing_commute_time(house_coords, keys.work_coords)
-    except BadResponse as e:
-        print(e)
-        bingtime = 'Unavailable'
-    finally:
-        update_house_dict(dic, ('local travel', 'Work commute (Bing)'), str(bingtime))
+    # Check for existing value
+    bingtime = dic['local travel'].setdefault('Work commute (Bing)', None)
+    if (bingtime is None) or force:
+        print('TESTING: getting bing commute')
+        house_coords = dic['_metadata']['geocoords']
+        try:
+            bingtime = bing.get_bing_commute_time(house_coords, keys.work_coords)
+        except BadResponse as e:
+            print(e)
+            bingtime = 'Unavailable'
+        finally:
+            update_house_dict(dic, ('local travel', 'Work commute (Bing)'), str(bingtime))
+    else:
+        print('TESTING: *not* getting bing commute')
 
 
-def add_nearest_metro(dic):
+def add_nearest_metro(dic, force=False):
     """Add the three nearest metro stations in distance order"""
-    house_coords = dic['_metadata']['geocoords']
-    try:
-        station_list = bing.find_nearest_metro(house_coords)
-    except BadResponse:
-        station_list = ['Unavailable']
-    finally:
-        update_house_dict(dic, ('local travel', 'Nearby Metro'), station_list)
+    # Check for existing value
+    station_list = dic['local travel'].setdefault('Nearby Metro', None)
+    if (station_list is None) or force:
+        print('TESTING: getting nearest metro')
+        house_coords = dic['_metadata']['geocoords']
+        try:
+            station_list = bing.find_nearest_metro(house_coords)
+        except BadResponse:
+            station_list = None
+        finally:
+            update_house_dict(dic, ('local travel', 'Nearby Metro'), station_list)
+    else:
+        print('TESTING: *not* getting bing commute')
 
 
-def add_frequent_driving(dic, favorites_dic):
+def add_frequent_driving(dic, favorites_dic, force=False):
     """Add the road distance and drive time to frequented places by car."""
     house_coords = dic['_metadata']['geocoords']
     for place, attribs in favorites_dic.items():
-        place_coords = bing.get_coords(attribs['addr'])
-        day = attribs.get('day', None)
-        starttime = attribs.get('time', None)
-        try:
-            distance, duration = bing.get_driving_info(house_coords, place_coords, day, starttime)
-        except BadResponse:
-            distance, duration = ('Unavailable', 'Unavailable')
-        finally:
-            update_house_dict(dic, ('local travel', place), (distance, duration))
+        # Check for existing value
+        place_coords = dic['local travel'].setdefault(place, None)
+        if (place_coords is None) or force:
+            print('TESTING: getting {} coords'.format(place))
+            place_coords = bing.get_coords(attribs['addr'])
+            day = attribs.get('day', None)
+            starttime = attribs.get('time', None)
+            try:
+                distance, duration = bing.get_driving_info(house_coords, place_coords, day, starttime)
+            except BadResponse:
+                distance, duration = ('Unavailable', 'Unavailable')
+            finally:
+                update_house_dict(dic, ('local travel', place), (distance, duration))
+        else:
+            print('TESTING: *not* getting place coords')
 
 
 def travel_quick_stats(dic):
@@ -134,23 +146,17 @@ def travel_quick_stats(dic):
     update_house_dict(dic, ('quickstats', 'commute_transit_mins'), round(commute_mins, 1))
 
 
-def sample():
-    sample_file = os.path.join('..', 'Data', 'Processed', 'saved_listings',
-                               '13406_PISCATAWAY_DR.json')
-    sample_house = json_handling.read_dicts_from_json(sample_file)[0]
-    add_citymapper_commute(sample_house)
-    _ = json_handling.add_dict_to_json(sample_house)
-
-
 def single(filename):
     print(filename)
     filepath = os.path.join(Code.LISTINGS_DIR, filename)
     house = json_handling.read_dicts_from_json(filepath)[0]
 
     # Add modifying functions here:
-    add_full_addr(house)
     add_coords(house)
-    add_citymapper_commute(house)
+    try:
+        add_citymapper_commute(house)
+    except citymapper.Sleepytime:
+        pass
     add_bing_commute(house)
     add_nearest_metro(house)
     add_frequent_driving(house, keys.favorites_driving)
@@ -162,11 +168,24 @@ def single(filename):
 
 def main():
     for f in glob.glob(Code.LISTINGS_GLOB):
-        try:  # TODO: temporary for unsupervised run!
-            single(f)
-        except Exception as e:
-            print('some error occurred: {}'.format(e))
-            continue
+        print(f)
+        filepath = os.path.join(Code.LISTINGS_DIR, f)
+        house = json_handling.read_dicts_from_json(filepath)[0]
+
+        # Add modifying functions here:
+        add_coords(house)
+        try:
+            add_citymapper_commute(house)
+        except citymapper.Sleepytime:
+            print('sleeping for 90 seconds.')
+            sleep(90)
+        add_bing_commute(house)
+        add_nearest_metro(house)
+        add_frequent_driving(house, keys.favorites_driving)
+        travel_quick_stats(house)
+
+        # Write back out
+        _ = json_handling.add_dict_to_json(house)
 
 
 def citymapper_only():
@@ -194,5 +213,5 @@ if __name__ == '__main__':
         '6614_CUSTER_ST.json',
         '6921_MARY_CAROLINE_CIR_L.json',
     ]
-    main()
-    # single('4304_34TH_ST_S_B2.json')
+    # main()
+    single('4304_34TH_ST_S_B2.json')

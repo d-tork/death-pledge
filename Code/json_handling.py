@@ -70,11 +70,11 @@ def add_dict_to_json(dic):
 
 
 def check_if_changed(dic1, dic2):
-    exclude_category = ['_metadata']
+    exclude_fields = ['changes', 'modify_time', 'scraped_time']
     change_set = set()
-    for category in [x for x in dic1.keys() if x not in exclude_category]:
-        category_dict = dic1[category]
-        for field, value in category_dict.items():
+    for category, category_dict in dic1.items():
+        for field in [x for x in category_dict if x not in exclude_fields]:
+            value = category_dict[field]
             try:
                 if value != dic2[category][field]:
                     change_set.add('Changed: {}'.format(field))

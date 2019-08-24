@@ -20,7 +20,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 import Code
-from Code import support, clean, modify, json_handling
+from Code import support, clean, json_handling
 from Code.api_calls import keys
 
 
@@ -229,7 +229,6 @@ def scrape_from_url_list(url_list):
             # Clean and add a couple more fields
             clean.main(listing_dict)
             listing_dict['_metadata'].update({'URL': url})
-            modify.add_coords(listing_dict)
 
             # Merge with previous dict
             json_handling.check_and_merge_dicts(listing_dict)

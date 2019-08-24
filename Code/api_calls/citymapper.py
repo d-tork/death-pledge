@@ -2,9 +2,12 @@
 
 import requests
 import datetime as dt
-from time import sleep
 from Code.api_calls import keys
 from Code import support
+
+
+class Sleepytime(Exception):
+    pass
 
 
 def get_citymapper_commute_time(startcoords, endcoords):

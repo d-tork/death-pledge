@@ -18,6 +18,7 @@ from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 import Code
 from Code import support, clean, json_handling, modify
@@ -68,6 +69,13 @@ def get_soup_for_url(url, driver):
 
     if 'Listing unavailable.' in driver.page_source:
         raise ListingNotAvailable("Bad URL or listing no longer exists.")
+
+    try:
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, 'listing-detail'))
+        )
+    except TimeoutException:
+        raise TimeoutException('Listing page did not load.')
 
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     return soup
@@ -160,7 +168,7 @@ def get_cards(soup, dic):
         if card_head:
             card_title = card_head.string
             if card_title:
-                discard = ['Which']
+                discard = ['Which', 'Open Houses']
                 if any(x in card_title for x in discard):
                     continue
                 card_title = card_title.lower().strip()
@@ -217,6 +225,9 @@ def scrape_from_url_list(url_list):
             except ListingNotAvailable as e:
                 print('\t{}'.format(e))
                 continue
+            except TimeoutException as e:
+                print('\t{}'.format(e))
+                continue
             listing_dict = scrape_soup(soup)
 
             # Clean and add a couple more fields
@@ -234,5 +245,5 @@ def scrape_from_url_list(url_list):
 
 if __name__ == '__main__':
     sample_url_list = [keys.sample_url, keys.sample_url2, keys.sample_url3]
-    # sample_url_list = [keys.sample_url]
+    sample_url_list = [keys.sample_url4]
     scrape_from_url_list(sample_url_list)

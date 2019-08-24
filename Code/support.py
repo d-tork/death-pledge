@@ -9,6 +9,35 @@ class BadResponse(Exception):
     pass
 
 
+def initialize_listing_dict():
+    """Create an empty listing dict to provide the backbone.
+
+    The structure needed is the outer dicts (categories) comprised
+    of empty dictionaries to be filled with the fields and values.
+
+    Here you can specify the precise order of the dict keys, because
+    as of Python 3.7, insertion order in dicts is preserved.
+    """
+    cat_list = [
+        '_metadata',
+        '_info',
+        'basic info',
+        'property / unit information',
+        'building information',
+        'exterior information',
+        'association / location / schools',
+        'expenses / taxes',
+        'utilities',
+        'listing history',
+        'local travel',
+        'quickstats'
+    ]
+    dic = {}
+    for category in cat_list:
+        dic.setdefault(category, {})
+    return dic
+
+
 def str_coords(coords):
     str_list = [str(x) for x in coords]
     return ','.join(str_list)

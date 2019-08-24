@@ -76,7 +76,7 @@ def find_closest_key(val, dic):
 def score_house_dict(dic, scorecard):
     """Evaluates a house dictionary against scorecard."""
     house_sc = {'address': dic['_info']['full_address'],
-                'MLS Number': str(dic['basic_info']['MLS Number'])}
+                'MLS Number': str(dic['basic info']['MLS Number'])}
     print(house_sc['address'])
     for k1, v1 in dic.items():
         for field, house_val in v1.items():
@@ -97,7 +97,7 @@ def write_scorecards_to_file(cards):
         cards = [cards]
     json_output_file = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'scorecards.json')
     with open(json_output_file, 'w') as f:
-        f.write(json.dumps(cards, indent=4, sort_keys=True))
+        f.write(json.dumps(cards, indent=4))
     print('Scorecards written to {}'.format(json_output_file))
 
 

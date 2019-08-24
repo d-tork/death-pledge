@@ -20,7 +20,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 import Code
-from Code import support, clean, json_handling
+from Code import support, clean, json_handling, modify
 from Code.api_calls import keys
 
 
@@ -152,14 +152,12 @@ def get_cards(soup, dic):
     # Get list of card tags
     result = soup.find_all('div', attrs={'class': 'card'})
 
-    dic['basic_info'] = {}
-
     # First card, no title (basic info)
     tag_basic_info = result[0]
     basic_info_list = tag_basic_info.find_all('div', class_='col-12')
     for i in basic_info_list:
         attr_tup = tuple(i.text.split(u':\xa0 '))
-        dic['basic_info'].update(dict([attr_tup]))
+        dic['basic info'].update(dict([attr_tup]))
 
     # All good cards
     for i in result:
@@ -172,7 +170,8 @@ def get_cards(soup, dic):
                     continue
                 card_title = card_title.lower().strip()
 
-                dic[card_title] = dic.setdefault(card_title, {})  # ensure it exists
+                # Create the key, in case names change or it's new
+                dic.setdefault(card_title, {})
                 card_attrib_list = i.find_all('div', class_='col-12')
                 if card_attrib_list:
                     for field_attrib in scrape_normal_card(card_attrib_list):
@@ -189,10 +188,11 @@ def scrape_soup(soup):
     :returns dict
     """
     # Initialize dict with date record
-    listing_dict = {'_metadata': {'scraped_time': str(datetime.now())}}
+    listing_dict = support.initialize_listing_dict()
+    listing_dict['_metadata'].update({'scraped_time': str(datetime.now())})
 
     # Scrape three sections
-    sleep(1)
+    sleep(1)  # TODO: why is this needed? And why here??
     get_main_box(soup, listing_dict)
     get_price_info(soup, listing_dict)
     get_cards(soup, listing_dict)
@@ -241,4 +241,5 @@ def scrape_from_url_list(url_list):
 
 if __name__ == '__main__':
     sample_url_list = [keys.sample_url, keys.sample_url2, keys.sample_url3]
+    # sample_url_list = [keys.sample_url]
     scrape_from_url_list(sample_url_list)

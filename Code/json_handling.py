@@ -22,7 +22,7 @@ def write_dicts_to_json(dict_list, filepath):
     """
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
     with open(filepath, 'w') as f:
-        f.write(json.dumps(dict_list, indent=4, sort_keys=True))
+        f.write(json.dumps(dict_list, indent=4))
     print('Listing data written to {}'.format(os.path.basename(filepath)))
 
 
@@ -65,6 +65,10 @@ def add_dict_to_json(dic):
         all_scrapes.insert(0, dic)
         write_dicts_to_json(all_scrapes, outfilepath)
     else:
+        # TESTING: Replace the dict anyway because I'm reordering the keys
+        all_scrapes.pop(0)
+        all_scrapes.insert(0, dic)
+        write_dicts_to_json(all_scrapes, outfilepath)
         print('\tNo change in listing data.')
     return all_scrapes
 
@@ -154,7 +158,7 @@ def dict_to_dataframe(dic):
     df.index = pd.MultiIndex.from_tuples(df.index)
     df.index.rename(['category', 'field'], inplace=True)
     # Rename the columns to MLS numbers
-    df.columns = [df.loc[('basic_info', 'MLS Number'), 'values']]
+    df.columns = [df.loc[('basic info', 'MLS Number'), 'values']]
     return df
 
 

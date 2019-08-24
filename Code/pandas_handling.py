@@ -10,6 +10,11 @@ def merge_data_and_scores():
     sc_path = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'scorecards.json')
     scores = json_handling.read_dicts_from_json(sc_path)
     df_scores = score2.score_dict_list_to_dataframe(scores)
+
+    # Quick dump to file
+    raw_scores_path = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'raw_scores.csv')
+    df_scores.to_csv(raw_scores_path)
+
     # Create MultiIndex for scores
     iterables = [['scores'], list(df_scores.columns)]
     mux = pd.MultiIndex.from_product(iterables, names=['first', 'second'])
@@ -18,7 +23,8 @@ def merge_data_and_scores():
     df_data = json_handling.all_files_to_dataframe(Code.LISTINGS_GLOB).T
 
     # Merge on indices
-    merged = pd.merge(df_data, df_scores, left_index=True, right_index=True)
+    merged = pd.merge(df_data, df_scores[('scores', 'TOTAL_SCORE')],
+                      left_index=True, right_index=True)
     # Drop the top level of the column multiindex (Excel tables don't like it)
     merged = merged.droplevel(level=0, axis=1)
     # Set column headers

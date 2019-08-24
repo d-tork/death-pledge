@@ -41,7 +41,7 @@ def get_bing_commute_time(startcoords, endcoords):
         same as startcoords
     Returns
     -------
-    timedelta
+    str: time in HH:MM:SS
     """
     baseurl = r"http://dev.virtualearth.net/REST/V1/Routes/Transit"
 
@@ -62,7 +62,7 @@ def get_bing_commute_time(startcoords, endcoords):
         travel_time = r_dict['resourceSets'][0]['resources'][0]['travelDuration']
     except KeyError:
         raise support.BadResponse('JSON response does not have travel_time_minutes key.')
-    return dt.timedelta(seconds=travel_time)
+    return str(dt.timedelta(seconds=travel_time))
 
 
 def get_walking_info(startcoords, endcoords):

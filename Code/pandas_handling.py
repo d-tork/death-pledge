@@ -28,5 +28,6 @@ def merge_data_and_scores():
     outpath = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'master_list.csv')
     merged.to_csv(outpath)
 
+
 if __name__ == '__main__':
     merge_data_and_scores()

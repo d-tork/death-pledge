@@ -99,7 +99,7 @@ def add_citymapper_commute(dic, force=False):
             print(e)
             cmtime = None
         finally:
-            update_house_dict(dic, ('local travel', key_name), str(cmtime))
+            update_house_dict(dic, ('local travel', key_name), cmtime)
             raise citymapper.Sleepytime
 
 
@@ -117,7 +117,7 @@ def add_bing_commute(dic, force=False):
             print(e)
             bingtime = None
         finally:
-            update_house_dict(dic, ('local travel', key_name), str(bingtime))
+            update_house_dict(dic, ('local travel', key_name), bingtime)
 
 
 def add_nearest_metro(dic, force=False):

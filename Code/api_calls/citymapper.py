@@ -21,7 +21,7 @@ def get_citymapper_commute_time(startcoords, endcoords):
         same as startcoords
     Returns
     -------
-    timedelta
+    str: time in HH:MM:SS
     """
     baseurl = r'https://developer.citymapper.com/api/1/traveltime/'
     url_args = {
@@ -43,7 +43,7 @@ def get_citymapper_commute_time(startcoords, endcoords):
         print(e)
         print('Could not retrieve commute time for this address.')
         raise support.BadResponse('JSON response does not have travel_time_minutes key.')
-    return dt.timedelta(minutes=travel_time)
+    return str(dt.timedelta(minutes=travel_time))
 
 
 if __name__ == '__main__':

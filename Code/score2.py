@@ -49,7 +49,10 @@ def get_score_for_row(field_name, value, inner_score_dict):
     try:
         row_score = inner_score_dict[str(value)]  # exact match (strings, Yes/No, etc.)
     except KeyError:
-        row_score = find_closest_key(float(value), inner_score_dict)
+        try:
+            row_score = find_closest_key(float(value), inner_score_dict)
+        except ValueError:  # not an exact match, but still a string
+            row_score = 0
     finally:
         weight = inner_score_dict.get('_weight', 1)
         try:

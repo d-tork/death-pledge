@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime
 import os
 import glob
+import copy
 import Code
 from django.utils.text import slugify
 
@@ -153,8 +154,23 @@ def dict_to_dataframe(dic):
     reform = {(outerKey, innerKey): values for outerKey, innerDict in dic.items() for innerKey, values in
               innerDict.items()}
 
+    # Remove duplicate fields
+    reform2 = copy.deepcopy(reform)
+    for category, field in reform.keys():
+        i = 0
+        for keys in reform.keys():
+            if keys[1] == field:
+                i += 1
+            if i > 1:
+                try:
+                    del reform2[keys]
+                except KeyError:
+                    continue
+                finally:
+                    i = 0
+
     # Convert to dataframe, then MultiIndex from the tuple keys
-    df = pd.DataFrame.from_dict(reform, orient='index', columns=['values'])
+    df = pd.DataFrame.from_dict(reform2, orient='index', columns=['values'])
     df.index = pd.MultiIndex.from_tuples(df.index)
     df.index.rename(['category', 'field'], inplace=True)
     # Rename the columns to MLS numbers

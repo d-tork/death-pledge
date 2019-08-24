@@ -21,12 +21,64 @@ def merge_data_and_scores():
     merged = pd.merge(df_data, df_scores, left_index=True, right_index=True)
     # Drop the top level of the column multiindex (Excel tables don't like it)
     merged = merged.droplevel(level=0, axis=1)
+    # Set column headers
+    merged = clean_dataframe_columns(merged)
     # Name the index
     merged.index.name = 'MLS Number'
 
     # Write to file
     outpath = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'master_list.csv')
     merged.to_csv(outpath)
+
+
+def clean_dataframe_columns(df):
+    col_list = [
+        'TOTAL_SCORE',
+        'URL',
+        'address',
+        'badge',
+        'Status',
+        'list_price',
+        'sale_price',
+        'sold',
+        'sale_price_diff',
+        'sale_diff_pct',
+        'sqft',
+        'Price Per SQFT',
+        'beds',
+        'baths',
+        'Bathrooms Full',
+        'Work commute (Bing)',
+        'Work commute (Citymapper)',
+        'Year Built',
+        'Structure Type',
+        'Architectural Style',
+        'Unit Building Type',
+        'Appliances',
+        'Has Basement',
+        'Laundry Type',
+        'Condo/Coop Fee',
+        'HOA Fee',
+        'HOA Fee Freq',
+        'City/Town Tax',
+        'County Tax',
+        'Tax Annual Amount',
+        'Tax Assessed Value',
+        '# of Attached Carport Spaces',
+        '# of Attached Garage Spaces',
+        '# of Detached Garage Spaces',
+        'Assigned Spaces Count',
+        'Has Garage',
+        'Parking Features',
+        'Pool',
+        'modify_time',
+        'scraped_time',
+        'County',
+        'city_state',
+        'full_address',
+        'Inclusions',
+    ]
+    return df[col_list]
 
 
 if __name__ == '__main__':

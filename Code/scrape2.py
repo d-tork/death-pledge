@@ -21,7 +21,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 import Code
-from Code import support, clean, json_handling, modify
+from Code import support, clean, json_handling
 from Code.api_calls import keys
 
 
@@ -57,8 +57,9 @@ def sign_into_website(driver):
     try:
         element = WebDriverWait(driver, 60).until(
             EC.title_contains('My Matches'))
+        print('\tsigned in.')
     except TimeoutException:
-        print('Failed to login.')
+        print('\tfailed to sign in.')
 
 
 def get_soup_for_url(url, driver):
@@ -202,13 +203,19 @@ def scrape_soup(soup):
     return listing_dict
 
 
-def scrape_from_url_list(url_list):
+def scrape_from_url_list(url_list, quiet=True):
     """Given an array of URLs, use soup scraper to save JSONs of the listing data.
 
     Meant for use within a context manager for the webdriver.
     """
-    with webdriver.Firefox(executable_path=Code.GECKODRIVER_PATH) as wd:
+    options = Options()
+    if quiet:
+        options.headless = True
+
+    with webdriver.Firefox(options=options, executable_path=Code.GECKODRIVER_PATH) as wd:
+        print('Opening browser and signing in...')
         sign_into_website(wd)
+        print('Navigating to URLs...\n')
         for url in url_list:
             random.seed()
             wait_time = random.random() * 5

@@ -224,9 +224,9 @@ def all_continuous_scoring(dic, house_sc):
 def sum_scores(house_sc):
     total = 0
     item_list = [x for x in house_sc.keys() if x != 'MLS Number']
-    for k, v in house_sc.items():
+    for k in item_list:
         try:
-            total += v
+            total += house_sc[k]
         except TypeError:
             continue
     return total

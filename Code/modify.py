@@ -191,12 +191,22 @@ def split_comma_delimited_fields(dic):
             v1[field] = val_list
 
 
+def sale_price_diff(dic):
+    """Update sale price diff"""
+    list_price = dic['_info']['list_price']
+    sale_price = dic['_info']['sale_price']
+    diff = sale_price - list_price
+    dic['_info']['sale_price_diff'] = diff
+    dic['_info']['sale_diff_pct'] = '{:+.1%}'.format(diff / list_price)
+
+
 def modify_one(house, loop=False):
     # Add modifying functions here:
     add_coords(house)
     split_comma_delimited_fields(house)
     try:
-        add_citymapper_commute(house)
+        # add_citymapper_commute(house)
+        pass
     except citymapper.Sleepytime:
         if loop:
             print('sleeping for 90 seconds.')
@@ -207,6 +217,10 @@ def modify_one(house, loop=False):
     add_nearest_metro(house)
     add_frequent_driving(house, keys.favorites_driving)
     travel_quick_stats(house)
+    try:
+        sale_price_diff(house)
+    except KeyError:
+        pass
 
     remove_key(house, 'basic_info', level=1)
     remove_key(house, 'open houses', level=1)
@@ -226,5 +240,6 @@ def modify_all():
 if __name__ == '__main__':
     modify_all()
     sample_path = os.path.join(Code.LISTINGS_DIR, '4304_34TH_ST_S_B2.json')
+    sample_path = os.path.join(Code.LISTINGS_DIR, '10217_ROLLING_GREEN_WAY.json')
     sample_house = json_handling.read_dicts_from_json(sample_path)[0]
     # modify_one(sample_house)

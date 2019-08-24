@@ -120,9 +120,12 @@ def get_price_info(soup, dic):
         if 'sold' in badge.text.lower():
             date_sold = badge.text.split(': ')[-1]
             list_price = box.small.text.split()[-1]
+            diff = price - list_price
             dic['_info'].update({'sold': date_sold,
-                                'sale_price': price,
-                                'list_price': list_price})
+                                 'sale_price': price,
+                                 'list_price': list_price,
+                                 'sale_price_diff': diff,
+                                 'sale_diff_pct': '{:.1%}'.format(diff / list_price)})
     except AttributeError:
         # Most likely "Off Market"
         pass

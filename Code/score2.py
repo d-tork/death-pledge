@@ -133,11 +133,13 @@ def continuous_score(value, min_value, max_value, weight,
     of possible values specified, B) how or if it is normalized, and C) whether or not a zero
     point is set and what it is set to. Therefore the relationship between the scores for
     various values is _relative_, and can be adjusted later by multiplying it by a weighting
-    factor.
+    factor and/or changing the normalization.
 
-    My usual weighting scale is between 1 and 3.5 (1 and 3 really, with an extra .5 for values
-    that are f***ing outstanding). But if this function returns scores that are all less than
-    1, a more appropriate weighting can be applied.
+    If an attribute's scores are not influencing the total score in the way you'd like it to,
+    first normalize it by increasing norm_by. Traditionally, I scored attributes on a 0-3.5
+    scale, and when the total score was calculated they were multiplied by their weight
+    factor. But now, for the ultra-important attributes, I can score them on different scales
+    like 1-10 or 1-15, _then_ multiplied by their weight.
 
     Finding a good zero point percentage is as easy as
         x = (zerovalue - min) / (max - min)  # for ascending, setting from left
@@ -180,6 +182,9 @@ def continuous_score(value, min_value, max_value, weight,
             the scores of the value(s) passed
 
     """
+    if value is None:
+        raise ValueError('\tNo value passed to scoring function.')
+
     spread = (max_value - min_value)
     if spread < 50:
         num = spread + 1
@@ -194,25 +199,64 @@ def continuous_score(value, min_value, max_value, weight,
 
     # multiply it by (x/50) to normalize on a 0-10 scale (or whatever scale specified)
     if norm_by:
-        score = score * (norm_by / num) - (zero_pt * norm_by) * weight
+        score = (score * (norm_by / num) - (zero_pt * norm_by)) * weight
     return score.round(1)
 
 
 def all_continuous_scoring(dic, house_sc):
-    price = dic['_info']['list_price']
-    house_sc['price_score'] = continuous_score(
-        price, 300e3, 500e3, weight=3, ascending=False, norm_by=4)
+    """Stores and runs continuous scoring functions for each attribute.
 
-    commute_time = dic['quickstats']['commute_transit_mins']
-    house_sc['commute_score'] = continuous_score(
-        commute_time, 10, 105, weight=3, ascending=False, norm_by=4, zero_pt=.47)
+    Uses dict.get() to avoid KeyErrors if the field is not in the house dict.
+    If it's not, prints the error and moves on without scoring it.
+    """
+    price = dic['_info'].get('list_price')
+    try:
+        house_sc['price_score'] = continuous_score(
+            price, 275e3, 525e3, weight=3, ascending=False, norm_by=4)
+    except ValueError as e:
+        print(e)
 
-    metro_walk = dic['quickstats']['metro_walk_mins']
-    house_sc['metro_walk_score'] = continuous_score(
-        metro_walk, 0, 120, weight=3, ascending=False, norm_by=4, zero_pt=.75)
+    commute_time = dic['quickstats'].get('commute_transit_mins')
+    try:
+        house_sc['commute_score'] = continuous_score(
+            commute_time, 15, 120, weight=3, ascending=False, norm_by=4, zero_pt=.47)
+    except ValueError as e:
+        print(e)
 
-    # Add tax amount
-    # Add year built
+    metro_walk = dic['quickstats'].get('metro_walk_mins')
+    try:
+        house_sc['metro_walk_score'] = continuous_score(
+            metro_walk, 0, 120, weight=5, ascending=False, norm_by=10, zero_pt=.65)
+    except ValueError as e:
+        print(e)
+
+    tax_amt = dic['expenses/taxes'].get('Tax Annual Amount')
+    if (tax_amt == 0) | (tax_amt is None):
+        pass
+    else:
+        house_sc['tax_amount_score'] = continuous_score(
+            tax_amt, 100, 6500, weight=1, ascending=False, norm_by=4)
+
+    year = dic['basic info'].get('Year Built')
+    try:
+        house_sc['year_score'] = continuous_score(
+            year, 1900, 2020, weight=4, ascending=True, norm_by=4, zero_pt=.42)
+    except ValueError as e:
+        print(e)
+
+    sqft = dic['_info'].get('sqft')
+    try:
+        house_sc['sqft_score'] = continuous_score(
+            sqft, 900, 2000, weight=2, ascending=True, norm_by=4)
+    except ValueError as e:
+        print(e)
+
+    price_sqft = dic['basic info'].get('Price Per SQFT')
+    try:
+        house_sc['price_SQFT_score'] = continuous_score(
+            price_sqft, 110, 376, weight=2, ascending=False, norm_by=4)
+    except ValueError as e:
+        print(e)
 
 
 def sum_scores(house_sc):

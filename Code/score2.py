@@ -1,5 +1,10 @@
 """
 Rate the various attributes of a house based on provided criteria.
+
+Any field added to the house's scorecard dict should be in the form
+    'field_name_score'
+where all spaces are replaced with underscores and the whole name
+is lowercase. This aids with dataframe creation later.
 """
 import json
 import pandas as pd
@@ -8,7 +13,7 @@ import os
 import glob
 import datetime as dt
 import Code
-from Code import json_handling, modify
+from Code import json_handling
 
 
 def get_scorecard(filepath=Code.SCORECARD_PATH):
@@ -18,16 +23,11 @@ def get_scorecard(filepath=Code.SCORECARD_PATH):
     return scores
 
 
-def convert_bools(df):
-    """Convert yes/no to bool"""
-    return df.replace('Yes', True).replace('No', False)
-
-
 class FieldNotScored(Exception):
     pass
 
 
-def get_score_for_row(field_name, value, inner_score_dict):
+def get_score_for_item(field_name, value, inner_score_dict):
     """Score each row in a listing dataframe.
 
     The listing is a single-column dataframe where the index is a (category, field)
@@ -84,24 +84,15 @@ def score_house_dict(dic, scorecard):
     for k1, v1 in dic.items():
         for field, house_val in v1.items():
             if field in scorecard:
-                field_score = get_score_for_row(field, house_val, scorecard[field])
-                house_sc[field] = field_score
+                field_score = get_score_for_item(field, house_val, scorecard[field])
+                new_fieldname = '{}_score'.format(field.lower().replace(' ', '_'))
+                house_sc[new_fieldname] = field_score
 
     # Insert additional special scoring functions here
     score_state(dic, house_sc)
     score_nearest_metro(dic, house_sc)
     all_continuous_scoring(dic, house_sc)
     return house_sc
-
-
-def write_scorecards_to_file(cards):
-    """Dump scorecard(s) into single file."""
-    if isinstance(cards, dict):
-        cards = [cards]
-    json_output_file = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'scorecards.json')
-    with open(json_output_file, 'w') as f:
-        f.write(json.dumps(cards, indent=4))
-    print('Scorecards written to {}'.format(json_output_file))
 
 
 def score_state(dic, house_sc):
@@ -225,6 +216,7 @@ def all_continuous_scoring(dic, house_sc):
 
 
 def sum_scores(house_sc):
+    """Sum up all scores in the scorecard and write to scorecard."""
     total = 0
     item_list = [x for x in house_sc.keys() if x != 'MLS Number']
     for k in item_list:
@@ -232,7 +224,17 @@ def sum_scores(house_sc):
             total += house_sc[k]
         except TypeError:
             continue
-    return round(total, 1)
+    house_sc['TOTAL_SCORE'] = round(total, 1)
+
+
+def write_scorecards_to_file(cards):
+    """Dump scorecard(s) into single file."""
+    if isinstance(cards, dict):
+        cards = [cards]
+    json_output_file = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'scorecards.json')
+    with open(json_output_file, 'w') as f:
+        f.write(json.dumps(cards, indent=4))
+    print('Scorecards written to {}'.format(json_output_file))
 
 
 def score_dict_list_to_dataframe(sc_list):
@@ -245,21 +247,20 @@ def score_dict_list_to_dataframe(sc_list):
     return full_df
 
 
-def single(house, scorecard):
+def score_single(house, scorecard):
     """Score a single house"""
     house_sc = score_house_dict(house, scorecard)
-    total_score = sum_scores(house_sc)
-    house_sc['TOTAL_SCORE'] = total_score
+    sum_scores(house_sc)
     return house_sc
 
 
-def main():
+def score_all():
     my_scorecard = get_scorecard()
 
     house_sc_list = []  # for JSON output
     for house_file in glob.glob(Code.LISTINGS_GLOB):
         house_dict = json_handling.read_dicts_from_json(house_file)[0]
-        house_sc = single(house_dict, my_scorecard)
+        house_sc = score_single(house_dict, my_scorecard)
         house_sc_list.append(house_sc)
 
     write_scorecards_to_file(house_sc_list)
@@ -272,12 +273,13 @@ def sample():
     sample_path = os.path.join(Code.LISTINGS_DIR, sample_fname)
     sample_house = json_handling.read_dicts_from_json(sample_path)[0]
 
-    sample_house_sc = single(sample_house, my_scorecard)
+    sample_house_sc = score_single(sample_house, my_scorecard)
 
     write_scorecards_to_file(sample_house_sc)
     sample_df = score_dict_list_to_dataframe([sample_house_sc])
-    print(sample_df)
+    print(sample_df.T)
+
 
 if __name__ == '__main__':
-    # main()
+    # score_all()
     sample()

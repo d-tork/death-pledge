@@ -241,7 +241,7 @@ def scrape_from_url_list(url_list, quiet=True):
             listing_dict = scrape_soup(soup)
 
             # Clean and add a couple more fields
-            clean.main(listing_dict)
+            clean.clean_one(listing_dict)
             listing_dict['_metadata'].update({'URL': url})
 
             # Merge with previous dict

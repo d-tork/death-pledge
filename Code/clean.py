@@ -2,8 +2,7 @@
 
 import time
 import glob
-import os
-from Code import PROJ_PATH
+import Code
 from Code import json_handling, scrape2
 
 
@@ -41,17 +40,18 @@ currency_list = [
     ('info', 'sale_price'),
     ('basic info', 'Price Per SQFT'),
     ('basic info', 'HOA Fee'),
-    ('Building Information', 'Price Per SQFT'),
-    ('Association / Location / Schools', 'Condo/Coop Fee'),
+    ('building information', 'Price Per SQFT'),
+    ('association / location / schools', 'Condo/Coop Fee')
 ]
 int_parse_list = [
     ('info', 'beds'),
-    ('info', 'sqft'),
+    ('info', 'sqft')
 ]
 float_parse_list = [
     ('info', 'baths'),
     ('basic info', 'Lot Size Acres'),
-    ('Exterior Information', 'Lot Size Acres'),
+    ('exterior information', 'Lot Size Acres'),
+    ('expenses / taxes', 'Tax Annual Amount')
 ]
 date_list = [
     ('info', 'sold')
@@ -61,7 +61,7 @@ string_list = [
 ]
 
 
-def main(dic):
+def clean_one(dic):
     """Apply all cleanings to dictionary."""
     for k1, v1 in dic.items():
         for k2, v2 in v1.items():
@@ -76,17 +76,14 @@ def main(dic):
             elif k2 in [x[1] for x in string_list]:
                 v1[k2] = keep_string(v2)
             else:
-                try:
-                    v1[k2] = int(v2)
-                except (ValueError, TypeError):  # string, or a tuple
-                    continue
+                continue
 
 
 if __name__ == '__main__':
     #dic1 = json_to_pandas.sample()
-    #main(dic1)
+    #clean_one(dic1)
 
-    for f in glob.glob(os.path.join(PROJ_PATH, 'Data', 'Processed', 'saved_listings', '*.json')):
+    for f in glob.glob(Code.LISTINGS_GLOB):
         house = json_handling.read_dicts_from_json(f)[0]
-        main(house)
-        _ = scrape2.add_dict_to_file(house)
+        clean_one(house)
+        _ = json_handling.add_dict_to_json(house)

@@ -54,5 +54,12 @@
     "Has HOA": {
         "No": 2.0,
         "_weight": 1
+    },
+    "County": {
+      "PRINCE GEORGES": 0,
+      "FAIRFAX": 1,
+      "ALEXANDRIA CITY": 2,
+      "ARLINGTON": 3,
+      "_weight": 10
     }
 }

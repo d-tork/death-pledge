@@ -230,7 +230,7 @@ def all_continuous_scoring(dic, house_sc):
     except ValueError as e:
         print(e)
 
-    tax_amt = dic['expenses/taxes'].get('Tax Annual Amount')
+    tax_amt = dic['expenses / taxes'].get('Tax Annual Amount')
     if (tax_amt == 0) | (tax_amt is None):
         pass
     else:

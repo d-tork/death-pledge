@@ -3,7 +3,7 @@
 import os
 import Code
 from Code.api_calls import google_sheets, keys
-from Code import scrape2, score2, modify, json_handling
+from Code import scrape2, score2, modify, json_handling, pandas_handling
 
 # Scrape all URLs from google
 # Re-scrape all on-market JSONS
@@ -19,6 +19,7 @@ def main():
     scrape2.scrape_from_url_list(urls)
     modify.modify_all()
     score2.score_all()
+    pandas_handling.merge_data_and_scores()
 
 
 def single_sample():

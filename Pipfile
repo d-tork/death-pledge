@@ -16,6 +16,8 @@ google-auth-oauthlib = "*"
 selenium = "*"
 gspread = "*"
 django = "*"
+matplotlib = "*"
+seaborn = "*"
 
 [requires]
 python_version = "3.7"

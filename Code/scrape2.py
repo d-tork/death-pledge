@@ -60,7 +60,7 @@ def sign_into_website(driver):
         print('Failed to login.')
 
 
-def get_soup_for_url(url, driver, click_wait_time=3.1415):
+def get_soup_for_url(url, driver):
     """Get BeautifulSoup object for single URL"""
     url_suffix = url.rfind('/') + 3
     print('URL: {}'.format(url[url_suffix:]))
@@ -68,7 +68,6 @@ def get_soup_for_url(url, driver, click_wait_time=3.1415):
 
     if 'Listing unavailable.' in driver.page_source:
         raise ListingNotAvailable("Bad URL or listing no longer exists.")
-    sleep(click_wait_time)
 
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     return soup
@@ -78,11 +77,7 @@ def get_main_box(soup, dic):
     """Add scrape_soup box details to listing dictionary."""
     # Get tags
     result = soup.find_all('div', attrs={'class': 'col-8 col-sm-8 col-md-7'})
-    try:
-        main_box = result[0]
-    except KeyError:
-        sleep(3)
-        main_box = result[0]
+    main_box = result[0]
 
     # Extract strings from tags
     badge = main_box.a.string
@@ -192,7 +187,6 @@ def scrape_soup(soup):
     listing_dict['_metadata'].update({'scraped_time': str(datetime.now())})
 
     # Scrape three sections
-    sleep(1)  # TODO: why is this needed? And why here??
     get_main_box(soup, listing_dict)
     get_price_info(soup, listing_dict)
     get_cards(soup, listing_dict)
@@ -209,8 +203,7 @@ def scrape_from_url_list(url_list):
         sign_into_website(wd)
         for url in url_list:
             random.seed()
-            wait_time = random.random() * 7
-            click_wait = 2 + random.random()
+            wait_time = random.random() * 5
 
             # Check if URL is still valid
             result_code = support.check_status_of_website(url)
@@ -220,7 +213,7 @@ def scrape_from_url_list(url_list):
 
             # Get soup, then scrape and wait before moving on
             try:
-                soup = get_soup_for_url(url, wd, click_wait)
+                soup = get_soup_for_url(url, wd)
             except ListingNotAvailable as e:
                 print('\t{}'.format(e))
                 continue

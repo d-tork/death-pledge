@@ -177,12 +177,11 @@ def dict_list_to_dataframe(house_hist):
 def all_files_to_dataframe(listings_glob):
     full_df = pd.DataFrame()
     for f in glob.glob(listings_glob):
-        all_entries = read_dicts_from_json(f)
-        most_recent = all_entries[0]
+        most_recent = read_dicts_from_json(f)[0]
         df_indv = dict_to_dataframe(most_recent)
         full_df = pd.concat([full_df, df_indv], axis=1)
     # Drop listing history rows, because they don't line up for all houses and are unwieldy
-    full_df = full_df.drop('Listing History', level='category')
+    full_df = full_df.drop('listing history', level='category')
     return full_df
 
 

@@ -7,6 +7,9 @@ from Code import support
 
 
 class Sleepytime(Exception):
+    """Raise when a Citymapper call is made, and you don't want to overload it
+    for the next one.
+    """
     pass
 
 
@@ -33,10 +36,10 @@ def get_citymapper_commute_time(startcoords, endcoords):
     }
     response = requests.get(baseurl, params=url_args)
     print(response.url)
+    r_dict = response.json()
     if response.status_code != 200:
         print('Could not retrieve commute time for this address.')
-        raise support.BadResponse('Response code from citymapper not 200.')
-    r_dict = response.json()
+        raise support.BadResponse(r_dict['error_message'])
     try:
         travel_time = r_dict['travel_time_minutes']
     except KeyError as e:

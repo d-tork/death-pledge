@@ -281,5 +281,5 @@ def sample():
 
 
 if __name__ == '__main__':
-    # score_all()
-    sample()
+    score_all()
+    # sample()

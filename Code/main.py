@@ -18,7 +18,7 @@ def main():
     json_handling.clear_all_json_histories(Code.LISTINGS_GLOB)
     scrape2.scrape_from_url_list(urls)
     modify.modify_all()
-    score2.main()
+    score2.score_all()
 
 
 def single_sample():

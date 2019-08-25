@@ -241,7 +241,7 @@ def update_days_on_market(dic):
         elif 'Initial' in text:
             start_date = dt.strptime(date, '%b %d, %Y')
     try:
-        dom = (end_date - start_date).days + 10
+        dom = (end_date - start_date).days
     except TypeError:
         print('\tListing date not found in history.')
         return
@@ -290,6 +290,6 @@ def modify_all():
 
 if __name__ == '__main__':
     modify_all()
-    sample_path = os.path.join(Code.LISTINGS_DIR, '5403_BAYCHESTER_CT.json')
+    sample_path = os.path.join(Code.LISTINGS_DIR, '607_BASHFORD_LN_1.json')
     sample_house = json_handling.read_dicts_from_json(sample_path)[0]
     # modify_one(sample_house)

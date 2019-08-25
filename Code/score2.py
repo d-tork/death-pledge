@@ -258,6 +258,13 @@ def all_continuous_scoring(dic, house_sc):
     except ValueError as e:
         print(e)
 
+    tether = dic['quickstats'].get('tether')
+    try:
+        house_sc['tether_score'] = continuous_score(
+            tether, 0, 10.5, weight=3, ascending=False, norm_by=10)
+    except ValueError as e:
+        print(e)
+
 
 def sum_scores(house_sc):
     """Sum up all scores in the scorecard and write to scorecard."""

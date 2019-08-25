@@ -1,5 +1,6 @@
 import requests
 import random
+from math import radians, cos, sin, asin, sqrt
 import datetime as dt
 from time import sleep
 from fake_useragent import UserAgent
@@ -95,6 +96,22 @@ def str_time_to_min(s):
     return delta.total_seconds()/60
 
 
-def clean_columns(df, rename_dict):
-    df.rename(columns=rename_dict, inplace=True)
-    # TODO: reorder columns
+def haversine(coords1, coords2):
+    """ Get distance between two lat/lon pairs using the Haversine formula."""
+    lat1, lon1 = coords1
+    lat2, lon2 = coords2
+    R = 3959.87433  # this is in miles. For kilometers use 6372.8 km
+
+    dLat = radians(lat2 - lat1)
+    dLon = radians(lon2 - lon1)
+    lat1 = radians(lat1)
+    lat2 = radians(lat2)
+
+    a = sin(dLat/2)**2 + cos(lat1)*cos(lat2)*sin(dLon/2)**2
+    c = 2*asin(sqrt(a))
+
+    return R * c
+
+
+if __name__ == '__main__':
+    pass

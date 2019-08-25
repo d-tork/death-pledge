@@ -200,6 +200,17 @@ def sale_price_diff(dic):
     dic['_info']['sale_diff_pct'] = '{:+.1%}'.format(diff / list_price)
 
 
+def add_tether(dic):
+    """Add straight-line distance to centerpoint (Arlington Cememtery)."""
+    house_coords = dic['_metadata'].get('geocoords')
+    center = keys.centerpoint
+    try:
+        dist = support.haversine(house_coords, center)
+    except TypeError:
+        print('\tDistance from center not added; missing house coords.')
+    update_house_dict(dic, ('quickstats', 'tether'), round(dist, 2))
+
+
 def modify_one(house, loop=False):
     # Add modifying functions here:
     add_coords(house)
@@ -221,6 +232,7 @@ def modify_one(house, loop=False):
         sale_price_diff(house)
     except KeyError:
         pass
+    add_tether(house)
 
     remove_key(house, 'basic_info', level=1)
     remove_key(house, 'open houses', level=1)

@@ -1,65 +1,154 @@
-{
-    "Has Basement": {
-        "No": 0.0,
-        "Yes": 2.0,
-        "_weight": 1
+[
+    {
+      "Has Basement": {
+          "No": 0.0,
+          "Yes": 2.0,
+          "_weight": 1
+      },
+      "Total Garage and Parking Spaces": {
+          "0": 0.0,
+          "1": 1.0,
+          "2": 3.0,
+          "_weight": 1
+      },
+      "Assigned Spaces Count": {
+          "0": 0.0,
+          "1": 3.0,
+          "2": 3.5,
+          "_weight": 1
+      },
+      "Has Garage": {
+          "No": 0.0,
+          "Yes": 2.0,
+          "_weight": 1
+      },
+      "# of Attached Garage Spaces": {
+          "1": 2.0,
+          "2": 3.0,
+          "3": 3.5,
+          "_weight": 1
+      },
+      "# of Detached Garage Spaces": {
+          "1": 1.0,
+          "2": 2.0,
+          "3": 2.0,
+          "_weight": 1
+      },
+      "Bathrooms Full": {
+          "1": -2.0,
+          "2": 3.0,
+          "_weight": 1
+      },
+      "beds": {
+          "0": 0.0,
+          "1": 1.0,
+          "2": 2.0,
+          "3": 3.0,
+          "4": 3.5,
+          "_weight": 1
+      },
+      "Structure Type": {
+          "Detached": 3.5,
+          "End of Row/Townhouse": 2,
+          "_weight": 1
+      },
+      "Has HOA": {
+          "No": 2.0,
+          "_weight": 1
+      },
+      "County": {
+        "PRINCE GEORGES": 0,
+        "FAIRFAX": 1,
+        "ALEXANDRIA CITY": 2,
+        "ARLINGTON": 3,
+        "_weight": 2
+      }
+  },
+  {
+    "price_score": {
+      "value_keys": ["_info", "list_price"],
+      "min_value": 275e3,
+      "max_value": 525e3,
+      "weight": 2.5,
+      "ascending": false,
+      "norm_by": 3.5
     },
-    "Total Garage and Parking Spaces": {
-        "0": 0.0,
-        "1": 1.0,
-        "2": 3.0,
-        "_weight": 1
+    "commute_score": {
+      "value_keys": ["quickstats", "commute_transit_mins"],
+      "min_value": 15,
+      "max_value": 120,
+      "weight": 8,
+      "ascending": false,
+      "norm_by": 4,
+      "zero_pt": 0.47
     },
-    "Assigned Spaces Count": {
-        "0": 0.0,
-        "1": 3.0,
-        "2": 3.5,
-        "_weight": 1
+    "metro_walk_score": {
+      "value_keys": ["quickstats", "metro_walk_mins"],
+      "min_value": 0,
+      "max_value": 120,
+      "weight": 4,
+      "ascending": false,
+      "norm_by": 4,
+      "zero_pt": 0.65
     },
-    "Has Garage": {
-        "No": 0.0,
-        "Yes": 2.0,
-        "_weight": 1
+    "tax_amount_score": {
+      "value_keys": ["expenses / taxes", "Tax Annual Amount"],
+      "min_value": 100,
+      "max_value": 6500,
+      "weight": 1,
+      "ascending": false,
+      "norm_by": 3.5
     },
-    "# of Attached Garage Spaces": {
-        "1": 2.0,
-        "2": 3.0,
-        "3": 3.5,
-        "_weight": 1
+    "year_score": {
+      "value_keys": ["basic info", "Year Built"],
+      "min_value": 1900,
+      "max_value": 2020,
+      "weight": 2,
+      "ascending": true,
+      "norm_by": 3.5,
+      "zero_pt": 0.42
     },
-    "# of Detached Garage Spaces": {
-        "1": 1.0,
-        "2": 2.0,
-        "3": 2.0,
-        "_weight": 1
+    "sqft_score": {
+      "value_keys": ["_info", "sqft"],
+      "min_value": 900,
+      "max_value": 2000,
+      "weight": 1,
+      "ascending": true,
+      "norm_by": 3.5
     },
-    "Bathrooms Full": {
-        "1": -2.0,
-        "2": 3.0,
-        "_weight": 1
+    "price_SQFT_score": {
+      "value_keys": ["basic info", "Price Per SQFT"],
+      "min_value": 110,
+      "max_value": 376,
+      "weight": 3,
+      "ascending": false,
+      "norm_by": 3.5
     },
-    "beds": {
-        "0": 0.0,
-        "1": 1.0,
-        "2": 2.0,
-        "3": 3.0,
-        "4": 3.5,
-        "_weight": 1
+    "tether_score": {
+      "value_keys": ["quickstats", "tether"],
+      "min_value": 0,
+      "max_value": 10.5,
+      "weight": 2,
+      "ascending": false,
+      "norm_by": 3.5,
+      "zero_pt": 0.24
     },
-    "Structure Type": {
-        "Detached": 3.5,
-        "End of Row/Townhouse": 2,
-        "_weight": 1
+    "bus_walk_score": {
+      "value_keys": ["quickstats", "bus_walk_mins"],
+      "min_value": 0,
+      "max_value": 30,
+      "weight": 4,
+      "ascending": false,
+      "norm_by": 4,
+      "zero_pt": 0.75
     },
-    "Has HOA": {
-        "No": 2.0,
-        "_weight": 1
-    },
-    "County": {
-      "PRINCE GEORGES": 0,
-      "FAIRFAX": 1,
-      "ALEXANDRIA CITY": 2,
-      "ARLINGTON": 3,
-      "_weight": 2
+    "dom_score": {
+      "value_keys": ["_metadata", "days_on_market"],
+      "min_value": 1,
+      "max_value": 300,
+      "weight": 1.5,
+      "ascending": true,
+      "norm_by": 3.5
     }
-}
+  }
+]

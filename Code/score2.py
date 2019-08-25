@@ -17,10 +17,25 @@ import Code
 from Code import json_handling, modify
 
 
-def get_scorecard(filepath=Code.SCORECARD_PATH):
-    """Create scorecard dictionary from JSON file."""
+def get_scorecard(filepath=Code.SCORECARD_PATH, mode='regular'):
+    """Create scorecard dictionary from JSON file.
+
+    :arg
+        filepath (str): where to find scorecard.json
+        mode (str): {'regular', 'continuous'} which dict to get from file
+
+    :return
+        dict
+    """
+    if mode == 'regular':
+        index = 0
+    elif mode == 'continuous':
+        index = 1
+    else:
+        raise ValueError("mode must be 'regular' or 'continuous'")
+
     with open(filepath, 'r') as f:
-        scores = json.loads(f.read())
+        scores = json.loads(f.read())[index]
     return scores
 
 
@@ -77,7 +92,7 @@ def find_closest_key(val, dic):
     return row_score
 
 
-def score_house_dict(dic, scorecard):
+def score_house_dict(dic, scorecard, cont_scorecard):
     """Evaluates a house dictionary against scorecard."""
     house_sc = {'address': dic['_info']['full_address'],
                 'MLS Number': str(dic['basic info']['MLS Number']),
@@ -93,7 +108,7 @@ def score_house_dict(dic, scorecard):
 
     # Insert additional special scoring functions here
     score_nearest_metro(dic, house_sc)
-    all_continuous_scoring(dic, house_sc)
+    all_continuous_scoring(dic, house_sc, cont_scorecard)
     return house_sc
 
 
@@ -115,7 +130,7 @@ def score_nearest_metro(dic, house_sc):
 
 
 def continuous_score(value, min_value, max_value, weight,
-                     ascending=True, norm_by=None, zero_pt=0):
+                     ascending=True, norm_by=None, zero_pt=0, **kwargs):
     """Score a value based on a min/max range.
 
     The scale that determines these scores is arbitrary, and shifts depending on A) the range
@@ -145,6 +160,8 @@ def continuous_score(value, min_value, max_value, weight,
         zero_pt (float): if norm_by, percentage at which to set the zero
             Anything left of the zero point (asc) or right of it (desc) becomes negative and
             detracts from a score, rather than just being a lower score.
+        **kwargs: to accept non-parameters items from the scorecard dictionary
+            Namely, the value_keys tuple for getting the house's attribute value
 
     Examples:
         For scoring the listing price, where lower prices are better, and I reasonably
@@ -192,81 +209,27 @@ def continuous_score(value, min_value, max_value, weight,
     return score.round(1)
 
 
-def all_continuous_scoring(dic, house_sc):
+def all_continuous_scoring(dic, house_sc, cont_sc):
     """Stores and runs continuous scoring functions for each attribute.
 
     Uses dict.get() to avoid KeyErrors if the field is not in the house dict.
     If it's not, prints the error and moves on without scoring it.
+
+    :arg
+        dic (dict): house listing dictionary
+        house_sc (dict): house scorecard
+        cont_sc (dict): dict of all continuous scoring criteria dictionaries
+            For each criteria (subdict) in this dict, unpack the values to use
+            as the parameters to `continuous_score()`
     """
-    price = dic['_info'].get('list_price')
-    try:
-        house_sc['price_score'] = continuous_score(
-            price, 275e3, 525e3, weight=2.5, ascending=False, norm_by=3.5)
-    except ValueError as e:
-        print(e)
-
-    commute_time = dic['quickstats'].get('commute_transit_mins')
-    try:
-        house_sc['commute_score'] = continuous_score(
-            commute_time, 15, 120, weight=8, ascending=False, norm_by=4, zero_pt=.47)
-    except ValueError as e:
-        print(e)
-
-    metro_walk = dic['quickstats'].get('metro_walk_mins')
-    try:
-        house_sc['metro_walk_score'] = continuous_score(
-            metro_walk, 0, 120, weight=4, ascending=False, norm_by=4, zero_pt=.65)
-    except ValueError as e:
-        print(e)
-
-    tax_amt = dic['expenses / taxes'].get('Tax Annual Amount')
-    if (tax_amt == 0) | (tax_amt is None):
-        pass
-    else:
-        house_sc['tax_amount_score'] = continuous_score(
-            tax_amt, 100, 6500, weight=1, ascending=False, norm_by=3.5)
-
-    year = dic['basic info'].get('Year Built')
-    try:
-        house_sc['year_score'] = continuous_score(
-            year, 1900, 2020, weight=2, ascending=True, norm_by=3.5, zero_pt=.42)
-    except ValueError as e:
-        print(e)
-
-    sqft = dic['_info'].get('sqft')
-    try:
-        house_sc['sqft_score'] = continuous_score(
-            sqft, 900, 2000, weight=1, ascending=True, norm_by=3.5)
-    except ValueError as e:
-        print(e)
-
-    price_sqft = dic['basic info'].get('Price Per SQFT')
-    try:
-        house_sc['price_SQFT_score'] = continuous_score(
-            price_sqft, 110, 376, weight=3, ascending=False, norm_by=3.5)
-    except ValueError as e:
-        print(e)
-
-    tether = dic['quickstats'].get('tether')
-    try:
-        house_sc['tether_score'] = continuous_score(
-            tether, 0, 10.5, weight=2, ascending=False, norm_by=3.5, zero_pt=0.24)
-    except ValueError as e:
-        print(e)
-
-    buswalk = dic['quickstats'].get('bus_walk_mins')
-    try:
-        house_sc['bus_walk_score'] = continuous_score(
-            buswalk, 0, 30, weight=4, ascending=False, norm_by=4, zero_pt=0.75)
-    except ValueError as e:
-        print(e)
-
-    dom = dic['_metadata'].get('days_on_market')
-    try:
-        house_sc['dom_score'] = continuous_score(
-            dom, 1, 300, weight=1.5, ascending=True, norm_by=3.5)
-    except ValueError as e:
-        print(e)
+    for score_field, sc in cont_sc.items():
+        # Get house value from house dict, assign back to scorecard dict
+        val_keys = sc['value_keys']
+        sc['value'] = dic[val_keys[0]].get(val_keys[1])
+        try:
+            house_sc[score_field] = continuous_score(**sc)
+        except ValueError as e:
+            print(e)
 
 
 def sum_scores(house_sc):
@@ -329,20 +292,21 @@ def write_score_percentiles_to_jsons(sc_list_path=None):
         _ = json_handling.add_dict_to_json(house)
 
 
-def score_single(house, scorecard):
+def score_single(house, scorecard, cont_scorecard):
     """Score a single house"""
-    house_sc = score_house_dict(house, scorecard)
+    house_sc = score_house_dict(house, scorecard, cont_scorecard)
     sum_scores(house_sc)
     return house_sc
 
 
 def score_all():
-    my_scorecard = get_scorecard()
+    my_scorecard = get_scorecard(mode='regular')
+    my_cont_scorecard = get_scorecard(mode='continuous')
 
     house_sc_list = []  # for JSON output
     for house_file in glob.glob(Code.LISTINGS_GLOB):
         house_dict = json_handling.read_dicts_from_json(house_file)[0]
-        house_sc = score_single(house_dict, my_scorecard)
+        house_sc = score_single(house_dict, my_scorecard, my_cont_scorecard)
         house_sc_list.append(house_sc)
 
     write_scorecards_to_file(house_sc_list)

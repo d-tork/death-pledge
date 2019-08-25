@@ -251,6 +251,13 @@ def all_continuous_scoring(dic, house_sc):
     except ValueError as e:
         print(e)
 
+    buswalk = dic['quickstats'].get('bus_walk_mins')
+    try:
+        house_sc['bus_walk_score'] = continuous_score(
+            buswalk, 0, 30, weight=4, ascending=False, norm_by=4, zero_pt=0.75)
+    except ValueError as e:
+        print(e)
+
 
 def sum_scores(house_sc):
     """Sum up all scores in the scorecard and write to scorecard."""

@@ -135,6 +135,24 @@ def add_nearest_metro(dic, force=False):
             update_house_dict(dic, ('local travel', 'Nearby Metro'), station_list)
 
 
+def add_nearest_bus_walk(dic, force=False):
+    """Add the walk time to the nearest bus stop in the work commute."""
+    key_name = 'bus_walk_mins'
+    # Check for existing value
+    walktime = dic['quickstats'].setdefault(key_name, None)
+    if (walktime is None) or force:
+        house_coords = dic['_metadata']['geocoords']
+        try:
+            walktime = bing.get_bing_commute_time(house_coords, keys.work_coords, bus_stop=True)
+            walktime = support.str_time_to_min(walktime)
+        except BadResponse as e:
+            print('Could not retrieve bus walk time for this address.')
+            print(e)
+            walktime = None
+        finally:
+            update_house_dict(dic, ('quickstats', key_name), round(walktime, 1))
+
+
 def add_frequent_driving(dic, favorites_dic, force=False):
     """Add the road distance and drive time to frequented places by car."""
     house_coords = dic['_metadata']['geocoords']
@@ -226,6 +244,7 @@ def modify_one(house, loop=False):
             pass
     add_bing_commute(house)
     add_nearest_metro(house)
+    add_nearest_bus_walk(house)
     add_frequent_driving(house, keys.favorites_driving)
     travel_quick_stats(house)
     try:

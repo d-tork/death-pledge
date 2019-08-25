@@ -60,6 +60,8 @@ def clean_dataframe_columns(df):
         'Bathrooms Full',
         'Work commute (Bing)',
         'Work commute (Citymapper)',
+        'tether',
+        'bus_walk_mins',
         'Year Built',
         'Structure Type',
         'Architectural Style',

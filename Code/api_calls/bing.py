@@ -30,7 +30,7 @@ def get_coords(address, zip_code=None):
     return tuple(coords)
 
 
-def get_bing_commute_time(startcoords, endcoords):
+def get_bing_commute_time(startcoords, endcoords, bus_stop=False):
     """Get commute travel time between two lat/lon tuples from Bing API.
 
     Parameters
@@ -39,6 +39,9 @@ def get_bing_commute_time(startcoords, endcoords):
         a list or tuple of geographic coordinates (lat/lon) as integers
     endcoords: iterable
         same as startcoords
+    bus_stop: bool
+        a flag to indicate if you want the walk time to the nearest bus stop
+        that goes in the direction of work
     Returns
     -------
     str: time in HH:MM:SS
@@ -58,6 +61,13 @@ def get_bing_commute_time(startcoords, endcoords):
     if response.status_code != 200:
         raise support.BadResponse('Response code from bing not 200.')
     r_dict = response.json()
+
+    if bus_stop:  # Function detour to return bus stop walk time
+        itin = r_dict['resourceSets'][0]['resources'][0]['routeLegs'][0]['itineraryItems']
+        for ix, leg in enumerate(itin):
+            if leg.get('iconType') == 'Bus':
+                bus_stop_walk = itin[ix-1]['travelDuration']  # get previous leg
+                return str(dt.timedelta(seconds=bus_stop_walk))
     try:
         travel_time = r_dict['resourceSets'][0]['resources'][0]['travelDuration']
     except KeyError:
@@ -106,7 +116,7 @@ def find_nearest_metro(startcoords):
     url_dict = {
         'query': 'metro station',
         'userLocation': support.str_coords(startcoords),
-        'maxResults': 3,
+        'maxResults': 2,
         'key': keys.bingMapsKey
     }
     url_args = {k: v for k, v in url_dict.items() if v is not None}

@@ -27,7 +27,7 @@ class FieldNotScored(Exception):
     pass
 
 
-def get_score_for_item(field_name, value, inner_score_dict):
+def get_score_for_item(inner_score_dict, field_name, value):
     """Score each row in a listing dataframe.
 
     The listing is a single-column dataframe where the index is a (category, field)
@@ -84,7 +84,7 @@ def score_house_dict(dic, scorecard):
     for k1, v1 in dic.items():
         for field, house_val in v1.items():
             if field in scorecard:
-                field_score = get_score_for_item(field, house_val, scorecard[field])
+                field_score = get_score_for_item(scorecard[field], field, house_val)
                 new_fieldname = '{}_score'.format(field.lower().replace(' ', '_'))
                 house_sc[new_fieldname] = field_score
 

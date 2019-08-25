@@ -258,6 +258,13 @@ def all_continuous_scoring(dic, house_sc):
     except ValueError as e:
         print(e)
 
+    dom = dic['_metadata'].get('days_on_market')
+    try:
+        house_sc['dom_score'] = continuous_score(
+            dom, 1, 300, weight=1.5, ascending=True, norm_by=3.5)
+    except ValueError as e:
+        print(e)
+
 
 def sum_scores(house_sc):
     """Sum up all scores in the scorecard and write to scorecard."""

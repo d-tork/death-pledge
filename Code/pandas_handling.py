@@ -48,6 +48,7 @@ def clean_dataframe_columns(df):
         'address',
         'badge',
         'Status',
+        'days_on_market',
         'list_price',
         'sale_price',
         'sold',

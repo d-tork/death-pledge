@@ -11,6 +11,7 @@ transformations of existing attributes, post-scraping.
 import os
 import glob
 from time import sleep
+from datetime import datetime as dt
 import Code
 from Code import json_handling, support
 from Code.api_calls import bing, citymapper, keys
@@ -229,6 +230,23 @@ def add_tether(dic):
     update_house_dict(dic, ('quickstats', 'tether'), round(dist, 2))
 
 
+def update_days_on_market(dic):
+    """Calculate days from initial listing to last modification date of dict."""
+    start_date, end_date = None, dt.today()
+    # Find day of initial listing
+    for date, text in dic['listing history'].items():
+        if 'Sold' in text:
+            end_date = dt.strptime(date, '%b %d, %Y')
+        elif 'Initial' in text:
+            start_date = dt.strptime(date, '%b %d, %Y')
+    try:
+        dom = (end_date - start_date).days + 10
+    except TypeError:
+        print('\tListing date not found in history.')
+        return
+    update_house_dict(dic, ('_metadata', 'days_on_market'), dom)
+
+
 def modify_one(house, loop=False):
     # Add modifying functions here:
     add_coords(house)
@@ -252,6 +270,7 @@ def modify_one(house, loop=False):
     except KeyError:
         pass
     add_tether(house)
+    update_days_on_market(house)
 
     remove_key(house, 'basic_info', level=1)
     remove_key(house, 'open houses', level=1)

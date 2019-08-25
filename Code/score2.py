@@ -9,11 +9,12 @@ is lowercase. This aids with dataframe creation later.
 import json
 import pandas as pd
 import numpy as np
+from scipy import stats
 import os
 import glob
 import datetime as dt
 import Code
-from Code import json_handling
+from Code import json_handling, modify
 
 
 def get_scorecard(filepath=Code.SCORECARD_PATH):
@@ -298,6 +299,34 @@ def score_dict_list_to_dataframe(sc_list):
     return full_df
 
 
+def write_score_percentiles_to_jsons(sc_list_path=None):
+    """With recently created scorecards, write total score & percentile back to dict.
+
+    Must be run after all scorecards have been generated and written to file. Then,
+    write each total_score back to _metadata as well as its k<sup>th</sup> percentile.
+    """
+    if sc_list_path is None:
+        sc_list_path = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'scorecards.json')
+    scorecards = json_handling.read_dicts_from_json(sc_list_path)
+
+    # Collect all total scores for percentile
+    all_scores = np.array([])
+    for card in scorecards:
+        all_scores = np.append(all_scores, card.get('TOTAL_SCORE'))
+
+    for f in glob.glob(Code.LISTINGS_GLOB):
+        house = json_handling.read_dicts_from_json(f)[0]
+        mls = house['basic info'].get('MLS Number')
+        for card in scorecards:
+            if card.get('MLS Number') == mls:
+                score = card.get('TOTAL_SCORE')
+                modify.update_house_dict(house, ('_metadata', 'total_score'), score)
+                percentile = stats.percentileofscore(all_scores, score)
+                pct_str = 'higher than {:.0f}% of listings'.format(percentile)
+                modify.update_house_dict(house, ('_metadata', 'percentile'), pct_str)
+        _ = json_handling.add_dict_to_json(house)
+
+
 def score_single(house, scorecard):
     """Score a single house"""
     house_sc = score_house_dict(house, scorecard)
@@ -315,6 +344,7 @@ def score_all():
         house_sc_list.append(house_sc)
 
     write_scorecards_to_file(house_sc_list)
+    write_score_percentiles_to_jsons()
     return
 
 

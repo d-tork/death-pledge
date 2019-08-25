@@ -18,6 +18,7 @@ gspread = "*"
 django = "*"
 matplotlib = "*"
 seaborn = "*"
+scipy = "*"
 
 [requires]
 python_version = "3.7"

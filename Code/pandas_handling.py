@@ -11,7 +11,11 @@ def merge_data_and_scores():
     scores = json_handling.read_dicts_from_json(sc_path)
     df_scores = score2.score_dict_list_to_dataframe(scores)
 
-    # Quick dump to file
+    # Quick dump to file, after rearranging columns
+    col_list = list(df_scores.columns)
+    col_list.remove('TOTAL_SCORE')
+    col_list.insert(1, 'TOTAL_SCORE')
+    df_scores = df_scores[col_list]
     raw_scores_path = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'raw_scores.csv')
     df_scores.to_csv(raw_scores_path)
 
@@ -88,4 +92,5 @@ def clean_dataframe_columns(df):
 
 
 if __name__ == '__main__':
+    score2.score_all()
     merge_data_and_scores()

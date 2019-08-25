@@ -119,10 +119,11 @@
     "price_SQFT_score": {
       "value_keys": ["basic info", "Price Per SQFT"],
       "min_value": 110,
-      "max_value": 376,
-      "weight": 3,
+      "max_value": 520,
+      "weight": 4,
       "ascending": false,
-      "norm_by": 3.5
+      "norm_by": 4,
+      "zero_pt": 0.4
     },
     "tether_score": {
       "value_keys": ["quickstats", "tether"],

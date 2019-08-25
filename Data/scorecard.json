@@ -14,7 +14,7 @@
         "0": 0.0,
         "1": 3.0,
         "2": 3.5,
-        "_weight": 3
+        "_weight": 1
     },
     "Has Garage": {
         "No": 0.0,
@@ -25,7 +25,7 @@
         "1": 2.0,
         "2": 3.0,
         "3": 3.5,
-        "_weight": 3
+        "_weight": 1
     },
     "# of Detached Garage Spaces": {
         "1": 1.0,
@@ -36,7 +36,7 @@
     "Bathrooms Full": {
         "1": -2.0,
         "2": 3.0,
-        "_weight": 2
+        "_weight": 1
     },
     "beds": {
         "0": 0.0,
@@ -60,6 +60,6 @@
       "FAIRFAX": 1,
       "ALEXANDRIA CITY": 2,
       "ARLINGTON": 3,
-      "_weight": 10
+      "_weight": 2
     }
 }

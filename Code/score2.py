@@ -89,23 +89,9 @@ def score_house_dict(dic, scorecard):
                 house_sc[new_fieldname] = field_score
 
     # Insert additional special scoring functions here
-    score_state(dic, house_sc)
     score_nearest_metro(dic, house_sc)
     all_continuous_scoring(dic, house_sc)
     return house_sc
-
-
-def score_state(dic, house_sc):
-    """Assign a score based on whether it's in VA or MD.
-    Eventually, I'll get this down to a city or zip code level with other
-    parameters.
-    """
-    city_state = dic['_info']['city_state']
-    if 'VA' in city_state.upper():
-        state_score = 3.5
-    else:
-        state_score = 0
-    house_sc['state_score'] = state_score
 
 
 def score_nearest_metro(dic, house_sc):
@@ -152,7 +138,7 @@ def continuous_score(value, min_value, max_value, weight,
         weight (int or float): weighting factor
         ascending (bool): whether to look left-to-right or right-to-left, default True
             Use false when a lower value is scored higher (i.e. price)
-        norm_by (int): scale by which to normalize the scores (i.e. 4, 10, 100)
+        norm_by (float): scale by which to normalize the scores (i.e. 4, 10, 100)
         zero_pt (float): if norm_by, percentage at which to set the zero
             Anything left of the zero point (asc) or right of it (desc) becomes negative and
             detracts from a score, rather than just being a lower score.
@@ -212,21 +198,21 @@ def all_continuous_scoring(dic, house_sc):
     price = dic['_info'].get('list_price')
     try:
         house_sc['price_score'] = continuous_score(
-            price, 275e3, 525e3, weight=3, ascending=False, norm_by=4)
+            price, 275e3, 525e3, weight=2.5, ascending=False, norm_by=3.5)
     except ValueError as e:
         print(e)
 
     commute_time = dic['quickstats'].get('commute_transit_mins')
     try:
         house_sc['commute_score'] = continuous_score(
-            commute_time, 15, 120, weight=3, ascending=False, norm_by=4, zero_pt=.47)
+            commute_time, 15, 120, weight=8, ascending=False, norm_by=4, zero_pt=.47)
     except ValueError as e:
         print(e)
 
     metro_walk = dic['quickstats'].get('metro_walk_mins')
     try:
         house_sc['metro_walk_score'] = continuous_score(
-            metro_walk, 0, 120, weight=5, ascending=False, norm_by=10, zero_pt=.65)
+            metro_walk, 0, 120, weight=4, ascending=False, norm_by=4, zero_pt=.65)
     except ValueError as e:
         print(e)
 
@@ -235,33 +221,33 @@ def all_continuous_scoring(dic, house_sc):
         pass
     else:
         house_sc['tax_amount_score'] = continuous_score(
-            tax_amt, 100, 6500, weight=1, ascending=False, norm_by=4)
+            tax_amt, 100, 6500, weight=1, ascending=False, norm_by=3.5)
 
     year = dic['basic info'].get('Year Built')
     try:
         house_sc['year_score'] = continuous_score(
-            year, 1900, 2020, weight=4, ascending=True, norm_by=4, zero_pt=.42)
+            year, 1900, 2020, weight=2, ascending=True, norm_by=3.5, zero_pt=.42)
     except ValueError as e:
         print(e)
 
     sqft = dic['_info'].get('sqft')
     try:
         house_sc['sqft_score'] = continuous_score(
-            sqft, 900, 2000, weight=2, ascending=True, norm_by=4)
+            sqft, 900, 2000, weight=1, ascending=True, norm_by=3.5)
     except ValueError as e:
         print(e)
 
     price_sqft = dic['basic info'].get('Price Per SQFT')
     try:
         house_sc['price_SQFT_score'] = continuous_score(
-            price_sqft, 110, 376, weight=2, ascending=False, norm_by=4)
+            price_sqft, 110, 376, weight=3, ascending=False, norm_by=3.5)
     except ValueError as e:
         print(e)
 
     tether = dic['quickstats'].get('tether')
     try:
         house_sc['tether_score'] = continuous_score(
-            tether, 0, 10.5, weight=3, ascending=False, norm_by=10)
+            tether, 0, 10.5, weight=2, ascending=False, norm_by=3.5, zero_pt=0.24)
     except ValueError as e:
         print(e)
 

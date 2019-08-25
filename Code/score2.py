@@ -80,7 +80,9 @@ def find_closest_key(val, dic):
 def score_house_dict(dic, scorecard):
     """Evaluates a house dictionary against scorecard."""
     house_sc = {'address': dic['_info']['full_address'],
-                'MLS Number': str(dic['basic info']['MLS Number'])}
+                'MLS Number': str(dic['basic info']['MLS Number']),
+                'badge': dic['_info']['badge']
+                }
     print(house_sc['address'])
     for k1, v1 in dic.items():
         for field, house_val in v1.items():

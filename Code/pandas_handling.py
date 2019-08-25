@@ -15,7 +15,7 @@ def merge_data_and_scores():
     col_list = list(df_scores.columns)
     col_list.remove('TOTAL_SCORE')
     col_list.insert(1, 'TOTAL_SCORE')
-    df_scores = df_scores[col_list]
+    df_scores = df_scores[col_list].sort_values('TOTAL_SCORE', ascending=False)
     raw_scores_path = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'raw_scores.csv')
     df_scores.to_csv(raw_scores_path)
 
@@ -35,6 +35,8 @@ def merge_data_and_scores():
     merged = clean_dataframe_columns(merged)
     # Name the index
     merged.index.name = 'MLS Number'
+    # Sort by total score
+    merged.sort_values('TOTAL_SCORE', ascending=False, inplace=True)
 
     # Write to file
     outpath = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'master_list.csv')

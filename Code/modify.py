@@ -134,6 +134,7 @@ def add_nearest_metro(dic, force=False):
             station_list = None
         finally:
             update_house_dict(dic, ('local travel', 'Nearby Metro'), station_list)
+    update_house_dict(dic, ('basic info', 'Nearest Metro'), station_list[0][0])
 
 
 def add_nearest_bus_walk(dic, force=False):
@@ -289,6 +290,6 @@ def modify_all():
 
 if __name__ == '__main__':
     modify_all()
-    sample_path = os.path.join(Code.LISTINGS_DIR, '3411_25TH_AVE.json')
+    sample_path = os.path.join(Code.LISTINGS_DIR, '5403_BAYCHESTER_CT.json')
     sample_house = json_handling.read_dicts_from_json(sample_path)[0]
     # modify_one(sample_house)

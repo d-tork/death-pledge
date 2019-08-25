@@ -45,7 +45,7 @@ def clean_dataframe_columns(df):
     col_list = [
         'TOTAL_SCORE',
         'URL',
-        'address',
+        'full_address',
         'badge',
         'Status',
         'days_on_market',
@@ -88,7 +88,6 @@ def clean_dataframe_columns(df):
         'scraped_time',
         'County',
         'city_state',
-        'full_address',
         'Inclusions',
     ]
     return df[col_list]

@@ -64,6 +64,8 @@ string_list = [
 def clean_one(dic):
     """Apply all cleanings to dictionary."""
     for k1, v1 in dic.items():
+        if k1 in ['quickstats', '_metadata']:
+            continue
         for k2, v2 in v1.items():
             if k2 in [x[1] for x in currency_list]:
                 v1[k2] = convert_currency_to_int(v2)
@@ -76,7 +78,10 @@ def clean_one(dic):
             elif k2 in [x[1] for x in string_list]:
                 v1[k2] = keep_string(v2)
             else:
-                continue
+                try:
+                    v1[k2] = int(v2)
+                except (ValueError, TypeError):  # string, or a tuple
+                    continue
 
 
 if __name__ == '__main__':

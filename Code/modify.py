@@ -289,7 +289,6 @@ def modify_all():
 
 if __name__ == '__main__':
     modify_all()
-    sample_path = os.path.join(Code.LISTINGS_DIR, '4304_34TH_ST_S_B2.json')
-    sample_path = os.path.join(Code.LISTINGS_DIR, '10217_ROLLING_GREEN_WAY.json')
+    sample_path = os.path.join(Code.LISTINGS_DIR, '3411_25TH_AVE.json')
     sample_house = json_handling.read_dicts_from_json(sample_path)[0]
     # modify_one(sample_house)

@@ -64,10 +64,12 @@ def get_bing_commute_time(startcoords, endcoords, bus_stop=False):
 
     if bus_stop:  # Function detour to return bus stop walk time
         itin = r_dict['resourceSets'][0]['resources'][0]['routeLegs'][0]['itineraryItems']
+        bus_stop_walk = 0
         for ix, leg in enumerate(itin):
             if leg.get('iconType') == 'Bus':
                 bus_stop_walk = itin[ix-1]['travelDuration']  # get previous leg
-                return str(dt.timedelta(seconds=bus_stop_walk))
+                break
+        return str(dt.timedelta(seconds=bus_stop_walk))
     try:
         travel_time = r_dict['resourceSets'][0]['resources'][0]['travelDuration']
     except KeyError:

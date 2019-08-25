@@ -109,6 +109,7 @@ def score_house_dict(dic, scorecard, cont_scorecard):
     # Insert additional special scoring functions here
     score_nearest_metro(dic, house_sc)
     all_continuous_scoring(dic, house_sc, cont_scorecard)
+    score_laundry(dic, house_sc)
     return house_sc
 
 
@@ -230,6 +231,24 @@ def all_continuous_scoring(dic, house_sc, cont_sc):
             house_sc[score_field] = continuous_score(**sc)
         except ValueError as e:
             print(e)
+
+
+def score_laundry(dic, house_sc):
+    """Add points if laundry info is available.
+
+    Weighted low because it's not always provided.
+    """
+    laundry = False
+    appliances = dic['building information'].get('Appliances')
+    if 'washer' in [x.lower() for x in appliances]:
+        laundry = True
+    elif any([x for x in appliances if 'dryer' in x.lower()]):
+        laundry = True
+    elif dic['building information'].get('Laundry Type') is not None:
+        laundry = True
+
+    if laundry:
+        house_sc['laundry_score'] = 2
 
 
 def sum_scores(house_sc):

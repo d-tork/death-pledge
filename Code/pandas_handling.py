@@ -41,6 +41,7 @@ def merge_data_and_scores():
     # Write to file
     outpath = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'master_list.csv')
     merged.to_csv(outpath)
+    return merged, df_scores
 
 
 def clean_dataframe_columns(df):

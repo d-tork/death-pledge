@@ -5,18 +5,22 @@ import pandas as pd
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+from Code import pandas_handling
 
 # Get this file's path
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
+SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
 # The ID and range of my master spreadsheet
 SPREADSHEET_DICT = {
     'spreadsheetId': '1ljlZZRXjMb_BEduXqgfc65hQK7cCximT3ebS6UcQPQ0',
-    #'range': 'Master_list!A2:AG'
-    'range': 'URLs'
+    # 'masterlist_range': 'Master_list!A2:AG'
+    'url_range': 'URLs',
+    'master_range': 'Master_list2!A1',
+    'scores': 'Scores!A1'
 }
 
 
@@ -66,7 +70,7 @@ def get_url_dataframe(google_creds, spreadsheet_dict=SPREADSHEET_DICT):
     # Call the Sheets API
     print('Getting data from Google sheets...')
     sheet_obj = service.spreadsheets()
-    request = sheet_obj.values().get(spreadsheetId=spreadsheet_id, range=spreadsheet_dict['range'])
+    request = sheet_obj.values().get(spreadsheetId=spreadsheet_id, range=spreadsheet_dict['url_range'])
     response = request.execute()
     print('Done')
 
@@ -77,6 +81,7 @@ def get_url_dataframe(google_creds, spreadsheet_dict=SPREADSHEET_DICT):
 
 def process_url_list(df):
     """Make adjustments to URL dataframe before passing as series."""
+
     def trim_url(url_str):
         """Remove extra params from URL"""
         q_mark = url_str.find('?')
@@ -100,6 +105,38 @@ def get_url_list():
     return process_url_list(df_raw)
 
 
+def upload_dataframe(df1, df2, google_creds):
+    service = build('sheets', 'v4', credentials=google_creds)
+    response = service.spreadsheets().values().batchUpdate(
+        spreadsheetId=SPREADSHEET_DICT['spreadsheetId'],
+        body=dict(
+            valueInputOption='USER_ENTERED',
+            includeValuesInResponse=False,
+            data=[
+                dict(
+                    range=SPREADSHEET_DICT['master_range'],
+                    majorDimension='ROWS',
+                    values=df1
+                ),
+                dict(
+                    range=SPREADSHEET_DICT['scores'],
+                    majorDimension='ROWS',
+                    values=df2
+                )
+            ])
+    ).execute()
+    print(response)
+
+
+def prep_dataframe(df):
+    df = df.fillna('').astype('str')
+    df = df.reset_index().T.reset_index().T.values.tolist()
+    return df
+
+
 if __name__ == '__main__':
-    sample_url_list = get_url_list()
-    print(sample_url_list)
+    # sample_url_list = get_url_list()
+    my_creds = get_creds()
+    df1, df2 = pandas_handling.merge_data_and_scores()
+    df1, df2 = prep_dataframe(df1), prep_dataframe(df2)
+    upload_dataframe(df1, df2, my_creds)

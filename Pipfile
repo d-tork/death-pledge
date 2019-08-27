@@ -19,6 +19,7 @@ django = "*"
 matplotlib = "*"
 seaborn = "*"
 scipy = "*"
+pylint = "*"
 
 [requires]
 python_version = "3.7"

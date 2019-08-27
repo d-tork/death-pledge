@@ -40,7 +40,6 @@ Contents:
 import json
 import os
 import glob
-import datetime as dt
 import pandas as pd
 import numpy as np
 from scipy import stats
@@ -101,15 +100,6 @@ def get_score_for_item(inner_score_dict, field_name, value):
         TypeError: If the score dict gives back a string instead of a number for *row_score*.
 
     """
-    # Make certain field values negative (like prices) for comparison because the lower the better
-    # TODO: remove this, because any price or fee fields are now continuously scored attributes
-    reversed_groups = ['price', 'fee']
-    if any(x in field_name.lower() for x in reversed_groups):
-        try:
-            value = -value
-        except TypeError:
-            pass
-
     try:
         row_score = inner_score_dict[str(value)]  # exact match (strings, Yes/No, etc.)
     except KeyError:
@@ -129,7 +119,7 @@ def get_score_for_item(inner_score_dict, field_name, value):
 
 def find_closest_key(val, dic):
     """Find the closest match to the val in the dict's keys.
-    
+
     Largely deprecated in favor of using :func:`continuous_score`.
     Acts like a LOOKUP in Excel.
 
@@ -164,7 +154,7 @@ def score_house_dict(dic, scorecard, cont_scorecard):
 
     Returns:
         dict: Scorecard for individual house listing.
-    
+
     """
     house_sc = {'address': dic['_info']['full_address'],
                 'MLS Number': str(dic['basic info']['MLS Number']),
@@ -179,7 +169,6 @@ def score_house_dict(dic, scorecard, cont_scorecard):
                 house_sc[new_fieldname] = field_score
 
     # Insert additional special scoring functions here
-    score_nearest_metro(dic, house_sc)  # TODO: remove (gets overwritten by continuous scoring anyway)
     all_continuous_scoring(dic, house_sc, cont_scorecard)
     score_laundry(dic, house_sc)
 
@@ -188,36 +177,8 @@ def score_house_dict(dic, scorecard, cont_scorecard):
     return house_sc
 
 
-def score_nearest_metro(dic, house_sc):
-    """Evaluate distance to nearest metro and updates house scorecard.
-
-    Deprecated in favor of using :func:`continuous_score`. This was basically an early
-    implementation of the same formula, albiet specific to metro walk times and a little
-    less developed. 
-    
-    Args:
-        dic (dict): House listing.
-        house_sc (dict): Scorecard for individual house listing.
-    
-    """
-    # TODO: remove all uses of this function!
-    metro = dic['local travel']['Nearby Metro'][0]  # takes the first [station, [dist, time]]
-    dur = dt.datetime.strptime(metro[1][1].split()[0], '%H:%M:%S')
-    delta = dt.timedelta(hours=dur.hour, minutes=dur.minute, seconds=dur.second)
-    secs = delta.total_seconds()
-
-    # Derived from SO 17118350 and 43095739
-    sec_array = np.arange(120, 1, -10) * 60
-    score = sec_array.size - np.searchsorted(sec_array[::-1], secs, side='right')
-    # Subtract 8 so that the commute times longer than 40 min give it a negative score
-    score = float(score) - 6
-    # Add weighting (because a close metro is muy importante
-    score *= 4
-    house_sc['metro_walk_score'] = score
-
-
 def continuous_score(value, min_value, max_value, weight,
-                     ascending=True, norm_by=None, zero_pt=0, **kwargs):
+                     ascending=True, norm_by=3.5, zero_pt=0, **kwargs):
     """Score a value based on a min/max range.
 
     The scale that determines these scores is arbitrary, and shifts depending on:
@@ -243,7 +204,7 @@ def continuous_score(value, min_value, max_value, weight,
 
             Use ``False`` when a lower value is scored higher (i.e. price).
         norm_by (float, optional): Max value of scale by which to normalize the scores.
-            Defaults to ``None``.
+            Defaults to 3.5.
 
             Pretty much every attribute is normalized on a 0 to 3.5 scale. Very important
             attributes are 0 to 4 for that extra umph. Extremely important attributes can
@@ -313,9 +274,8 @@ def continuous_score(value, min_value, max_value, weight,
     else:
         score = np.searchsorted(-a[::-1], -value, side='right')
 
-    # multiply it by (x/50) to normalize on a 0-10 scale (or whatever scale specified)
-    if norm_by:
-        score = (score * (norm_by / num) - (zero_pt * norm_by)) * weight
+    # multiply it by (x/50) to normalize on a 0-3.5 scale (or whatever scale specified)
+    score = (score * (norm_by / num) - (zero_pt * norm_by)) * weight
     return score.round(1)
 
 
@@ -403,8 +363,7 @@ def score_dict_list_to_dataframe(sc_list):
         df = pd.DataFrame.from_dict(sc, orient='index').T.set_index('MLS Number')
         full_df = pd.concat([full_df, df], axis=0, sort=False)
     # Rename column headers from their MLS number to their order in the file
-    # TODO: don't know what happened to this, but still useful when all the scorecards are
-    # for the same house.
+    # TODO: don't know what happened to this, but still useful when all the scorecards are for the same house
     return full_df
 
 
@@ -441,23 +400,6 @@ def write_score_percentiles_to_jsons(sc_list_path=None):
                 pct_str = 'higher than {:.0f}% of listings'.format(percentile)
                 modify.update_house_dict(house, ('_metadata', 'percentile'), pct_str)
         _ = json_handling.add_dict_to_json(house)
-
-
-# TODO: remove this!
-def score_single(house, scorecard, cont_scorecard):
-    """Score a single house.
-
-    Deprecated (never needed in the first place)
-
-    Args:
-        house (dict): House listing.
-        scorecard (dict): From full scorecard, standard attributes.
-        cont_scorecard (dict): From full scorecard, continuous attributes.
-
-    """
-    house_sc = score_house_dict(house, scorecard, cont_scorecard)
-    sum_scores(house_sc)
-    return house_sc
 
 
 def score_all():

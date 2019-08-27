@@ -12,8 +12,9 @@ import os
 import glob
 from time import sleep
 from datetime import datetime as dt
+
 import Code
-from Code import json_handling, support
+from Code import json_handling, support, clean
 from Code.api_calls import bing, citymapper, keys
 from Code.support import BadResponse
 
@@ -248,6 +249,23 @@ def update_days_on_market(dic):
     update_house_dict(dic, ('_metadata', 'days_on_market'), dom)
 
 
+def change_from_initial(dic):
+    """Calculate the change from the initial price."""
+    # Get current price
+    current_price = dic['_info'].get('list_price')
+
+    # Find initial listing
+    for date, text in dic['listing history'].items():
+        if 'Initial' in text:
+            initial_price = text.split()[3]
+            initial_price = clean.convert_currency_to_int(initial_price)
+
+    price_diff = current_price - initial_price
+    pct_change = '{:+.1%}'.format(price_diff / initial_price)
+    update_house_dict(dic, ('_info', 'change_from_initial'), price_diff)
+    update_house_dict(dic, ('_info', 'pct_change_initial'), pct_change)
+
+
 def modify_one(house, loop=False):
     # Add modifying functions here:
     add_coords(house)
@@ -272,9 +290,9 @@ def modify_one(house, loop=False):
         pass
     add_tether(house)
     update_days_on_market(house)
+    change_from_initial(house)
 
-    remove_key(house, 'basic_info', level=1)
-    remove_key(house, 'open houses', level=1)
+    remove_key(house, 'current_price_diff', 2)
 
     # Write back out
     _ = json_handling.add_dict_to_json(house)

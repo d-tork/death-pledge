@@ -53,6 +53,8 @@ def clean_dataframe_columns(df):
         'Status',
         'days_on_market',
         'list_price',
+        'change_from_initial',
+        'pct_change_initial',
         'sale_price',
         'sold',
         'sale_price_diff',

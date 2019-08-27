@@ -76,7 +76,10 @@ def clean_one(dic):
             elif k2 in [x[1] for x in string_list]:
                 v1[k2] = keep_string(v2)
             else:
-                continue
+                try:
+                    v1[k2] = int(v2)
+                except (ValueError, TypeError):  # string, or a tuple
+                    continue
 
 
 if __name__ == '__main__':

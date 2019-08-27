@@ -106,9 +106,10 @@ def remove_dict_from_json(filepath, quantity=None):
     all = read_dicts_from_json(filepath)
     keep = [all.pop(0)]
     if quantity is None:
-        quantity = len(all)
+        quantity = len(all) - 1
     del all[-quantity:]  # delete from end number of items in quantity
-    print('Removed {} old versions from {}'.format(quantity, os.path.basename(filepath)))
+    if quantity > 0:
+        print('Removed {} old versions from {}'.format(quantity, os.path.basename(filepath)))
     # Write the kept version back out to JSON
     write_dicts_to_json(keep, filepath)
 

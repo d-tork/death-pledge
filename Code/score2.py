@@ -310,7 +310,9 @@ def score_laundry(dic, house_sc):
     """
     laundry = False
     appliances = dic['building information'].get('Appliances')
-    if 'washer' in [x.lower() for x in appliances]:
+    if appliances is None:
+        return
+    elif 'washer' in [x.lower() for x in appliances]:
         laundry = True
     elif any([x for x in appliances if 'dryer' in x.lower()]):
         laundry = True

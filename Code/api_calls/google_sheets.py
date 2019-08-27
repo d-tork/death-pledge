@@ -7,6 +7,10 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from Code import pandas_handling
 
+GREEN = dict(red=.34, green=.73, blue=.54)
+WHITE = dict(red=1, green=1, blue=1)
+RED = dict(red=.90, green=.49, blue=.45)
+
 # Get this file's path
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -107,22 +111,22 @@ def get_url_list():
 
 def upload_dataframe(df1, df2, google_creds):
     service = build('sheets', 'v4', credentials=google_creds)
+    master_obj = dict(
+        range=SPREADSHEET_DICT['master_range'],
+        majorDimension='ROWS',
+        values=df1)
+    scores_obj = dict(
+        range=SPREADSHEET_DICT['scores'],
+        majorDimension='ROWS',
+        values=df2)
     response = service.spreadsheets().values().batchUpdate(
         spreadsheetId=SPREADSHEET_DICT['spreadsheetId'],
         body=dict(
             valueInputOption='USER_ENTERED',
             includeValuesInResponse=False,
             data=[
-                dict(
-                    range=SPREADSHEET_DICT['master_range'],
-                    majorDimension='ROWS',
-                    values=df1
-                ),
-                dict(
-                    range=SPREADSHEET_DICT['scores'],
-                    majorDimension='ROWS',
-                    values=df2
-                )
+                master_obj,
+                scores_obj
             ])
     ).execute()
     print(response)
@@ -140,11 +144,66 @@ def prep_dataframe(df):
     return df
 
 
-if __name__ == '__main__':
-    # sample_url_list = get_url_list()
+def upload_data():
     my_creds = get_creds()
     df1, df2 = pandas_handling.merge_data_and_scores()
     df2 = df2.droplevel(0, axis=1)
     df1, df2 = prep_dataframe(df1), prep_dataframe(df2)
 
     upload_dataframe(df1, df2, my_creds)
+
+
+def apply_desc_gradient_3(sheet_id, start_col_index, end_col_index, ascending=True):
+    if ascending:
+        mincolor, maxcolor = RED, GREEN
+    else:
+        mincolor, maxcolor = GREEN, RED
+    grid_range = dict(
+        sheetId=sheet_id,
+        startRowIndex=1,
+        startColumnIndex=start_col_index,
+        endColumnIndex=end_col_index)
+    gradient_rule = dict(
+        minpoint=dict(color=mincolor, type='MIN'),
+        midpoint=dict(color=WHITE, type='PERCENTILE', value='50'),
+        maxpoint=dict(color=maxcolor, type='MAX'))
+    format_rule = {
+        'ranges': [grid_range],
+        'gradientRule': gradient_rule}
+    conditional_format_rule_request = {
+        'rule': format_rule,
+        'index': 0}
+    rule_request = {
+        'addConditionalFormatRule': conditional_format_rule_request
+    }
+    return rule_request
+
+
+
+
+if __name__ == '__main__':
+    # sample_url_list = get_url_list()
+    # upload_data()
+    from pprint import pprint
+
+    my_creds = get_creds()
+    service = build('sheets', 'v4', credentials=my_creds)
+    spreadsheet_id = SPREADSHEET_DICT['spreadsheetId']
+    batch_update_spreadsheet_request_body = {
+        'requests': [
+            apply_desc_gradient_3(936588282, 35, 36)
+            """Here's how this needs to go: 
+            1. first, apply all rules I want (can do this from the web interface)
+            2. get response and label the rules by their index number with code comments
+            3. change all function calls from add... to updateConditionalFormatting
+            4. Any new rules, it must be "add", otherwise, always update
+            """
+        ],
+        'includeSpreadsheetInResponse': True
+    }
+    request = service.spreadsheets().batchUpdate(
+        spreadsheetId=spreadsheet_id,
+        body=batch_update_spreadsheet_request_body)
+    response = request.execute()
+    pprint(response)
+

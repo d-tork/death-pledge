@@ -61,7 +61,6 @@ def clean_dataframe_columns(df):
         'Price Per SQFT',
         'beds',
         'baths',
-        'Bathrooms Full',
         'Work commute (Bing)',
         'Work commute (Citymapper)',
         'tether',

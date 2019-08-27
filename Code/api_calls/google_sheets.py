@@ -179,12 +179,17 @@ def apply_desc_gradient_3(sheet_id, start_col_index, end_col_index, ascending=Tr
     return rule_request
 
 
-
-
 if __name__ == '__main__':
     # sample_url_list = get_url_list()
     # upload_data()
     from pprint import pprint
+
+    """Here's how this needs to go: 
+    1. first, apply all rules I want (can do this from the web interface)
+    2. get response and label the rules by their index number with code comments
+    3. change all function calls from add... to updateConditionalFormatting
+    4. Any new rules, it must be "add", otherwise, always update
+    """
 
     my_creds = get_creds()
     service = build('sheets', 'v4', credentials=my_creds)
@@ -192,12 +197,6 @@ if __name__ == '__main__':
     batch_update_spreadsheet_request_body = {
         'requests': [
             apply_desc_gradient_3(936588282, 35, 36)
-            """Here's how this needs to go: 
-            1. first, apply all rules I want (can do this from the web interface)
-            2. get response and label the rules by their index number with code comments
-            3. change all function calls from add... to updateConditionalFormatting
-            4. Any new rules, it must be "add", otherwise, always update
-            """
         ],
         'includeSpreadsheetInResponse': True
     }

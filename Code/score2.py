@@ -1,32 +1,73 @@
-"""
-Rate the various attributes of a house based on provided criteria.
+"""Rate the various attributes of a house based on provided criteria.
 
-Any field added to the house's scorecard dict should be in the form
-    'field_name_score'
-where all spaces are replaced with underscores and the whole name
-is lowercase. This aids with dataframe creation later.
+Dynamically reads two different types of scorecards from a single JSON file
+and applies those scores and weights to the attributes in a house JSON file.
+
+The first type of scorecard contains attributes whose possible values are
+known and enumerated, i.e. a house can be only one of several specific structure
+types, and each structure type is worth a certain number of points, and the
+whole field of "Structure Type" is weighted according to how much it matters
+in calculating the total score.
+
+The second type of scorecard contains attributes whose possible values cannot
+be enumerated because they can fall anywhere within a range of values, i.e.
+price or distance. For these, a min and max are set which determine at what value
+that attribute would receive 0 points, and at what value it would receive the
+maximum number of points.
+
+Any new field added to the house's scorecard dict should be in the form:
+    `'<field_name>_score'`
+where all spaces are replaced with underscores, the whole name is lowercase, and
+it ends with '_score'. This aids with dataframe creation later.
+
+Contents:
+    - get_scorecard():                    Gets the scorecard from file.
+    - get_score_for_item():               Scores an attribute.
+    - find_closest_key():                 Gets closest score (deprecated).
+    - score_house_dict():                 Score a whole house.
+    - score_nearest_metro():              Score the nearest metro walk (deprecated).
+    - continuous_score():                 Score attributes over a range.
+    - all_continuous_scoring():           Use :func:`continuous_score` with args from a file.
+    - score_laundry():                    Score the existence of laundry machines.
+    - sum_scores():                       Sum all scores in a dictionary.
+    - write_scorecards_to_file():         Output scorecard(s) to a scorecards.json
+    - score_dict_list_to_dataframe():     Convert scorecards to a dataframe.
+    - write_score_percentiles_to_jsons(): Write to house file total score and kth percentile.
+    - score_all():                        Score all houses in folder.
+    - sample():                           Score a single specified house (testing).
+
 """
 import json
-import pandas as pd
-import numpy as np
-from scipy import stats
 import os
 import glob
 import datetime as dt
+import pandas as pd
+import numpy as np
+from scipy import stats
+
 import Code
 from Code import json_handling, modify
 
 
-def get_scorecard(filepath=Code.SCORECARD_PATH, mode='regular'):
+def get_scorecard(filepath=None, mode='regular'):
     """Create scorecard dictionary from JSON file.
 
-    :arg
-        filepath (str): where to find scorecard.json
-        mode (str): {'regular', 'continuous'} which dict to get from file
+    Args:
+        filepath (str, optional): Where to find ``scorecard.json``. Defaults to ``None``.
+            Optional because the default scorecard path is saved as a package-level variable.
+        mode (str, optional):  Which dict to get from the scorecard. Defaults to 'regular'.
+            Must be either 'regular' or 'continuous'.
 
-    :return
-        dict
+    Returns:
+        dict: A scorecard.
+
+    Raises:
+        ValueError: If an invalid argument is passed to *mode*.
+
     """
+    if filepath is None:
+        filepath = Code.SCORECARD_PATH
+
     if mode == 'regular':
         index = 0
     elif mode == 'continuous':
@@ -44,17 +85,24 @@ class FieldNotScored(Exception):
 
 
 def get_score_for_item(inner_score_dict, field_name, value):
-    """Score each row in a listing dataframe.
+    """Score each value in a house listing if that field exists in the scorecard.
 
-    The listing is a single-column dataframe where the index is a (category, field)
-    MultiIndex and the column is the values for the house.
+    Args:
+        inner_score_dict (dict): Potential field values and their corresponding scores.
+            In the form ``{field value: points}``, but with a final item of
+            ``{'_weight': <float>}``.
+        field_name (str): Name of house attribute currently being scored.
+        value (str or float): Value of the house attribute currently being scored.
 
-    The inner_score_dict becomes a simple dictionary in the form:
-        {point value: attribute value}, but with a final item of
-        {'weight': integer}
+    Returns:
+        float: The attribute's score determined by the attribute value for the house.
+
+    Raises:
+        TypeError: If the score dict gives back a string instead of a number for *row_score*.
 
     """
     # Make certain field values negative (like prices) for comparison because the lower the better
+    # TODO: remove this, because any price or fee fields are now continuously scored attributes
     reversed_groups = ['price', 'fee']
     if any(x in field_name.lower() for x in reversed_groups):
         try:
@@ -74,12 +122,26 @@ def get_score_for_item(inner_score_dict, field_name, value):
         try:
             row_score = row_score * weight
         except TypeError:
-            print('\t{0}: {1}'.format(field_name, value))
+            error_msg = '\tfailed to score {2} for ({0}: {1})'.format(row_score, field_name, value)
+            raise TypeError(error_msg)
     return row_score
 
 
 def find_closest_key(val, dic):
-    """Find the closest match to the val in the dict's keys."""
+    """Find the closest match to the val in the dict's keys.
+    
+    Largely deprecated in favor of using :func:`continuous_score`.
+    Acts like a LOOKUP in Excel.
+
+    Args:
+        val (float): Value of the house attribute currently being scored.
+        dic (dict): Potential field values and their corresponding scores.
+            The "inner score dict" corresponding to the house attribute field.
+
+    Returns:
+        Closest matching score in the inner score dict.
+
+    """
     row_score = 0
     for key, pt_value in dic.items():
         if key == '_weight':
@@ -93,7 +155,17 @@ def find_closest_key(val, dic):
 
 
 def score_house_dict(dic, scorecard, cont_scorecard):
-    """Evaluates a house dictionary against scorecard."""
+    """Evaluates a house listing against scorecard.
+
+    Args:
+        dic (dict): House listing.
+        scorecard (dict): From full scorecard, standard attributes.
+        cont_scorecard (dict): From full scorecard, continuous attributes.
+
+    Returns:
+        dict: Scorecard for individual house listing.
+    
+    """
     house_sc = {'address': dic['_info']['full_address'],
                 'MLS Number': str(dic['basic info']['MLS Number']),
                 'badge': dic['_info']['badge']
@@ -107,15 +179,29 @@ def score_house_dict(dic, scorecard, cont_scorecard):
                 house_sc[new_fieldname] = field_score
 
     # Insert additional special scoring functions here
-    score_nearest_metro(dic, house_sc)
+    score_nearest_metro(dic, house_sc)  # TODO: remove (gets overwritten by continuous scoring anyway)
     all_continuous_scoring(dic, house_sc, cont_scorecard)
     score_laundry(dic, house_sc)
+
+    # Sum up scores
+    sum_scores(house_sc)
     return house_sc
 
 
 def score_nearest_metro(dic, house_sc):
-    """Evaluate distance to nearest metro"""
-    metro = dic['local travel']['Nearby Metro'][0]  # returns a list of [station, (dist, time)]
+    """Evaluate distance to nearest metro and updates house scorecard.
+
+    Deprecated in favor of using :func:`continuous_score`. This was basically an early
+    implementation of the same formula, albiet specific to metro walk times and a little
+    less developed. 
+    
+    Args:
+        dic (dict): House listing.
+        house_sc (dict): Scorecard for individual house listing.
+    
+    """
+    # TODO: remove all uses of this function!
+    metro = dic['local travel']['Nearby Metro'][0]  # takes the first [station, [dist, time]]
     dur = dt.datetime.strptime(metro[1][1].split()[0], '%H:%M:%S')
     delta = dt.timedelta(hours=dur.hour, minutes=dur.minute, seconds=dur.second)
     secs = delta.total_seconds()
@@ -134,35 +220,50 @@ def continuous_score(value, min_value, max_value, weight,
                      ascending=True, norm_by=None, zero_pt=0, **kwargs):
     """Score a value based on a min/max range.
 
-    The scale that determines these scores is arbitrary, and shifts depending on A) the range
-    of possible values specified, B) how or if it is normalized, and C) whether or not a zero
-    point is set and what it is set to. Therefore the relationship between the scores for
-    various values is _relative_, and can be adjusted later by multiplying it by a weighting
-    factor and/or changing the normalization.
+    The scale that determines these scores is arbitrary, and shifts depending on:
+        A) the range of possible values specified,
+        B) how or if it is normalized, and
+        C) whether or not a zero point is set and what it is set to.
+    Therefore the relationship between the scores for various values is **relative**, and can
+    be adjusted later by multiplying it by a weighting factor and/or changing the normalization.
 
     If an attribute's scores are not influencing the total score in the way you'd like it to,
-    first normalize it by increasing norm_by. Traditionally, I scored attributes on a 0-3.5
+    first normalize it by increasing *norm_by*. Traditionally, I scored attributes on a 0-3.5
     scale, and when the total score was calculated they were multiplied by their weight
-    factor. But now, for the ultra-important attributes, I can score them on different scales
-    like 1-10 or 1-15, _then_ multiplied by their weight.
-
-    Finding a good zero point percentage is as easy as
-        x = (zerovalue - min) / (max - min)  # for ascending, setting from left
-        x = 1 - (zerovalue - min) / (max - min)  # for descending, setting from right
+    factor (typically between 1 and 4). But now, for the ultra-important attributes, I can 
+    score them on different scales like 1-10 or 1-15, **then** multiply them by a weight.
 
     Args:
-        value (num): number to be scored
-        min_value (num): bottom of range of potential/expected values in dataset
-        max_value (num): top of range of potential/expected values in dataset
-        weight (int or float): weighting factor
-        ascending (bool): whether to look left-to-right or right-to-left, default True
-            Use false when a lower value is scored higher (i.e. price)
-        norm_by (float): scale by which to normalize the scores (i.e. 4, 10, 100)
-        zero_pt (float): if norm_by, percentage at which to set the zero
-            Anything left of the zero point (asc) or right of it (desc) becomes negative and
-            detracts from a score, rather than just being a lower score.
-        **kwargs: to accept non-parameters items from the scorecard dictionary
-            Namely, the value_keys tuple for getting the house's attribute value
+        value (num): Number to be scored.
+        min_value (num): Bottom of range of potential/expected values in dataset.
+        max_value (num): Top of range of potential/expected values in dataset.
+        weight (int or float): Weighting factor.
+        ascending (bool, optional): Whether to look left-to-right or right-to-left.
+            Defaults to ``True``.
+
+            Use ``False`` when a lower value is scored higher (i.e. price).
+        norm_by (float, optional): Max value of scale by which to normalize the scores.
+            Defaults to ``None``.
+
+            Pretty much every attribute is normalized on a 0 to 3.5 scale. Very important
+            attributes are 0 to 4 for that extra umph. Extremely important attributes can
+            go higher I suppose, but it's better to leave them at 4 and just increase the
+            weight.
+            
+            Be very careful if not normalizing, as you can end up with VERY high scores. The
+            only attributes that could probably get away with this are things like # of parking
+            spaces or bedrooms.
+        zero_pt (float, optional): If *norm_by*, percentage at which to set the zero value.
+            Defaults to 0.
+
+            Anything left of the zero point (when ascending) or right of it (when descending)
+            becomes negative and subtracts from a score, rather than just being lower.
+
+            Finding a good zero point percentage is as easy as:
+                ``x = (zerovalue - min) / (max - min)``      # for ascending, setting from left
+                ``x = 1 - (zerovalue - min) / (max - min)``  # for descending, setting from right
+        **kwargs: To accept non-parameters items from the scorecard dictionary.
+            Namely, the *value_keys* tuple for getting the house's attribute value.
 
     Examples:
         For scoring the listing price, where lower prices are better, and I reasonably
@@ -174,7 +275,8 @@ def continuous_score(value, min_value, max_value, weight,
 
         Set the zero point at 50% so that the upper half of the price scale becomes
         negative:
-        >>> continuous_score(prices, 275e3, 550e3, weight=3, ascending=False, norm_by=10, zero_pt=.5)
+        >>> continuous_score(prices, 275e3, 550e3, weight=3, ascending=False,
+        ...     norm_by=10, zero_pt=.5)
         array([ -7.8,  -9.6, -11.4, -13.2])
 
         An ascending example, as with the number of bedrooms. Zero point set to
@@ -185,16 +287,23 @@ def continuous_score(value, min_value, max_value, weight,
         array([-0.8,  0. ,  0.8,  1.6,  2.4])
 
     Returns:
-        int64 or array of int64
-            the scores of the value(s) passed
+        float: Score of the value passed.
+            Can return an array of scores if the input is also an array of values, but that is
+            generally reserved for testing out weights/normalization factors/zero points and not
+            for actual usage against a listing.
+
+    Raises:
+        ValueError: When the field (i.e. attribute) wasn't found in the listing dictionary for the
+            particular house (``dict.get()`` returned None and passed it to this function as
+            *value*).
 
     """
     if value is None:
         raise ValueError('\tNo value passed to scoring function.')
 
-    spread = (max_value - min_value)
+    spread = (max_value - min_value) + 1
     if spread < 50:
-        num = spread + 1
+        num = spread
     else:
         num = 50
     a = np.linspace(min_value, max_value, num=num)
@@ -211,17 +320,18 @@ def continuous_score(value, min_value, max_value, weight,
 
 
 def all_continuous_scoring(dic, house_sc, cont_sc):
-    """Stores and runs continuous scoring functions for each attribute.
+    """Loops through part 2 of the scorecard, passing arguments to :func:`continuous_score`.
 
-    Uses dict.get() to avoid KeyErrors if the field is not in the house dict.
+    Uses ``dict.get()`` to avoid KeyErrors if the attribute field is not in the house dict.
     If it's not, prints the error and moves on without scoring it.
 
-    :arg
-        dic (dict): house listing dictionary
-        house_sc (dict): house scorecard
-        cont_sc (dict): dict of all continuous scoring criteria dictionaries
-            For each criteria (subdict) in this dict, unpack the values to use
-            as the parameters to `continuous_score()`
+    Args:
+        dic (dict): House listing.
+        house_sc (dict): Scorecard being updated for individual house listing.
+        cont_sc (dict): Continuous scoring criteria dictionaries.
+            For each criteria (subdict) in this dict, unpack the values to use as the
+            arguments to :func:`continuous_score`.
+
     """
     for score_field, sc in cont_sc.items():
         # Get house value from house dict, assign back to scorecard dict
@@ -236,7 +346,7 @@ def all_continuous_scoring(dic, house_sc, cont_sc):
 def score_laundry(dic, house_sc):
     """Add points if laundry info is available.
 
-    Weighted low because it's not always provided.
+    Weighted low because the data is not always provided.
     """
     laundry = False
     appliances = dic['building information'].get('Appliances')
@@ -252,7 +362,7 @@ def score_laundry(dic, house_sc):
 
 
 def sum_scores(house_sc):
-    """Sum up all scores in the scorecard and write to scorecard."""
+    """Sum all scores in the scorecard."""
     total = 0
     item_list = [x for x in house_sc.keys() if x != 'MLS Number']
     for k in item_list:
@@ -264,7 +374,12 @@ def sum_scores(house_sc):
 
 
 def write_scorecards_to_file(cards):
-    """Dump scorecard(s) into single file."""
+    """Combine scorecard(s) and write to single file.
+    
+    Args:
+        cards: A single house scorecard or list of scorecards.
+    
+    """
     if isinstance(cards, dict):
         cards = [cards]
     json_output_file = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'scorecards.json')
@@ -274,20 +389,37 @@ def write_scorecards_to_file(cards):
 
 
 def score_dict_list_to_dataframe(sc_list):
-    """Given a list of JSON dicts, convert them all to a single df."""
+    """Create a dataframe of a list of scorecards.
+
+    Args:
+        sc_list (list): Collection of scorecards as dicts.
+
+    Returns:
+        pd.DataFrame
+
+    """
     full_df = pd.DataFrame()
     for sc in sc_list:
         df = pd.DataFrame.from_dict(sc, orient='index').T.set_index('MLS Number')
         full_df = pd.concat([full_df, df], axis=0, sort=False)
     # Rename column headers from their MLS number to their order in the file
+    # TODO: don't know what happened to this, but still useful when all the scorecards are
+    # for the same house.
     return full_df
 
 
 def write_score_percentiles_to_jsons(sc_list_path=None):
-    """With recently created scorecards, write total score & percentile back to dict.
+    """With recently created scorecards, write total score & percentile back to listing file.
 
-    Must be run after all scorecards have been generated and written to file. Then,
-    write each total_score back to _metadata as well as its k<sup>th</sup> percentile.
+    Must be run after all scorecards have been generated and written to file. Only then can it
+    write each total_score back to _metadata as well as its *k*\ :sup`th` percentile.
+
+    Args:
+        sc_list_path (str, optional): Path to ``scorecards.json``. Defaults to ``None``.
+            Optional because the code knows where the file should be relative to the rest of the
+            project structure. It should have been generated just microseconds prior to this
+            function executing, after all.
+
     """
     if sc_list_path is None:
         sc_list_path = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'scorecards.json')
@@ -311,35 +443,46 @@ def write_score_percentiles_to_jsons(sc_list_path=None):
         _ = json_handling.add_dict_to_json(house)
 
 
+# TODO: remove this!
 def score_single(house, scorecard, cont_scorecard):
-    """Score a single house"""
+    """Score a single house.
+
+    Deprecated (never needed in the first place)
+
+    Args:
+        house (dict): House listing.
+        scorecard (dict): From full scorecard, standard attributes.
+        cont_scorecard (dict): From full scorecard, continuous attributes.
+
+    """
     house_sc = score_house_dict(house, scorecard, cont_scorecard)
     sum_scores(house_sc)
     return house_sc
 
 
 def score_all():
+    """Score all the house listings saved in the ``saved_listings`` folder."""
     my_scorecard = get_scorecard(mode='regular')
     my_cont_scorecard = get_scorecard(mode='continuous')
 
     house_sc_list = []  # for JSON output
     for house_file in glob.glob(Code.LISTINGS_GLOB):
         house_dict = json_handling.read_dicts_from_json(house_file)[0]
-        house_sc = score_single(house_dict, my_scorecard, my_cont_scorecard)
+        house_sc = score_house_dict(house_dict, my_scorecard, my_cont_scorecard)
         house_sc_list.append(house_sc)
 
     write_scorecards_to_file(house_sc_list)
     write_score_percentiles_to_jsons()
-    return
 
 
 def sample():
-    my_scorecard = get_scorecard()
+    my_scorecard = get_scorecard(mode='regular')
+    my_cont_scorecard = get_scorecard(mode='continuous')
     sample_fname = '4304_34TH_ST_S_B2.json'
     sample_path = os.path.join(Code.LISTINGS_DIR, sample_fname)
     sample_house = json_handling.read_dicts_from_json(sample_path)[0]
 
-    sample_house_sc = score_single(sample_house, my_scorecard)
+    sample_house_sc = score_house_dict(sample_house, my_scorecard, my_cont_scorecard)
 
     write_scorecards_to_file(sample_house_sc)
     sample_df = score_dict_list_to_dataframe([sample_house_sc])

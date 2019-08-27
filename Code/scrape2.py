@@ -1,11 +1,9 @@
-"""
-Scrape listing URLs for details that I would normally input myself.
+"""Scrape listing URLs for details that I would normally input myself.
 
 This module returns no values; it is meant to accumulate a listing's
 details in a dictionary, then write that dictionary to a JSON file
-for that listing (or append the dict to the list of JSON dictionaries
-if the file already exists) with a key:value pair for the timestamp
-of access.
+(or append the dict to the list of JSON dictionaries if the file already
+exists).
 
 """
 import random
@@ -30,22 +28,37 @@ class ListingNotAvailable(Exception):
 
 
 def get_html_from_file(fname):
-    """Gets HTML soup from a local file (for offline testing)"""
+    """Gets HTML soup from a local file (for offline testing).
+    
+    Deprecated; I haven't done any offline testing since the first day.
+    
+    """
     with open(fname) as fhand:
         c = fhand.read()
     return BeautifulSoup(c, features='html.parser')
 
 
 def prettify_soup(soup_obj):
-    """Writes out HTML soup for manual parsing (for testing)"""
+    """Writes out HTML soup for manual parsing (for testing)
+    
+    Deprecated; I haven't done any offline testing since the first day.
+    
+    """
     prettyhtml = soup_obj.prettify()
     with open('html_source.txt', 'w') as fhand:
         fhand.write(prettyhtml)
 
 
 def sign_into_website(driver):
-    """Open website and login to access restricted listings."""
-    # Sign in
+    """Open website and login to access restricted listings.
+
+    Doesn't return anything; the browser is left open after signing in for
+    another function to take over driving.
+
+    Args:
+        driver: Selenium WebDriver for navigating on the internet.
+    
+    """
     driver.get(keys.website_url)
     username = driver.find_element_by_id('email_field')
     password = driver.find_element_by_id('user_password')
@@ -63,7 +76,19 @@ def sign_into_website(driver):
 
 
 def get_soup_for_url(url, driver):
-    """Get BeautifulSoup object for single URL"""
+    """Get BeautifulSoup object for a URL.
+    
+    Args:
+        url (str): URL for listing.
+        driver: Selenium WebDriver
+
+    Returns:
+        bs4 soup object
+
+    Raises:
+        TimeoutException: If listing details don't appear within 10 sec after navigation.
+    
+    """
     url_suffix = url.rfind('/') + 3
     print('URL: {}'.format(url[url_suffix:]))
     driver.get(url)
@@ -78,12 +103,17 @@ def get_soup_for_url(url, driver):
     except TimeoutException:
         raise TimeoutException('Listing page did not load.')
 
-    soup = BeautifulSoup(driver.page_source, 'html.parser')
-    return soup
+    return BeautifulSoup(driver.page_source, 'html.parser')
 
 
 def get_main_box(soup, dic):
-    """Add scrape_soup box details to listing dictionary."""
+    """Add scrape_soup box details to listing dictionary.
+
+    Args: 
+        soup: bs4 soup object.
+        dic (dict): House listing.
+    
+    """
     # Get tags
     result = soup.find_all('div', attrs={'class': 'col-8 col-sm-8 col-md-7'})
     main_box = result[0]

@@ -1,3 +1,5 @@
+"""Generic functions to support other modules."""
+
 import requests
 import random
 from math import radians, cos, sin, asin, sqrt
@@ -11,13 +13,15 @@ class BadResponse(Exception):
 
 
 def initialize_listing_dict():
-    """Create an empty listing dict to provide the backbone.
+    """Create an empty listing dict to provide the backbone to the house file.
 
     The structure needed is the outer dicts (categories) comprised
-    of empty dictionaries to be filled with the fields and values.
+    of empty dictionaries to be filled with field: value pairs.
 
     Here you can specify the precise order of the dict keys, because
     as of Python 3.7, insertion order in dicts is preserved.
+
+    Returns: dict
     """
     cat_list = [
         '_metadata',
@@ -45,6 +49,7 @@ def str_coords(coords):
     return ','.join(str_list)
 
 
+# TODO: is this getting used anywhere??
 def check_status_of_website(url):
     """Make sure get() returns a 200"""
     ua = UserAgent()
@@ -56,19 +61,21 @@ def check_status_of_website(url):
 
 def get_commute_datetime(mode, dayofweek=1, hrmin='06:30'):
     """Get my work commute time for the next day specified.
-    By default, work time is 06:30 and day is Tuesday.
 
+    By default, work time is 06:30 and day is Tuesday.
     Adapted from SO 6558535
 
     Args:
-        mode (str): {'cm', 'bing'}
-            determines the format for citymapper or bing
-        dayofweek (int): index of weekday, default 1 (Tuesday)
+        mode (str): Determines how to format the resulting string.
+            Either 'bing', or 'cm' for citymapper.
+        dayofweek (int, optional): Index of weekday. Defaults to 1 (Tuesday).
             0=Mon, 1=Tue, 2=Wed, 3=Thur, 4=Fri, 5=Sat, 6=Sun
-        hrmin (str): 24-hour specifying departure or arrival time, default 6:30 AM
-            Departure if driving, arrival time if transit
+        hrmin (str, optional): 24-hour specifying departure or arrival time. Defaults to 6:30 AM.
+            It's the departure time if driving, arrival time if transit.
 
-    :return: str formatted as datetime for given mode
+    Returns:
+        str: Formatted as datetime for chosen *mode*.
+
     """
     now = dt.datetime.now()
     days_ahead = dayofweek - now.weekday()
@@ -109,7 +116,6 @@ def haversine(coords1, coords2):
 
     a = sin(dLat/2)**2 + cos(lat1)*cos(lat2)*sin(dLon/2)**2
     c = 2*asin(sqrt(a))
-
     return R * c
 
 

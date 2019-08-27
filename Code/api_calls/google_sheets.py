@@ -129,6 +129,12 @@ def upload_dataframe(df1, df2, google_creds):
 
 
 def prep_dataframe(df):
+    """Converts a dataframe to iterable values for Google batchUpdate.
+
+    Returns
+        list: data as list of values
+
+    """
     df = df.fillna('').astype('str')
     df = df.reset_index().T.reset_index().T.values.tolist()
     return df
@@ -138,5 +144,7 @@ if __name__ == '__main__':
     # sample_url_list = get_url_list()
     my_creds = get_creds()
     df1, df2 = pandas_handling.merge_data_and_scores()
+    df2 = df2.droplevel(0, axis=1)
     df1, df2 = prep_dataframe(df1), prep_dataframe(df2)
+
     upload_dataframe(df1, df2, my_creds)

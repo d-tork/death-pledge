@@ -49,8 +49,17 @@
       },
       "Structure Type": {
           "Detached": 3.5,
-          "End of Row/Townhouse": 2,
+          "Twin/Semi-Detached": 3,
+          "End of Row/Townhouse": 2.5,
+          "Row/Townhouse": 2,
+          "Unit/Flat/Apartment": 0,
           "_weight": 1
+      },
+      "Unit Building Type": {
+          "Hi-Rise 9+ Floors": -1,
+          "Mid-Rise 5-8 Floors": 0,
+          "Garden 1- 4 Floors": 2,
+          "_weight": 1.5
       },
       "Has HOA": {
           "No": 2.0,

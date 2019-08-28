@@ -181,7 +181,7 @@ def apply_desc_gradient_3(sheet_id, start_col_index, end_col_index, ascending=Tr
 
 if __name__ == '__main__':
     # sample_url_list = get_url_list()
-    # upload_data()
+    upload_data()
     from pprint import pprint
 
     """Here's how this needs to go: 
@@ -190,13 +190,13 @@ if __name__ == '__main__':
     3. change all function calls from add... to updateConditionalFormatting
     4. Any new rules, it must be "add", otherwise, always update
     """
-
+    """
     my_creds = get_creds()
     service = build('sheets', 'v4', credentials=my_creds)
     spreadsheet_id = SPREADSHEET_DICT['spreadsheetId']
     batch_update_spreadsheet_request_body = {
         'requests': [
-            apply_desc_gradient_3(936588282, 35, 36)
+            # apply_desc_gradient_3(936588282, 35, 36)
         ],
         'includeSpreadsheetInResponse': True
     }
@@ -205,4 +205,4 @@ if __name__ == '__main__':
         body=batch_update_spreadsheet_request_body)
     response = request.execute()
     pprint(response)
-
+    """

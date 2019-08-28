@@ -66,6 +66,7 @@
           "_weight": 1
       },
       "County": {
+        "WASHINGTON": -1,
         "PRINCE GEORGES": 0,
         "FAIRFAX": 1,
         "ALEXANDRIA CITY": 2,

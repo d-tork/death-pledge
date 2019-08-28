@@ -212,15 +212,6 @@ def split_comma_delimited_fields(dic):
             v1[field] = val_list
 
 
-def sale_price_diff(dic):
-    """Update sale price diff"""
-    list_price = dic['_info']['list_price']
-    sale_price = dic['_info']['sale_price']
-    diff = sale_price - list_price
-    dic['_info']['sale_price_diff'] = diff
-    dic['_info']['sale_diff_pct'] = '{:+.1%}'.format(diff / list_price)
-
-
 def add_tether(dic):
     """Add straight-line distance to centerpoint (Arlington Cememtery)."""
     house_coords = dic['_metadata'].get('geocoords')
@@ -262,8 +253,31 @@ def change_from_initial(dic):
 
     price_diff = current_price - initial_price
     pct_change = '{:+.1%}'.format(price_diff / initial_price)
-    update_house_dict(dic, ('_info', 'change_from_initial'), price_diff)
-    update_house_dict(dic, ('_info', 'pct_change_initial'), pct_change)
+    update_house_dict(dic, ('_info', 'change'), price_diff)
+    update_house_dict(dic, ('_info', 'pct_change'), pct_change)
+
+
+def sale_price_diff(dic):
+    """Get the difference between listing price and sale price."""
+    info = dic['_info']
+    if info.get('badge') == 'Sold':
+        list_price = info.get('list_price')
+        sale_price = info.get('sale_price')
+        diff = sale_price - list_price
+        diff_pct = '{:.1%}'.format(diff / list_price)
+
+        update_house_dict(dic, ('_info', 'sale_price_diff'), diff)
+        update_house_dict(dic, ('_info', 'sale_diff_pct'), diff_pct)
+
+
+def tax_assessed_diff(dic):
+    """Get the difference between listing price and the tax assessed value."""
+    list_price = dic['_info'].get('list_price')
+    tax_assessed = dic['expenses / taxes'].get('Tax Assessed Value')
+    diff = tax_assessed - list_price
+    diff_pct = '{:.1%}'.format(diff / list_price)
+
+    update_house_dict(dic, ('expenses / taxes', 'tax_assessed_diff'), diff_pct)
 
 
 def modify_one(house, loop=False):
@@ -284,13 +298,11 @@ def modify_one(house, loop=False):
     add_nearest_bus_walk(house)
     add_frequent_driving(house, keys.favorites_driving)
     travel_quick_stats(house)
-    try:
-        sale_price_diff(house)
-    except KeyError:
-        pass
+    sale_price_diff(house)
     add_tether(house)
     update_days_on_market(house)
     change_from_initial(house)
+    tax_assessed_diff(house)
 
     remove_key(house, 'current_price_diff', 2)
 

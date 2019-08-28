@@ -53,12 +53,8 @@ def clean_dataframe_columns(df):
         'Status',
         'days_on_market',
         'list_price',
-        'change_from_initial',
-        'pct_change_initial',
-        'sale_price',
-        'sold',
-        'sale_price_diff',
-        'sale_diff_pct',
+        'change',
+        'pct_change',
         'sqft',
         'Price Per SQFT',
         'beds',
@@ -81,6 +77,7 @@ def clean_dataframe_columns(df):
         'County Tax',
         'Tax Annual Amount',
         'Tax Assessed Value',
+        'tax_assessed_diff',
         '# of Attached Carport Spaces',
         '# of Attached Garage Spaces',
         '# of Detached Garage Spaces',
@@ -93,6 +90,10 @@ def clean_dataframe_columns(df):
         'County',
         'city_state',
         'Inclusions',
+        'sold',
+        'sale_price',
+        'sale_price_diff',
+        'sale_diff_pct'
     ]
     return df[col_list]
 

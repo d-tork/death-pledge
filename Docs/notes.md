@@ -25,6 +25,8 @@ Conditional formatting: https://developers.google.com/sheets/api/samples/conditi
 - [ ] push scores dataframe to new spreadsheet to share with DB
 - [ ] update Blacksnake (and find a way to make those kinds of manual changes permanent!)
 - [ ] **IDEA:** get raspberry pi up and running again, clone the repo, then set it to run the whole script on command. That command can be sent from my phone on a lunch break.
+    - research headless mode (https://www.raspberrypi.org/documentation/configuration/wireless/headless.md)
+    - need to prevent it from sleeping so VNC can connect (https://stackoverflow.com/questions/30985964/how-to-disable-sleeping-on-raspberry-pi)
 - [ ] metro walk score should probably be weighted a little bit higher than commute score (or at least higher than it is now), because metro walk is applicable to everyone (not just me) and at all times (not just early morning), and my commute will feasibly change (maybe even to a driving commute in the opposite direction, like Belvoir or McLean) yet the metro walk will still be valuable.
 - [ ] Can I store JSONs in google drive? That's the only way to access them here
     - [ ] share the new folder (from Excel Help to me), then access that shared folder via my own drive on computer. Set up a bash script to rsync every morning while I'm on my way to work.

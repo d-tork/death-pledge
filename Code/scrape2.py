@@ -284,5 +284,5 @@ def scrape_from_url_list(url_df, quiet=True):
 
 if __name__ == '__main__':
     # sample_url_list = [keys.sample_url, keys.sample_url2, keys.sample_url3]
-    sample_urls = google_sheets.get_url_list()
+    sample_urls = google_sheets.get_url_list().tail(1)
     scrape_from_url_list(sample_urls)

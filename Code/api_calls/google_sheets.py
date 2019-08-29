@@ -5,7 +5,7 @@ import pandas as pd
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
-from Code import pandas_handling
+from Code import pandas_handling, score2
 
 GREEN = dict(red=.34, green=.73, blue=.54)
 WHITE = dict(red=1, green=1, blue=1)
@@ -181,6 +181,8 @@ def apply_desc_gradient_3(sheet_id, start_col_index, end_col_index, ascending=Tr
 
 if __name__ == '__main__':
     # sample_url_list = get_url_list()
+    score2.score_all()
+    pandas_handling.merge_data_and_scores()
     upload_data()
     from pprint import pprint
 

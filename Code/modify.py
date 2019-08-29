@@ -252,9 +252,10 @@ def change_from_initial(dic):
             initial_price = clean.convert_currency_to_int(initial_price)
 
     price_diff = current_price - initial_price
-    pct_change = '{:+.1%}'.format(price_diff / initial_price)
-    update_house_dict(dic, ('_info', 'change'), price_diff)
-    update_house_dict(dic, ('_info', 'pct_change'), pct_change)
+    if price_diff != 0:
+        pct_change = '{:+.1%}'.format(price_diff / initial_price)
+        update_house_dict(dic, ('_info', 'change'), price_diff)
+        update_house_dict(dic, ('_info', 'pct_change'), pct_change)
 
 
 def sale_price_diff(dic):
@@ -303,8 +304,6 @@ def modify_one(house, loop=False):
     update_days_on_market(house)
     change_from_initial(house)
     tax_assessed_diff(house)
-
-    remove_key(house, 'current_price_diff', 2)
 
     # Write back out
     _ = json_handling.add_dict_to_json(house)

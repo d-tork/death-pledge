@@ -78,16 +78,17 @@
     "price_score": {
       "value_keys": ["_info", "list_price"],
       "min_value": 275e3,
-      "max_value": 525e3,
-      "weight": 2.5,
+      "max_value": 550e3,
+      "weight": 3,
       "ascending": false,
-      "norm_by": 3.5
+      "norm_by": 3.5,
+      "zero_pt": 0.18
     },
     "commute_score": {
       "value_keys": ["quickstats", "commute_transit_mins"],
       "min_value": 15,
       "max_value": 120,
-      "weight": 8,
+      "weight": 5,
       "ascending": false,
       "norm_by": 4,
       "zero_pt": 0.47
@@ -130,7 +131,7 @@
       "value_keys": ["basic info", "Price Per SQFT"],
       "min_value": 110,
       "max_value": 520,
-      "weight": 4,
+      "weight": 4.5,
       "ascending": false,
       "norm_by": 4,
       "zero_pt": 0.4
@@ -148,7 +149,7 @@
       "value_keys": ["quickstats", "bus_walk_mins"],
       "min_value": 0,
       "max_value": 30,
-      "weight": 4,
+      "weight": 5,
       "ascending": false,
       "norm_by": 4,
       "zero_pt": 0.75
@@ -165,10 +166,10 @@
       "value_keys": ["association / location / schools", "Condo/Coop Fee"],
       "min_value": 0,
       "max_value": 960,
-      "weight": 1.5,
+      "weight": 2,
       "ascending": false,
       "norm_by": 3.5,
-      "zero_pt": 0
+      "zero_pt": 0.05
     }
   }
 ]

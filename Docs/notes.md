@@ -42,7 +42,7 @@ on command. That command can be sent from my phone on a lunch break.
 higher than it is now), because metro walk is applicable to everyone (not just me) and at all times (not
 just early morning), and my commute will feasibly change (maybe even to a driving commute in the opposite
 direction, like Belvoir or McLean) yet the metro walk will still be valuable.
-- [ ] price and price per sqft definitely need to be weighted higher, or else commute's weight be reduced.
+- [x] price and price per sqft definitely need to be weighted higher, or else commute's weight be reduced.
 See: the DC property for $550K that made it in the top 10 despite being the most expensive house I've
 analyzed AND in D.C.
 - [x] Can I store JSONs in google drive? That's the only way to access them here
@@ -56,7 +56,7 @@ analyzed AND in D.C.
     score on a scale of 0 to 3.5. Weighted by a factor of 1 or 2, of course. Store it in quickstats, or
     local travel?
 - [ ] create visitation sheet in google with the fields that I would rate in person. Then read that sheet
-it, condense it down to a single number or two, and factor it into the scorecard. It can (and often should)
+in, condense it down to a single number or two, and factor it into the scorecard. It can (and often should)
 be negative, as this is an adjustment of my first impression. Internal to this manual assessment is a
 weighting scheme, where the neighborhood and modernity threshold should be weighted quite heavily (considering
 there's not much information available to to me on those things prior to the visit). 

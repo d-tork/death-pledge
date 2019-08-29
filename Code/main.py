@@ -20,6 +20,7 @@ def main():
     modify.modify_all()
     score2.score_all()
     pandas_handling.merge_data_and_scores()
+    google_sheets.upload_data()
 
 
 def single_sample():

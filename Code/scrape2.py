@@ -18,9 +18,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
+
 import Code
 from Code import support, clean, json_handling
-from Code.api_calls import keys
+from Code.api_calls import keys, google_sheets
 
 
 class ListingNotAvailable(Exception):
@@ -233,7 +234,7 @@ def scrape_soup(soup):
     return listing_dict
 
 
-def scrape_from_url_list(url_list, quiet=True):
+def scrape_from_url_list(url_df, quiet=True):
     """Given an array of URLs, use soup scraper to save JSONs of the listing data.
 
     Meant for use within a context manager for the webdriver.
@@ -246,19 +247,19 @@ def scrape_from_url_list(url_list, quiet=True):
         print('Opening browser and signing in...')
         sign_into_website(wd)
         print('Navigating to URLs...\n')
-        for url in url_list:
+        for row in url_df.itertuples():
             random.seed()
             wait_time = random.random() * 5
 
             # Check if URL is still valid
-            result_code = support.check_status_of_website(url)
+            result_code = support.check_status_of_website(row.url)
             if result_code != 200:
                 print('URL did not return valid response code.')
                 continue
 
             # Get soup, then scrape and wait before moving on
             try:
-                soup = get_soup_for_url(url, wd)
+                soup = get_soup_for_url(row.url, wd)
             except ListingNotAvailable as e:
                 print('\t{}'.format(e))
                 continue
@@ -269,7 +270,8 @@ def scrape_from_url_list(url_list, quiet=True):
 
             # Clean and add a couple more fields
             clean.clean_one(listing_dict)
-            listing_dict['_metadata'].update({'URL': url})
+            listing_dict['_metadata'].update({'URL': row.url})
+            listing_dict['_metadata'].update({'date_added': row.date_added})
 
             # Merge with previous dict
             json_handling.check_and_merge_dicts(listing_dict)
@@ -281,6 +283,6 @@ def scrape_from_url_list(url_list, quiet=True):
 
 
 if __name__ == '__main__':
-    sample_url_list = [keys.sample_url, keys.sample_url2, keys.sample_url3]
-    sample_url_list = [keys.sample_url4]
-    scrape_from_url_list(sample_url_list)
+    # sample_url_list = [keys.sample_url, keys.sample_url2, keys.sample_url3]
+    sample_urls = google_sheets.get_url_list()
+    scrape_from_url_list(sample_urls)

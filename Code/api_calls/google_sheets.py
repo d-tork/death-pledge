@@ -98,8 +98,8 @@ def process_url_list(df):
     df['url'] = df['url'].apply(trim_url)
 
     # drop rows that I've marked inactive
-    url_series = df.loc[df['inactive'] == '']['url']
-    return url_series
+    df_url = df.loc[df['inactive'] == ''][['url', 'date_added']]
+    return df_url
 
 
 def get_url_list():

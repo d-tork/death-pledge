@@ -49,6 +49,7 @@ def clean_dataframe_columns(df):
         'TOTAL_SCORE',
         'URL',
         'full_address',
+        'date_added',
         'badge',
         'Status',
         'days_on_market',

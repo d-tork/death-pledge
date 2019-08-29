@@ -9,6 +9,8 @@ __pycache__/
 *~
 
 # Personal files
+geckodriver.log
+token.pickle
 keys.py
 Code/token.pickle
 Code/api_calls/token.pickle

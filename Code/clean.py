@@ -36,25 +36,25 @@ def keep_string(s):
 
 
 currency_list = [
-    ('info', 'list_price'),
-    ('info', 'sale_price'),
+    ('_info', 'list_price'),
+    ('_info', 'sale_price'),
     ('basic info', 'Price Per SQFT'),
     ('basic info', 'HOA Fee'),
     ('building information', 'Price Per SQFT'),
     ('association / location / schools', 'Condo/Coop Fee')
 ]
 int_parse_list = [
-    ('info', 'beds'),
-    ('info', 'sqft')
+    ('_info', 'beds'),
+    ('_info', 'sqft')
 ]
 float_parse_list = [
-    ('info', 'baths'),
+    ('_info', 'baths'),
     ('basic info', 'Lot Size Acres'),
     ('exterior information', 'Lot Size Acres'),
     ('expenses / taxes', 'Tax Annual Amount')
 ]
 date_list = [
-    ('info', 'sold')
+    ('_info', 'sold')
 ]
 string_list = [
     ('basic info', 'MLS Number')

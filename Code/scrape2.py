@@ -123,7 +123,7 @@ def get_main_box(soup, dic):
     badge = main_box.a.string
     address = main_box.h1.string
     citystate = main_box.h2.string
-    vitals = main_box.h3.string.split(' - ')
+    vitals = main_box.h5.text.split(' |\xa0')
 
     # Add to dictionary
     dic['_info'] = {'badge': badge,

@@ -84,7 +84,7 @@ def get_url_dataframe(google_creds, spreadsheet_dict=SPREADSHEET_DICT):
 
 
 def process_url_list(df):
-    """Make adjustments to URL dataframe before passing as series."""
+    """Make adjustments to URL dataframe before passing as small dataframe."""
 
     def trim_url(url_str):
         """Remove extra params from URL"""

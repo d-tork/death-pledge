@@ -1,3 +1,4 @@
+#!/Users/dtork/.local/share/virtualenvs/death-pledge-ki0k_bpH/bin/python
 """Run actions on housing search spreadsheet."""
 
 import os
@@ -16,10 +17,9 @@ from Code import scrape2, score2, modify, json_handling, pandas_handling
 def main():
     urls = google_sheets.get_url_list()
     json_handling.clear_all_json_histories(Code.LISTINGS_GLOB)
-    scrape2.scrape_from_url_list(urls)
+    scrape2.scrape_from_url_list(urls, quiet=True)
     modify.modify_all()
     score2.score_all()
-    pandas_handling.merge_data_and_scores()
     google_sheets.upload_data()
 
 

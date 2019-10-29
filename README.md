@@ -19,6 +19,10 @@ Or run things without explicitly activating the virtual environment:
 $ pipenv run python citymapper.py
 ```
 
+### with `virtualenv`
+
+A requirements.txt file is included for use with `venv`, for my dumb Raspberry Pi that couldn't handle `pipenv`.
+
 ## Usage
 Only with the proper credentials can this be run:
 * Google OAuth for my spreadsheet, or else feed it your own list of URLs

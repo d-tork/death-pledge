@@ -181,8 +181,7 @@ def apply_desc_gradient_3(sheet_id, start_col_index, end_col_index, ascending=Tr
 
 if __name__ == '__main__':
     # sample_url_list = get_url_list()
-    score2.score_all()
-    pandas_handling.merge_data_and_scores()
+    # score2.score_all()
     upload_data()
     from pprint import pprint
 

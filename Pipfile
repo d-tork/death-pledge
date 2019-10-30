@@ -21,6 +21,7 @@ seaborn = "*"
 scipy = "*"
 pylint = "*"
 pprint = "*"
+death-pledge = {editable = true,path = "."}
 
 [requires]
 python_version = "3.7"

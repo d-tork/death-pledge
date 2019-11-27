@@ -2,6 +2,7 @@
 
 import time
 import glob
+import re
 import Code
 from Code import json_handling, scrape2
 
@@ -18,6 +19,8 @@ def parse_string_int(s):
         return int(s.split()[0])
     except AttributeError:
         return int(s)
+    except ValueError:  # since they started making them '2,260 sqft' I guess?
+        return int(s.split()[0].replace(',', ''))
 
 
 def parse_string_float(s):

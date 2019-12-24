@@ -295,12 +295,11 @@ def all_continuous_scoring(dic, house_sc, cont_sc):
     """
     for score_field, sc in cont_sc.items():
         # Get house value from house dict, assign back to scorecard dict
-        val_keys = sc['value_keys']
-        sc['value'] = dic[val_keys[0]].get(val_keys[1])
+        sc['value'] = dic[sc['value_keys'][0]].get(sc['value_keys'][1])
         try:
             house_sc[score_field] = continuous_score(**sc)
         except ValueError as e:
-            print(e)
+            print(f'{score_field}: {e}')
 
 
 def score_laundry(dic, house_sc):

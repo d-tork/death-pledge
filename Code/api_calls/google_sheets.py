@@ -146,7 +146,7 @@ def prep_dataframe(df):
 
 def upload_data():
     my_creds = get_creds()
-    df1, df2 = pandas_handling.merge_data_and_scores()
+    df1, df2 = pandas_handling.merge_data_and_scores(slim=True)
     df2 = df2.droplevel(0, axis=1)
     df1, df2 = prep_dataframe(df1), prep_dataframe(df2)
 

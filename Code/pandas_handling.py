@@ -5,8 +5,12 @@ import Code
 from Code import score2, json_handling
 
 
-def merge_data_and_scores():
-    """Read in data from JSONs and scorecards, then merge as dataframe"""
+def merge_data_and_scores(slim=True):
+    """Read in data from JSONs and scorecards, then merge as dataframe.
+
+    Args:
+        slim (bool): If True, then only merge with TOTAL_SCORE.
+    """
     sc_path = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'scorecards.json')
     scores = json_handling.read_dicts_from_json(sc_path)
     df_scores = score2.score_dict_list_to_dataframe(scores)
@@ -27,12 +31,15 @@ def merge_data_and_scores():
     df_data = json_handling.all_files_to_dataframe(Code.LISTINGS_GLOB).T
 
     # Merge on indices
-    merged = pd.merge(df_data, df_scores[('scores', 'TOTAL_SCORE')],
+    if slim:
+        df_scores = df_scores[('scores', 'TOTAL_SCORE')]
+    merged = pd.merge(df_data, df_scores,
                       left_index=True, right_index=True)
     # Drop the top level of the column multiindex (Excel tables don't like it)
     merged = merged.droplevel(level=0, axis=1)
     # Set column headers
-    merged = clean_dataframe_columns(merged)
+    if slim:
+        merged = clean_dataframe_columns(merged)
     # Name the index
     merged.index.name = 'MLS Number'
     # Sort by total score
@@ -101,4 +108,4 @@ def clean_dataframe_columns(df):
 
 if __name__ == '__main__':
     score2.score_all()
-    merge_data_and_scores()
+    merge_data_and_scores(slim=False)

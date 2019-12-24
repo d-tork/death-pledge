@@ -18,7 +18,7 @@ from Code import scrape2, score2, modify, json_handling, pandas_handling
 def main():
     urls = google_sheets.get_url_list()[-3:]
     json_handling.clear_all_json_histories(Code.LISTINGS_GLOB)
-    scrape2.scrape_from_url_list(urls, quiet=True)
+    scrape2.scrape_from_url_list(urls, quiet=False)
     modify.modify_all()
     score2.score_all()
     #google_sheets.upload_data()

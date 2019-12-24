@@ -200,8 +200,8 @@ def get_cards(soup, dic):
         if card_head:
             card_title = card_head.string
             if card_title:
-                discard = ['Which', 'Open Houses']
-                if any(x in card_title for x in discard):
+                discard = ['which', 'open houses', 'questions']
+                if any(x in card_title.lower() for x in discard):
                     continue
                 card_title = card_title.lower().strip()
 

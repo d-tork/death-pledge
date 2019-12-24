@@ -16,11 +16,9 @@ def convert_currency_to_int(s):
 
 def parse_string_int(s):
     try:
-        return int(s.split()[0])
+        return int(s.split()[0].replace(',', ''))
     except AttributeError:
         return int(s)
-    except ValueError:  # since they started making them '2,260 sqft' I guess?
-        return int(s.split()[0].replace(',', ''))
 
 
 def parse_string_float(s):

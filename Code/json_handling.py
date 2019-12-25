@@ -4,8 +4,10 @@ from datetime import datetime
 import os
 import glob
 import copy
-import Code
 from django.utils.text import slugify
+
+import Code
+from Code import clean
 
 
 def read_dicts_from_json(filepath):
@@ -51,6 +53,9 @@ def add_dict_to_json(dic):
         all_scrapes.extend(contents)
     except FileNotFoundError:
         pass
+
+    # Clean any dict about to be saved to file
+    clean.clean_one(dic)
 
     # Check if newest scrape is different from previous one
     if all_scrapes:  # previous versions existed

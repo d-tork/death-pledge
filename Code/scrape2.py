@@ -20,7 +20,7 @@ from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 
 import Code
-from Code import support, clean, json_handling
+from Code import support, json_handling
 from Code.api_calls import keys, google_sheets
 
 
@@ -268,8 +268,7 @@ def scrape_from_url_list(url_df, quiet=True):
                 continue
             listing_dict = scrape_soup(soup)
 
-            # Clean and add a couple more fields
-            clean.clean_one(listing_dict)
+            # Add a couple more fields
             listing_dict['_metadata'].update({'URL': row.url})
             listing_dict['_metadata'].update({'date_added': row.date_added})
 

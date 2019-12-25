@@ -80,6 +80,7 @@ def get_url_dataframe(google_creds, spreadsheet_dict=SPREADSHEET_DICT):
     print('Done')
 
     df = pd.DataFrame.from_records(data=response['values'])
+    # Use first row of values as headers
     df = df.rename(columns=df.iloc[0]).drop(df.index[0])
     return df
 
@@ -98,7 +99,7 @@ def process_url_list(df):
     # Trim urls to their base
     df['url'] = df['url'].apply(trim_url)
 
-    # drop rows that I've marked inactive
+    # drop rows that I've marked inactive (either Sold or definite no)
     df_url = df.loc[df['inactive'] == ''][['url', 'date_added']]
     return df_url
 

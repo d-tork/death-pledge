@@ -36,6 +36,32 @@ def keep_string(s):
     return str(s)
 
 
+def split_comma_delimited_fields(dic):
+    """Create lists out of comma-separated values in certain fields."""
+    # TODO: move to clean.py?
+    field_list = [
+        'HOA/Condo/Coop Amenities',
+        'HOA/Condo/Coop Fee Includes',
+        'Appliances',
+        'Interior Features',
+        'Room List',
+        'Exterior Features',
+        'Garage Features',
+        'Lot Features',
+        'Basement Type',
+        'Wall & Ceiling Types',
+    ]
+    for k1, v1 in dic.items():
+        for field in [x for x in field_list if x in v1]:
+            try:
+                val_list = v1[field].split(', ')
+            except AttributeError:  # no longer a string
+                continue
+            # Replace 'and' in final element
+            val_list[-1] = val_list[-1].replace('and ', '')
+            v1[field] = val_list
+
+
 currency_list = [
     ('_info', 'list_price'),
     ('_info', 'sale_price'),
@@ -64,6 +90,7 @@ string_list = [
 
 def clean_one(dic):
     """Apply all cleanings to dictionary."""
+    split_comma_delimited_fields(dic)
     for k1, v1 in dic.items():
         for k2, v2 in v1.items():
             if k2 in [x[1] for x in currency_list]:
@@ -82,12 +109,3 @@ def clean_one(dic):
                 except (ValueError, TypeError):  # string, or a tuple
                     continue
 
-
-if __name__ == '__main__':
-    #dic1 = json_to_pandas.sample()
-    #clean_one(dic1)
-
-    for f in glob.glob(Code.LISTINGS_GLOB):
-        house = json_handling.read_dicts_from_json(f)[0]
-        clean_one(house)
-        _ = json_handling.add_dict_to_json(house)

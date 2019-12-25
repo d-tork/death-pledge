@@ -299,7 +299,8 @@ def all_continuous_scoring(dic, house_sc, cont_sc):
         try:
             house_sc[score_field] = continuous_score(**sc)
         except ValueError as e:
-            print(f'{score_field}: {e}')
+            #print(f'{score_field}: {e}')
+            continue
 
 
 def score_laundry(dic, house_sc):

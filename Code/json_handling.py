@@ -71,16 +71,21 @@ def add_dict_to_json(dic):
         all_scrapes.insert(0, dic)
         write_dicts_to_json(all_scrapes, outfilepath)
     else:
-        # TESTING: Replace the dict anyway because I'm reordering the keys
+        # Replace the most recent dict anyway in case keys have been reordered
         all_scrapes.pop(0)
         all_scrapes.insert(0, dic)
         write_dicts_to_json(all_scrapes, outfilepath)
-        print('\tNo change in listing data.')
+        #print('\tNo change in listing data.')
     return all_scrapes
 
 
 def check_if_changed(dic1, dic2):
-    exclude_fields = ['changes', 'modify_time', 'scraped_time', 'percentile']
+    exclude_fields = [
+        'changes',
+        'modify_time',
+        'scraped_time',
+        'percentile',
+    ]
     change_set = set()
     for category, category_dict in dic1.items():
         for field in [x for x in category_dict if x not in exclude_fields]:

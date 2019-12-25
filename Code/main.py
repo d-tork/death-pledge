@@ -5,7 +5,7 @@ import os
 
 import Code
 from Code.api_calls import google_sheets, keys
-from Code import scrape2, score2, modify, json_handling, pandas_handling
+from Code import scrape2, score2, modify, json_handling, pandas_handling, support
 
 # Scrape all URLs from google
 # Re-scrape all on-market JSONS
@@ -14,9 +14,9 @@ from Code import scrape2, score2, modify, json_handling, pandas_handling
 # Pull from Google
 # Push all to Google
 
-
+@support.timing
 def main():
-    urls = google_sheets.get_url_list()[:]
+    urls = google_sheets.get_url_list()[-1:]
     #json_handling.clear_all_json_histories(Code.LISTINGS_GLOB)
     scrape2.scrape_from_url_list(urls, quiet=True)
     modify.modify_all()

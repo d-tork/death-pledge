@@ -5,7 +5,7 @@ import pandas as pd
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
-from Code import pandas_handling, score2
+from Code import pandas_handling, support
 
 GREEN = dict(red=.34, green=.73, blue=.54)
 WHITE = dict(red=1, green=1, blue=1)
@@ -82,6 +82,8 @@ def get_url_dataframe(google_creds, spreadsheet_dict=SPREADSHEET_DICT):
     df = pd.DataFrame.from_records(data=response['values'])
     # Use first row of values as headers
     df = df.rename(columns=df.iloc[0]).drop(df.index[0])
+    # Drop null rows
+    df.dropna(subset=['url'], inplace=True)
     return df
 
 
@@ -193,9 +195,9 @@ def apply_desc_gradient_3(sheet_id, start_col_index, end_col_index, ascending=Tr
 
 
 if __name__ == '__main__':
-    # sample_url_list = get_url_list()
+    sample_url_list = get_url_list()
     # score2.score_all()
-    upload_dataframes()
+    #upload_dataframes()
     from pprint import pprint
 
     """Here's how this needs to go: 

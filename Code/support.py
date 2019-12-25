@@ -3,13 +3,29 @@
 import requests
 import random
 from math import radians, cos, sin, asin, sqrt
-import datetime as dt
-from time import sleep
+import datetime
+from datetime import datetime as dt
+import time
 from fake_useragent import UserAgent
 
 
 class BadResponse(Exception):
     pass
+
+
+def timing(f):
+
+    def timed(*args, **kw):
+
+        start = dt.now()
+        result = f(*args, **kw)
+        finish = dt.now()
+
+        print(f'Start: {start}')
+        print(f'Finish: {finish} ({finish-start})')
+        return result
+
+    return timed
 
 
 def initialize_listing_dict():
@@ -55,7 +71,7 @@ def check_status_of_website(url):
     ua = UserAgent()
     header = {'User-Agent': str(ua.firefox)}
     result = requests.get(url, headers=header)
-    sleep(random.random()*10)
+    time.sleep(random.random()*10)
     return result.status_code
 
 
@@ -77,13 +93,13 @@ def get_commute_datetime(mode, dayofweek=1, hrmin='06:30'):
         str: Formatted as datetime for chosen *mode*.
 
     """
-    now = dt.datetime.now()
+    now = dt.now()
     days_ahead = dayofweek - now.weekday()
     if days_ahead <= 0:  # Target day already happened this week
         days_ahead += 7
-    wday = now + dt.timedelta(days_ahead)
-    wtime = dt.datetime.strptime(hrmin, '%H:%M').time()
-    work_datetime = dt.datetime(wday.year, wday.month, wday.day, wtime.hour, wtime.minute)
+    wday = now + datetime.timedelta(days_ahead)
+    wtime = dt.strptime(hrmin, '%H:%M').time()
+    work_datetime = dt(wday.year, wday.month, wday.day, wtime.hour, wtime.minute)
 
     # Format for mode
     if mode == 'cm':
@@ -96,10 +112,10 @@ def get_commute_datetime(mode, dayofweek=1, hrmin='06:30'):
 def str_time_to_min(s):
     """Converts a HH:MM:SS string to decimal minutes."""
     try:
-        dur = dt.datetime.strptime(s.split()[0], '%H:%M:%S')
+        dur = dt.strptime(s.split()[0], '%H:%M:%S')
     except (TypeError, ValueError):
         return None
-    delta = dt.timedelta(hours=dur.hour, minutes=dur.minute, seconds=dur.second)
+    delta = datetime.timedelta(hours=dur.hour, minutes=dur.minute, seconds=dur.second)
     return delta.total_seconds()/60
 
 

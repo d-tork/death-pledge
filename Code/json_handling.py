@@ -192,6 +192,7 @@ def dict_list_to_dataframe(house_hist):
 
 
 def all_files_to_dataframe(listings_glob):
+    """Takes most recent of house JSON entries and concatenates all of them."""
     full_df = pd.DataFrame()
     for f in glob.glob(listings_glob):
         most_recent = read_dicts_from_json(f)[0]

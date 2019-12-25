@@ -115,6 +115,7 @@ def upload_dataframes():
     # TODO: get fully merged dataframe, then only clean_dataframe_columns() on the one going to google
     # (don't send scores to Google, I don't think I have need for them there)
     merged, scores = pandas_handling.merge_data_and_scores()
+    merged.set_index('MLS Number', inplace=True)
 
     # Set column headers for slim version of merged (master_list)
     master_list = pandas_handling.master_list_columns(merged)
@@ -158,7 +159,6 @@ def prep_dataframe(df):
         list: data as list of values
 
     """
-    df = df.drop('MLS Number', axis=1, errors='ignore')  # in case MLS field already exists
     df = df.fillna('').astype('str')
     df = df.reset_index().T.reset_index().T.values.tolist()
     return df

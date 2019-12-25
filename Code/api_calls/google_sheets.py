@@ -23,8 +23,9 @@ SPREADSHEET_DICT = {
     'spreadsheetId': '1ljlZZRXjMb_BEduXqgfc65hQK7cCximT3ebS6UcQPQ0',
     # 'masterlist_range': 'Master_list!A2:AG'
     'url_range': 'URLs',
-    'master_range': 'Master_list2!A1',
-    'scores': 'Scores!A1'
+    'master_range': 'Master_list!A1',
+    'scores': 'Scores!A1',
+    'raw_data': 'raw_data!A1'
 }
 
 
@@ -79,6 +80,7 @@ def get_url_dataframe(google_creds, spreadsheet_dict=SPREADSHEET_DICT):
     print('Done')
 
     df = pd.DataFrame.from_records(data=response['values'])
+    # Use first row of values as headers
     df = df.rename(columns=df.iloc[0]).drop(df.index[0])
     return df
 
@@ -97,7 +99,7 @@ def process_url_list(df):
     # Trim urls to their base
     df['url'] = df['url'].apply(trim_url)
 
-    # drop rows that I've marked inactive
+    # drop rows that I've marked inactive (either Sold or definite no)
     df_url = df.loc[df['inactive'] == ''][['url', 'date_added']]
     return df_url
 
@@ -109,22 +111,41 @@ def get_url_list():
     return process_url_list(df_raw)
 
 
-def upload_dataframe(df1, df2, google_creds):
+def upload_dataframes():
+    google_creds = get_creds()  # TODO: move credentials call to main()?
+    # TODO: get fully merged dataframe, then only clean_dataframe_columns() on the one going to google
+    # (don't send scores to Google, I don't think I have need for them there)
+    merged, scores = pandas_handling.merge_data_and_scores()
+    merged.set_index('MLS Number', inplace=True)
+
+    # Set column headers for slim version of merged (master_list)
+    master_list = pandas_handling.master_list_columns(merged)
+
+    merged = prep_dataframe(merged)
+    master_list = prep_dataframe(master_list)
+    scores = prep_dataframe(scores)
+
+    # Send to google
     service = build('sheets', 'v4', credentials=google_creds)
+    raw_data_obj = dict(
+        range=SPREADSHEET_DICT['raw_data'],
+        majorDimension='ROWS',
+        values=merged)
     master_obj = dict(
         range=SPREADSHEET_DICT['master_range'],
         majorDimension='ROWS',
-        values=df1)
+        values=master_list)
     scores_obj = dict(
         range=SPREADSHEET_DICT['scores'],
         majorDimension='ROWS',
-        values=df2)
+        values=scores)
     response = service.spreadsheets().values().batchUpdate(
         spreadsheetId=SPREADSHEET_DICT['spreadsheetId'],
         body=dict(
             valueInputOption='USER_ENTERED',
             includeValuesInResponse=False,
             data=[
+                raw_data_obj,
                 master_obj,
                 scores_obj
             ])
@@ -144,16 +165,8 @@ def prep_dataframe(df):
     return df
 
 
-def upload_data():
-    my_creds = get_creds()
-    df1, df2 = pandas_handling.merge_data_and_scores(slim=True)
-    df2 = df2.droplevel(0, axis=1)
-    df1, df2 = prep_dataframe(df1), prep_dataframe(df2)
-
-    upload_dataframe(df1, df2, my_creds)
-
-
 def apply_desc_gradient_3(sheet_id, start_col_index, end_col_index, ascending=True):
+    # TODO: finish implementing this
     if ascending:
         mincolor, maxcolor = RED, GREEN
     else:
@@ -182,7 +195,7 @@ def apply_desc_gradient_3(sheet_id, start_col_index, end_col_index, ascending=Tr
 if __name__ == '__main__':
     # sample_url_list = get_url_list()
     # score2.score_all()
-    upload_data()
+    upload_dataframes()
     from pprint import pprint
 
     """Here's how this needs to go: 

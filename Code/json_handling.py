@@ -4,8 +4,10 @@ from datetime import datetime
 import os
 import glob
 import copy
-import Code
 from django.utils.text import slugify
+
+import Code
+from Code import clean
 
 
 def read_dicts_from_json(filepath):
@@ -52,6 +54,9 @@ def add_dict_to_json(dic):
     except FileNotFoundError:
         pass
 
+    # Clean any dict about to be saved to file
+    clean.clean_one(dic)
+
     # Check if newest scrape is different from previous one
     if all_scrapes:  # previous versions existed
         any_change = check_if_changed(dic, all_scrapes[0])
@@ -75,7 +80,7 @@ def add_dict_to_json(dic):
 
 
 def check_if_changed(dic1, dic2):
-    exclude_fields = ['changes', 'modify_time', 'scraped_time']
+    exclude_fields = ['changes', 'modify_time', 'scraped_time', 'percentile']
     change_set = set()
     for category, category_dict in dic1.items():
         for field in [x for x in category_dict if x not in exclude_fields]:
@@ -192,6 +197,7 @@ def dict_list_to_dataframe(house_hist):
 
 
 def all_files_to_dataframe(listings_glob):
+    """Takes most recent of house JSON entries and concatenates all of them."""
     full_df = pd.DataFrame()
     for f in glob.glob(listings_glob):
         most_recent = read_dicts_from_json(f)[0]

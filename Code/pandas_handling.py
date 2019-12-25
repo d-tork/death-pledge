@@ -5,12 +5,8 @@ import Code
 from Code import score2, json_handling
 
 
-def merge_data_and_scores(slim=True):
-    """Read in data from JSONs and scorecards, then merge as dataframe.
-
-    Args:
-        slim (bool): If True, then only merge with TOTAL_SCORE.
-    """
+def merge_data_and_scores():
+    """Read in data from JSONs and scorecards, then merge as dataframe. """
     sc_path = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'scorecards.json')
     scores = json_handling.read_dicts_from_json(sc_path)
     df_scores = score2.score_dict_list_to_dataframe(scores)
@@ -31,27 +27,41 @@ def merge_data_and_scores(slim=True):
     df_data = json_handling.all_files_to_dataframe(Code.LISTINGS_GLOB).T
 
     # Merge on indices
-    if slim:
-        df_scores = df_scores[('scores', 'TOTAL_SCORE')]
-    merged = pd.merge(df_data, df_scores,
+    merged = pd.merge(df_data, df_scores, how='left',
                       left_index=True, right_index=True)
     # Drop the top level of the column multiindex (Excel tables don't like it)
     merged = merged.droplevel(level=0, axis=1)
-    # Set column headers
-    if slim:
-        merged = clean_dataframe_columns(merged)
-    # Name the index
-    merged.index.name = 'MLS Number'
+    df_scores = df_scores.droplevel(level=0, axis=1)
+    # Drop the index (MLS Number already exists as a field)
+    merged.reset_index(drop=True, inplace=True)
+    # Remove duplicate columns (coming from both data and scorecards)
+    merged = merged.loc[:, ~merged.columns.duplicated()]
     # Sort by total score
     merged.sort_values('TOTAL_SCORE', ascending=False, inplace=True)
 
-    # Write to file
+    # Append to master file
     outpath = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'master_list.csv')
-    merged.to_csv(outpath)
+    append_to_master(merged, outpath)
     return merged, df_scores
 
 
-def clean_dataframe_columns(df):
+def append_to_master(df, master_fp):
+    """Append most recent data to master csv, removing duplicates."""
+    # Read in master
+    master = pd.read_csv(master_fp, index_col=0)
+    # Append new data
+    master = pd.concat([master, df], axis=0, ignore_index=True, sort=False)
+    # Sort by last modified
+    master.sort_values('modify_time', inplace=True)
+    # Drop duplicates with same modify_time
+    dupe_fields = ['MLS Number', 'modify_time']
+    master.drop_duplicates(subset=dupe_fields, inplace=True)
+    exclude_fields = ['scraped_time', 'percentile', 'changes']  # another way of subsetting
+    # Write back out
+    master.to_csv(master_fp, index_label='index')
+
+
+def master_list_columns(df):
     col_list = [
         'TOTAL_SCORE',
         'URL',
@@ -108,4 +118,4 @@ def clean_dataframe_columns(df):
 
 if __name__ == '__main__':
     score2.score_all()
-    merge_data_and_scores(slim=False)
+    merge_data_and_scores()

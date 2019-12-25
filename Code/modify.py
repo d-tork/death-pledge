@@ -189,29 +189,6 @@ def travel_quick_stats(dic):
     update_house_dict(dic, ('quickstats', 'commute_transit_mins'), round(commute_mins, 1))
 
 
-def split_comma_delimited_fields(dic):
-    """Create lists out of comma-separated values in certain fields."""
-    field_list = [
-        'HOA/Condo/Coop Amenities',
-        'HOA/Condo/Coop Fee Includes',
-        'Appliances',
-        'Interior Features',
-        'Room List',
-        'Exterior Features',
-        'Garage Features',
-        'Lot Features'
-    ]
-    for k1, v1 in dic.items():
-        for field in [x for x in field_list if x in v1]:
-            try:
-                val_list = v1[field].split(', ')
-            except AttributeError:  # no longer a string
-                continue
-            # Replace 'and' in final element
-            val_list[-1] = val_list[-1].replace('and ', '')
-            v1[field] = val_list
-
-
 def add_tether(dic):
     """Add straight-line distance to centerpoint (Arlington Cememtery)."""
     house_coords = dic['_metadata'].get('geocoords')
@@ -284,7 +261,6 @@ def tax_assessed_diff(dic):
 def modify_one(house, loop=False):
     # Add modifying functions here:
     add_coords(house)
-    split_comma_delimited_fields(house)
     try:
         # add_citymapper_commute(house)
         pass

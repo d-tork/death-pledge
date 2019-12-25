@@ -117,13 +117,13 @@ def upload_dataframes():
     google_creds = get_creds()  # TODO: move credentials call to main()?
     # TODO: get fully merged dataframe, then only clean_dataframe_columns() on the one going to google
     # (don't send scores to Google, I don't think I have need for them there)
-    merged, scores = pandas_handling.merge_data_and_scores()
+    cumulative, merged, scores = pandas_handling.merge_data_and_scores()
     merged.set_index('MLS Number', inplace=True)
 
     # Set column headers for slim version of merged (master_list)
     master_list = pandas_handling.master_list_columns(merged)
 
-    merged = prep_dataframe(merged)
+    cumulative = prep_dataframe(cumulative)
     master_list = prep_dataframe(master_list)
     scores = prep_dataframe(scores)
 
@@ -132,7 +132,7 @@ def upload_dataframes():
     raw_data_obj = dict(
         range=SPREADSHEET_DICT['raw_data'],
         majorDimension='ROWS',
-        values=merged)
+        values=cumulative)
     master_obj = dict(
         range=SPREADSHEET_DICT['master_range'],
         majorDimension='ROWS',

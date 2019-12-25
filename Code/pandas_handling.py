@@ -41,8 +41,8 @@ def merge_data_and_scores():
 
     # Append to master file
     outpath = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'master_list.csv')
-    append_to_master(merged, outpath)
-    return merged, df_scores
+    cumulative = append_to_master(merged, outpath)
+    return cumulative, merged, df_scores
 
 
 def append_to_master(df, master_fp):
@@ -59,6 +59,7 @@ def append_to_master(df, master_fp):
     exclude_fields = ['scraped_time', 'percentile', 'changes']  # another way of subsetting
     # Write back out
     master.to_csv(master_fp, index_label='index')
+    return master
 
 
 def master_list_columns(df):

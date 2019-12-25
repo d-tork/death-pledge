@@ -18,10 +18,9 @@ def timing(f):
     def timed(*args, **kw):
 
         start = dt.now()
+        print(f'Start: {start}')
         result = f(*args, **kw)
         finish = dt.now()
-
-        print(f'Start: {start}')
         print(f'Finish: {finish} ({finish-start})')
         return result
 

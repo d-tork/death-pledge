@@ -69,12 +69,11 @@ def add_dict_to_json(dic):
 
         # Write new (and old) dictionaries to a list in file
         all_scrapes.insert(0, dic)
-        write_dicts_to_json(all_scrapes, outfilepath)
     else:
         # Replace the most recent dict anyway in case keys have been reordered
         all_scrapes.pop(0)
         all_scrapes.insert(0, dic)
-        write_dicts_to_json(all_scrapes, outfilepath)
+    write_dicts_to_json(all_scrapes, outfilepath)
         #print('\tNo change in listing data.')
     return all_scrapes
 

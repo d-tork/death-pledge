@@ -38,7 +38,6 @@ def keep_string(s):
 
 def split_comma_delimited_fields(dic):
     """Create lists out of comma-separated values in certain fields."""
-    # TODO: move to clean.py?
     field_list = [
         'HOA/Condo/Coop Amenities',
         'HOA/Condo/Coop Fee Includes',
@@ -50,6 +49,8 @@ def split_comma_delimited_fields(dic):
         'Lot Features',
         'Basement Type',
         'Wall & Ceiling Types',
+        'Accessibility Features',
+        'Utilities',
     ]
     for k1, v1 in dic.items():
         for field in [x for x in field_list if x in v1]:

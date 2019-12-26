@@ -30,7 +30,7 @@ def get_coords(address, zip_code=None):
     return tuple(coords)
 
 
-def get_bing_commute_time(startcoords, endcoords, bus_stop=False):
+def get_bing_commute_time(startcoords, endcoords):
     """Get commute travel time between two lat/lon tuples from Bing API.
 
     Parameters
@@ -39,12 +39,10 @@ def get_bing_commute_time(startcoords, endcoords, bus_stop=False):
         a list or tuple of geographic coordinates (lat/lon) as integers
     endcoords: iterable
         same as startcoords
-    bus_stop: bool
-        a flag to indicate if you want the walk time to the nearest bus stop
-        that goes in the direction of work
+
     Returns
     -------
-    str: time in HH:MM:SS
+    str: (commute_time, first_walk_time), in HH:MM:SS
     """
     baseurl = r"http://dev.virtualearth.net/REST/V1/Routes/Transit"
 
@@ -62,19 +60,24 @@ def get_bing_commute_time(startcoords, endcoords, bus_stop=False):
         raise support.BadResponse('Response code from bing not 200.')
     r_dict = response.json()
 
-    if bus_stop:  # Function detour to return bus stop walk time
-        itin = r_dict['resourceSets'][0]['resources'][0]['routeLegs'][0]['itineraryItems']
-        bus_stop_walk = 0
-        for ix, leg in enumerate(itin):
-            if leg.get('iconType') == 'Bus':
-                bus_stop_walk = itin[ix-1]['travelDuration']  # get previous leg
-                break
-        return str(dt.timedelta(seconds=bus_stop_walk))
     try:
         travel_time = r_dict['resourceSets'][0]['resources'][0]['travelDuration']
     except KeyError:
         raise support.BadResponse('JSON response does not have travel_time_minutes key.')
-    return str(dt.timedelta(seconds=travel_time))
+    commute_time = str(dt.timedelta(seconds=travel_time))
+
+    # Function detour to get walk time of first leg of trip
+    itin = r_dict['resourceSets'][0]['resources'][0]['routeLegs'][0]['itineraryItems']
+    first_walk_time = 0
+    for ix, leg in enumerate(itin):
+        if leg.get('iconType') in ['Bus', 'Train']:
+            first_walk_time = itin[ix-1]['travelDuration']  # get previous leg, in sec
+            first_leg = leg.get('iconType')
+            break
+    #first_walk_time = str(dt.timedelta(seconds=first_walk_time))
+    first_walk_time = round(first_walk_time/60, 1)
+
+    return commute_time, first_walk_time, first_leg
 
 
 def get_walking_info(startcoords, endcoords):
@@ -132,7 +135,7 @@ def find_nearest_metro(startcoords):
     metro_list = []
     for result in r_dict['resourceSets'][0]['resources']:
         name = result['name']
-        if len(name) < 6:
+        if (len(name) < 6) | (name == 'Metro Rail'):
             web = result['Website']
             url_last_slash = web.rfind('/')
             url_page_extension = web.rfind('.')

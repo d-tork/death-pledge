@@ -415,6 +415,7 @@ def score_all():
         house_sc = score_house_dict(house_dict, my_scorecard, my_cont_scorecard)
         house_sc_list.append(house_sc)
 
+    # TODO: ensure that a check for changes occurs AFTER scoring
     write_scorecards_to_file(house_sc_list)
     write_score_percentiles_to_jsons()
 

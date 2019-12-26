@@ -106,20 +106,26 @@ def add_citymapper_commute(dic, force=False):
 
 
 def add_bing_commute(dic, force=False):
-    """Add the bing transit time to listing dict"""
-    key_name = 'Work commute (Bing)'
-    # Check for existing value
-    bingtime = dic['local travel'].setdefault(key_name, None)
-    if (bingtime is None) or force:
+    """Add the bing transit time to listing dict."""
+    # Checks for existing values
+    key_name_dict = {
+        'Work commute (Bing)': dic['local travel'].setdefault('Work commute (Bing)', None),
+        'first_walk_mins': dic['quickstats'].setdefault('first_walk_mins', None)
+    }
+    if (not all([v for k, v in key_name_dict.items()])) | force:
+        # At least one of them is empty or force=True, Bing API call is necessary
+        # If not force, and if all values exist, then end function
         house_coords = dic['_metadata']['geocoords']
         try:
-            bingtime = bing.get_bing_commute_time(house_coords, keys.work_coords)
+            commute_time, first_walk_time, first_leg = bing.get_bing_commute_time(house_coords, keys.work_coords)
         except BadResponse as e:
             print('Could not retrieve commute time for this address.')
             print(e)
-            bingtime = None
+            commute_time, first_walk_time, first_leg = None, None, None
         finally:
-            update_house_dict(dic, ('local travel', key_name), bingtime)
+            update_house_dict(dic, ('local travel', 'Work commute (Bing)'), commute_time)
+            update_house_dict(dic, ('quickstats', 'first_walk_mins'), round(first_walk_time, 1))
+            update_house_dict(dic, ('quickstats', 'first_leg_type'), first_leg)
 
 
 def add_nearest_metro(dic, force=False):
@@ -136,24 +142,6 @@ def add_nearest_metro(dic, force=False):
         finally:
             update_house_dict(dic, ('local travel', 'Nearby Metro'), station_list)
     update_house_dict(dic, ('basic info', 'Nearest Metro'), station_list[0][0])
-
-
-def add_nearest_bus_walk(dic, force=False):
-    """Add the walk time to the nearest bus stop in the work commute."""
-    key_name = 'bus_walk_mins'
-    # Check for existing value
-    walktime = dic['quickstats'].setdefault(key_name, None)
-    if (walktime is None) or force:
-        house_coords = dic['_metadata']['geocoords']
-        try:
-            walktime = bing.get_bing_commute_time(house_coords, keys.work_coords, bus_stop=True)
-            walktime = support.str_time_to_min(walktime)
-        except BadResponse as e:
-            print('Could not retrieve bus walk time for this address.')
-            print(e)
-            walktime = None
-        finally:
-            update_house_dict(dic, ('quickstats', key_name), round(walktime, 1))
 
 
 def add_frequent_driving(dic, favorites_dic, force=False):
@@ -270,9 +258,8 @@ def modify_one(house, loop=False):
             sleep(90)
         else:
             pass
-    add_bing_commute(house)
-    add_nearest_metro(house)
-    add_nearest_bus_walk(house)
+    add_bing_commute(house, force=True)
+    add_nearest_metro(house, force=True)
     add_frequent_driving(house, keys.favorites_driving)
     travel_quick_stats(house)
     sale_price_diff(house)
@@ -294,7 +281,7 @@ def modify_all():
 
 
 if __name__ == '__main__':
-    modify_all()
-    sample_path = os.path.join(Code.LISTINGS_DIR, '607_BASHFORD_LN_1.json')
+    #modify_all()
+    sample_path = os.path.join(Code.LISTINGS_DIR, '3417_WELTHAM_ST.json')
     sample_house = json_handling.read_dicts_from_json(sample_path)[0]
-    # modify_one(sample_house)
+    modify_one(sample_house)

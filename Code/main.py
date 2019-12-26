@@ -17,7 +17,7 @@ from Code import scrape2, score2, modify, json_handling, pandas_handling, suppor
 
 @support.timing
 def main():
-    urls = google_sheets.get_url_list()[-2:]
+    urls = google_sheets.get_url_list(last_n=2, force_all=False)
     #json_handling.clear_all_json_histories(Code.LISTINGS_GLOB)
     scrape2.scrape_from_url_list(urls, quiet=True)
     modify.modify_all()

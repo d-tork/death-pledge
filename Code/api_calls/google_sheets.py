@@ -87,8 +87,12 @@ def get_url_dataframe(google_creds, spreadsheet_dict=SPREADSHEET_DICT):
     return df
 
 
-def process_url_list(df):
-    """Make adjustments to URL dataframe before passing as small dataframe."""
+def process_url_list(df, force_all=False):
+    """Make adjustments to URL dataframe before passing as small dataframe.
+
+    Args:
+        force_all: scrape all listings, even if status is 'no' or 'Sold'
+    """
 
     def trim_url(url_str):
         """Remove extra params from URL"""
@@ -101,16 +105,23 @@ def process_url_list(df):
     # Trim urls to their base
     df['url'] = df['url'].apply(trim_url)
 
-    # drop rows that I've marked inactive (either Sold or definite no)
-    df_url = df.loc[df['inactive'] == ''][['url', 'date_added']]
+    if not force_all:
+        # drop rows that I've marked inactive (either Sold or definite no)
+        df_url = df.loc[df['inactive'] == ''][['url', 'date_added']]
     return df_url
 
 
-def get_url_list():
-    """Get list of URLs to scrape from google sheets."""
+def get_url_list(last_n=None, **kwargs):
+    """Get list of URLs to scrape from google sheets.
+
+    Args:
+        last_n (int): get only last n rows (will trump a force_all parameter)
+    """
     my_creds = get_creds()
     df_raw = get_url_dataframe(my_creds)
-    return process_url_list(df_raw)
+    df_clean = process_url_list(df_raw, **kwargs)
+    if last_n:
+        return df_clean[-last_n:]
 
 
 def upload_dataframes():

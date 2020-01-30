@@ -107,7 +107,9 @@ def process_url_list(df, force_all=False):
 
     if not force_all:
         # drop rows that I've marked inactive (either Sold or definite no)
-        df_url = df.loc[df['inactive'] == ''][['url', 'date_added']]
+        df = df.loc[df['inactive'] == '']
+    # Slice for columns needed
+    df_url = df[['url', 'date_added']].copy()
     return df_url
 
 
@@ -122,6 +124,7 @@ def get_url_list(last_n=None, **kwargs):
     df_clean = process_url_list(df_raw, **kwargs)
     if last_n:
         return df_clean[-last_n:]
+    return df_clean
 
 
 def upload_dataframes():

@@ -4,7 +4,7 @@
 import os
 
 import Code
-from Code.api_calls import google_sheets, keys
+from Code.api_calls import google_sheets as gs, keys
 from Code import scrape2, score2, modify, json_handling, pandas_handling, support
 
 # Scrape all URLs from google
@@ -17,12 +17,12 @@ from Code import scrape2, score2, modify, json_handling, pandas_handling, suppor
 
 @support.timing
 def main():
-    urls = google_sheets.get_url_list(last_n=None, force_all=True)
+    google_creds = gs.get_creds()
+    urls = gs.get_url_list(google_creds, last_n=5, force_all=False)
     #json_handling.clear_all_json_histories(Code.LISTINGS_GLOB)
     scrape2.scrape_from_url_list(urls, quiet=True)
     modify.modify_all()
     score2.score_all()
-    google_sheets.upload_dataframes()
 
 
 def single_sample():

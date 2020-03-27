@@ -15,7 +15,7 @@ RED = dict(red=.90, green=.49, blue=.45)
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # If modifying these scopes, delete the file token.pickle.
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
+#SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
 # The ID and range of my master spreadsheet
@@ -113,22 +113,21 @@ def process_url_list(df, force_all=False):
     return df_url
 
 
-def get_url_list(last_n=None, **kwargs):
+def get_url_list(creds, last_n=None, **kwargs):
     """Get list of URLs to scrape from google sheets.
 
     Args:
         last_n (int): get only last n rows (will trump a force_all parameter)
     """
     my_creds = get_creds()
-    df_raw = get_url_dataframe(my_creds)
+    df_raw = get_url_dataframe(creds)
     df_clean = process_url_list(df_raw, **kwargs)
     if last_n:
         return df_clean[-last_n:]
     return df_clean
 
 
-def upload_dataframes():
-    google_creds = get_creds()  # TODO: move credentials call to main()?
+def upload_dataframes(creds):
     # TODO: get fully merged dataframe, then only clean_dataframe_columns() on the one going to google
     # (don't send scores to Google, I don't think I have need for them there)
     cumulative, merged, scores = pandas_handling.merge_data_and_scores()
@@ -142,7 +141,7 @@ def upload_dataframes():
     scores = prep_dataframe(scores)
 
     # Send to google
-    service = build('sheets', 'v4', credentials=google_creds)
+    service = build('sheets', 'v4', credentials=creds)
     raw_data_obj = dict(
         range=SPREADSHEET_DICT['raw_data'],
         majorDimension='ROWS',
@@ -209,9 +208,10 @@ def apply_desc_gradient_3(sheet_id, start_col_index, end_col_index, ascending=Tr
 
 
 if __name__ == '__main__':
-    sample_url_list = get_url_list()
+    #sample_url_list = get_url_list()
     # score2.score_all()
-    #upload_dataframes()
+    google_creds = get_creds()
+    upload_dataframes(google_creds)
     from pprint import pprint
 
     """Here's how this needs to go: 

@@ -69,7 +69,8 @@ currency_list = [
     ('basic info', 'Price Per SQFT'),
     ('basic info', 'HOA Fee'),
     ('building information', 'Price Per SQFT'),
-    ('association / location / schools', 'Condo/Coop Fee')
+    ('association / location / schools', 'Condo/Coop Fee'),
+    ('expenses / taxes', 'Tax Annual Amount')
 ]
 int_parse_list = [
     ('_info', 'beds'),
@@ -79,7 +80,6 @@ float_parse_list = [
     ('_info', 'baths'),
     ('basic info', 'Lot Size Acres'),
     ('exterior information', 'Lot Size Acres'),
-    ('expenses / taxes', 'Tax Annual Amount')
 ]
 date_list = [
     ('_info', 'sold')

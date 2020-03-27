@@ -158,7 +158,7 @@
       "value_keys": ["_metadata", "days_on_market"],
       "min_value": 1,
       "max_value": 300,
-      "weight": 1.5,
+      "weight": 1,
       "ascending": true,
       "norm_by": 3.5
     },

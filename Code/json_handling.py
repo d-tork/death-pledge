@@ -233,7 +233,6 @@ if __name__ == '__main__':
     # sample(Code.LISTINGS_DIR)
     # clear_all_json_histories(Code.LISTINGS_GLOB)
     single_path = os.path.join(Code.LISTINGS_DIR, '4304_34TH_ST_S_B2.json')
-    remove_dict_from_json(single_path)
 
     # df1 = all_files_to_dataframe(Code.LISTINGS_GLOB).T
     # df1.to_csv(os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'all_listings.csv'))

@@ -20,34 +20,12 @@ from bs4 import BeautifulSoup
 import json
 
 import Code
-from Code import support, json_handling
+from Code import support, json_handling, classes
 from Code.api_calls import keys, google_sheets
 
 
 class ListingNotAvailable(Exception):
     pass
-
-
-class House(dict):
-
-    def __init__(self, url=None, added_date=None):
-        super().__init__()
-        if url:
-            self.url = url
-        if added_date:
-            self.added_date = datetime.strptime(added_date, '%m/%d/%Y').date()
-        else:
-            self.added_date = datetime.now().date()
-
-    def scrape(self, webdriver):
-        try:
-            soup = get_soup_for_url(self.url, webdriver)
-        except TimeoutException as e:
-            print(f'\t{e}')
-        except AttributeError as e:  # url has not been set
-            print(f'URL has not been set for this house. \n\t{e}')
-        listing_data = scrape_soup(self, soup)
-        self.update(listing_data)
 
 
 def sign_into_website(driver):
@@ -199,7 +177,7 @@ def get_cards(soup):
     house_data['basic_info'] = house_data.setdefault('basic_info', {})
     for i in basic_info_list:
         attr_tup = tuple(i.text.split(u':\xa0 '))
-        house_data['basic_info'] = dict([attr_tup])
+        house_data['basic_info'].update(dict([attr_tup]))
 
     # All good cards
     for i in result:
@@ -211,7 +189,7 @@ def get_cards(soup):
                 if any(x in card_title.lower() for x in discard):
                     continue
                 card_title = card_title.lower().strip()
-                card_title = card_title.replace(' ', '_')
+                card_title = card_title.replace('/ ', '').replace(' ', '_')
 
                 # Create the key, in case names change or it's new
                 house_data.setdefault(card_title, {})
@@ -242,11 +220,28 @@ def scrape_soup(house, soup):
     house['main'], house['listing'] = get_main_box(soup)
     house['listing'].update(get_price_info(soup))
     house['data'] = get_cards(soup)
+
+    # Reorganize sub-dicts
+    single_items = [
+        ('basic_info', 'Tax Annual Amount'),
+        ('basic_info', 'Price Per SQFT'),
+    ]
+    for subdict, key in single_items:
+        house['listing'][key] = house['data'][subdict].pop(key, None)
+    # Whole sub-dicts
+    house['listing']['expenses_taxes'] = house['data'].pop('expenses_taxes')
+    house['listing']['listing_history'] = house['data'].pop('listing_history')
     return house
 
 
 def scrape_from_url_list(url_df, quiet=True):
-    """Given an array of URLs, use soup scraper to save JSONs of the listing data."""
+    """Given an array of URLs, use soup scraper to save JSONs of the listing data.
+
+    TODO: will be deprecated in favor of looping through instances of the House class
+    and calling their scrape() method. Don't forget to include checks for a valid URL
+    and retain the random wait times elsewhere in the code.
+
+    """
     options = Options()
     if quiet:
         options.headless = True
@@ -291,14 +286,10 @@ def scrape_from_url_list(url_df, quiet=True):
 
 if __name__ == '__main__':
     sample_url_list = [keys.sample_url, keys.sample_url2, keys.sample_url3]
-    sample_house = House(url=sample_url_list[0])
-
-    #google_creds = google_sheets.get_creds()
-    #sample_urls = google_sheets.get_url_list(google_creds).tail(1)
-    #sample_house = House(url=sample_urls.iloc[0]['url'], added_date=sample_urls.iloc[0]['date_added'])
+    sample_house = classes.House(url=sample_url_list[0])
 
     options = Options()
-    options.headless = True
+    #options.headless = True
     with webdriver.Firefox(
             options=options,
             executable_path=Code.GECKODRIVER_PATH) as wd:
@@ -306,3 +297,4 @@ if __name__ == '__main__':
         sign_into_website(wd)
         sample_house.scrape(wd)
         print(json.dumps(sample_house['listing'], indent=2))
+        sample_house.upload()

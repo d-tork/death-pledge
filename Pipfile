@@ -22,6 +22,7 @@ scipy = "*"
 pylint = "*"
 pprint = "*"
 death-pledge = {editable = true,path = "."}
+cloudant = "*"
 
 [requires]
 python_version = "3.7"

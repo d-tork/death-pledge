@@ -1,10 +1,6 @@
 """Clean a dictionary of listing details."""
 
 import time
-import glob
-import re
-import Code
-from Code import json_handling, scrape2
 
 
 def convert_currency_to_int(s):

@@ -18,9 +18,8 @@ from Code import scrape2, score2, modify, json_handling, pandas_handling, suppor
 @support.timing
 def main():
     google_creds = gs.get_creds()
-    urls = gs.get_url_list(google_creds, last_n=5, force_all=False)
-    #json_handling.clear_all_json_histories(Code.LISTINGS_GLOB)
-    scrape2.scrape_from_url_list(urls, quiet=True)
+    df_urls = gs.get_url_list(google_creds, last_n=5, force_all=False)
+    scrape2.scrape_from_url_list(df_urls, quiet=True)
     modify.modify_all()
     score2.score_all()
 

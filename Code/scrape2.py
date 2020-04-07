@@ -17,6 +17,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
+import json
 
 import Code
 from Code import support, json_handling
@@ -25,6 +26,28 @@ from Code.api_calls import keys, google_sheets
 
 class ListingNotAvailable(Exception):
     pass
+
+
+class House(dict):
+
+    def __init__(self, url=None, added_date=None):
+        super().__init__()
+        if url:
+            self.url = url
+        if added_date:
+            self.added_date = datetime.strptime(added_date, '%m/%d/%Y').date()
+        else:
+            self.added_date = datetime.now().date()
+
+    def scrape(self, webdriver):
+        try:
+            soup = get_soup_for_url(self.url, webdriver)
+        except TimeoutException as e:
+            print(f'\t{e}')
+        except AttributeError as e:  # url has not been set
+            print(f'URL has not been set for this house. \n\t{e}')
+        listing_data = scrape_soup(self, soup)
+        self.update(listing_data)
 
 
 def sign_into_website(driver):
@@ -43,7 +66,7 @@ def sign_into_website(driver):
 
     username.send_keys(keys.website_email)
     password.send_keys(keys.website_pw)
-    sleep(.2)
+    sleep(2)
     driver.find_element_by_name('commit').click()
     try:
         element = WebDriverWait(driver, 60).until(
@@ -84,13 +107,12 @@ def get_soup_for_url(url, driver):
     return BeautifulSoup(driver.page_source, 'html.parser')
 
 
-def get_main_box(soup, dic):
-    """Add scrape_soup box details to listing dictionary.
+def get_main_box(soup):
+    """Add box details to listing dictionary.
 
     Args: 
         soup: bs4 soup object.
-        dic (dict): House listing.
-    
+
     """
     # Get tags
     result = soup.find_all('div', attrs={'class': 'col-8 col-sm-8 col-md-7'})
@@ -103,34 +125,43 @@ def get_main_box(soup, dic):
     vitals = main_box.h5.text.split(' |\xa0')
 
     # Add to dictionary
-    dic['_info'] = {'badge': badge,
-                    'address': address,
-                    'city_state': citystate,
-                    'full_address': ' '.join([address, citystate]),
-                    'beds': vitals[0],
-                    'baths': vitals[1],
-                    'sqft': vitals[2]}
+    main = {
+        'address': address,
+        'city_state': citystate,
+        'full_address': ' '.join([address, citystate]),
+        'beds': vitals[0],
+        'baths': vitals[1],
+        'sqft': vitals[2],
+            }
+    listing = {
+        'badge': badge,
+    }
+    return main, listing
 
 
-def get_price_info(soup, dic):
+def get_price_info(soup):
     """Add price info details to listing dictionary."""
+    info = {}
     # Get tags
     result = soup.find_all('div', attrs={'class': 'col-4 col-sm-4 col-md-5 text-right'})
     box = result[0]
     price = box.h2.text
-    dic['_info'].update({'list_price': price})
+    info['list_price'] = price
 
     try:
         badge = box.p
         if 'sold' in badge.text.lower():
             date_sold = badge.text.split(': ')[-1]
             list_price = box.small.text.split()[-1]
-            dic['_info'].update({'sold': date_sold,
-                                 'sale_price': price,
-                                 'list_price': list_price})
-    except AttributeError:
+            info.update({
+                'sold': date_sold,
+                'sale_price': price,
+                'list_price': list_price,
+            })
+    except AttributeError as e:
+        print(f'Error while getting price info: {e}')
         # Most likely "Off Market"
-        pass
+    return info
 
 
 def scrape_normal_card(attrib_list):
@@ -156,17 +187,19 @@ def scrape_history_card(attrib_list):
             yield current_row
 
 
-def get_cards(soup, dic):
+def get_cards(soup):
     """Parse all cards and add to listing dictionary."""
+    house_data = {}
     # Get list of card tags
     result = soup.find_all('div', attrs={'class': 'card'})
 
     # First card, no title (basic info)
     tag_basic_info = result[0]
     basic_info_list = tag_basic_info.find_all('div', class_='col-12')
+    house_data['basic_info'] = house_data.setdefault('basic_info', {})
     for i in basic_info_list:
         attr_tup = tuple(i.text.split(u':\xa0 '))
-        dic['basic info'].update(dict([attr_tup]))
+        house_data['basic_info'] = dict([attr_tup])
 
     # All good cards
     for i in result:
@@ -178,34 +211,38 @@ def get_cards(soup, dic):
                 if any(x in card_title.lower() for x in discard):
                     continue
                 card_title = card_title.lower().strip()
+                card_title = card_title.replace(' ', '_')
 
                 # Create the key, in case names change or it's new
-                dic.setdefault(card_title, {})
+                house_data.setdefault(card_title, {})
                 card_attrib_list = i.find_all('div', class_='col-12')
                 if card_attrib_list:
                     for field_attrib in scrape_normal_card(card_attrib_list):
-                        dic[card_title].update([field_attrib])
+                        house_data[card_title].update([field_attrib])
                 if not card_attrib_list:  # the Listing History card
                     card_attrib_list = i.find_all('div', class_='col-4')
                     for row in scrape_history_card(card_attrib_list):
-                        dic[card_title].update({row[0]: row[1]})
+                        house_data[card_title].update({row[0]: row[1]})
+    return house_data
 
 
-def scrape_soup(soup):
+def scrape_soup(house, soup):
     """Scrape all for a single BS4 soup object.
 
-    :returns dict
+    Returns: dict
     """
-    # Initialize dict with date record
-    listing_dict = support.initialize_listing_dict()
-    listing_dict['_metadata'].update({'scraped_time': str(datetime.now())})
+    # Initialize dict with metadata
+    scrape_data = house.setdefault('scrape_data', {})
+    scrape_data['added_date'] = str(house.added_date)
+    scrape_data['url'] = house.url
+    scrape_data['scraped_time'] = str(datetime.now())
+    scrape_data['scraped_source'] = 'RealScout'
 
     # Scrape three sections
-    get_main_box(soup, listing_dict)
-    get_price_info(soup, listing_dict)
-    get_cards(soup, listing_dict)
-
-    return listing_dict
+    house['main'], house['listing'] = get_main_box(soup)
+    house['listing'].update(get_price_info(soup))
+    house['data'] = get_cards(soup)
+    return house
 
 
 def scrape_from_url_list(url_df, quiet=True):
@@ -242,7 +279,6 @@ def scrape_from_url_list(url_df, quiet=True):
             # Add a couple more fields
             listing_dict['_metadata'].update({'URL': row.url})
             listing_dict['_metadata'].update({'date_added': row.date_added})
-            # TODO: remove underscore from all JSON dict fields (reserved by DB)
 
             # Merge with previous dict
             json_handling.check_and_merge_dicts(listing_dict)
@@ -254,6 +290,19 @@ def scrape_from_url_list(url_df, quiet=True):
 
 
 if __name__ == '__main__':
-    # sample_url_list = [keys.sample_url, keys.sample_url2, keys.sample_url3]
-    sample_urls = google_sheets.get_url_list().tail(1)
-    scrape_from_url_list(sample_urls)
+    sample_url_list = [keys.sample_url, keys.sample_url2, keys.sample_url3]
+    sample_house = House(url=sample_url_list[0])
+
+    #google_creds = google_sheets.get_creds()
+    #sample_urls = google_sheets.get_url_list(google_creds).tail(1)
+    #sample_house = House(url=sample_urls.iloc[0]['url'], added_date=sample_urls.iloc[0]['date_added'])
+
+    options = Options()
+    options.headless = True
+    with webdriver.Firefox(
+            options=options,
+            executable_path=Code.GECKODRIVER_PATH) as wd:
+        print('Opening browser and signing in...')
+        sign_into_website(wd)
+        sample_house.scrape(wd)
+        print(json.dumps(sample_house['listing'], indent=2))

@@ -5,7 +5,7 @@ from os import path
 import json
 
 import Code
-from Code import scrape2, database
+from Code import scrape2, database, support
 
 
 class House(dict):
@@ -33,6 +33,7 @@ class House(dict):
             database.push_to_db(self)
         except Exception as e:
             print(f'Upload failed, saving to disk.\n\t{e}')
-            outfilepath = path.join(Code.LISTINGS_DIR, self['main']['address']+'.json')
+            outfilename = support.create_filename_from_dict(self)
+            outfilepath = path.join(Code.LISTINGS_DIR, outfilename)
             with open(outfilepath, 'w') as f:
                 f.write(json.dumps(self, indent=4))

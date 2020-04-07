@@ -4,10 +4,9 @@ from datetime import datetime
 import os
 import glob
 import copy
-from django.utils.text import slugify
 
 import Code
-from Code import clean
+from Code import clean, support
 
 
 def read_dicts_from_json(filepath):
@@ -28,13 +27,6 @@ def write_dicts_to_json(dict_list, filepath):
         f.write(json.dumps(dict_list, indent=4))
 
 
-def create_filename_from_dict(dic):
-    """Generate a JSON filename from address in dict."""
-    addr = dic['_info']['address']
-    clean_name = slugify(addr).replace('-', '_').upper()
-    return '{}.json'.format(clean_name)
-
-
 def add_dict_to_json(dic):
     """Write listing dict to JSON file. If file already exists, insert the dict.
 
@@ -42,7 +34,7 @@ def add_dict_to_json(dic):
         a list of len 1 or more of all scraped versions
     """
     # Define file path
-    basename = create_filename_from_dict(dic)
+    basename = support.create_filename_from_dict(dic)
     outfilepath = os.path.join(Code.LISTINGS_DIR, basename)
 
     all_scrapes = []

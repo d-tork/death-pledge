@@ -18,6 +18,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 import json
+from django.utils.text import slugify
 
 import Code
 from Code import support, json_handling, classes
@@ -147,6 +148,7 @@ def scrape_normal_card(attrib_list):
     for tag in attrib_list:
         attr_tup = tag.text.split(u':\xa0 ')
         attr_tup = [x.strip() for x in attr_tup]  # Strip whitespace from k and v
+        attr_tup = [slugify(attr_tup[0]).replace('-', '_'), attr_tup[1]]
         yield attr_tup
 
 
@@ -160,7 +162,9 @@ def scrape_history_card(attrib_list):
         val = tag.text.strip()
         row_items.append(val)
         if (i + 1) % 3 == 0:  # Third (last) item
-            current_row = (row_items[0], '{} --> {}'.format(row_items[1], row_items[2]))
+            datestr = datetime.strptime(row_items[0], '%b %d, %Y').date()
+            from_event, to_event = row_items[1], row_items[2]
+            current_row = (str(datestr), f'{from_event} --> {to_event}')
             row_items = []
             yield current_row
 
@@ -177,7 +181,8 @@ def get_cards(soup):
     house_data['basic_info'] = house_data.setdefault('basic_info', {})
     for i in basic_info_list:
         attr_tup = tuple(i.text.split(u':\xa0 '))
-        house_data['basic_info'].update(dict([attr_tup]))
+        attr_tup = (slugify(attr_tup[0]).replace('-', '_'), attr_tup[1])
+        house_data['basic_info'].update([attr_tup])
 
     # All good cards
     for i in result:
@@ -188,8 +193,7 @@ def get_cards(soup):
                 discard = ['which', 'open houses', 'questions']
                 if any(x in card_title.lower() for x in discard):
                     continue
-                card_title = card_title.lower().strip()
-                card_title = card_title.replace('/ ', '').replace(' ', '_')
+                card_title = slugify(card_title).replace('-', '_')
 
                 # Create the key, in case names change or it's new
                 house_data.setdefault(card_title, {})
@@ -223,8 +227,8 @@ def scrape_soup(house, soup):
 
     # Reorganize sub-dicts
     single_items = [
-        ('basic_info', 'Tax Annual Amount'),
-        ('basic_info', 'Price Per SQFT'),
+        ('basic_info', 'tax_annual_amount'),
+        ('basic_info', 'price_per_sqft'),
     ]
     for subdict, key in single_items:
         house['listing'][key] = house['data'][subdict].pop(key, None)

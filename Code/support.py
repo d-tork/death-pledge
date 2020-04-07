@@ -7,6 +7,7 @@ import datetime
 from datetime import datetime as dt
 import time
 from fake_useragent import UserAgent
+from django.utils.text import slugify
 
 
 class BadResponse(Exception):
@@ -132,6 +133,13 @@ def haversine(coords1, coords2):
     a = sin(dLat/2)**2 + cos(lat1)*cos(lat2)*sin(dLon/2)**2
     c = 2*asin(sqrt(a))
     return R * c
+
+
+def create_filename_from_dict(dic):
+    """Generate a JSON filename from address in dict."""
+    addr = dic['main']['address']
+    clean_name = slugify(addr).replace('-', '_').upper()
+    return '{}.json'.format(clean_name)
 
 
 if __name__ == '__main__':

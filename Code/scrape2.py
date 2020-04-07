@@ -10,7 +10,6 @@ import random
 import gc
 from datetime import datetime
 from time import sleep
-from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.firefox.options import Options
@@ -26,28 +25,6 @@ from Code.api_calls import keys, google_sheets
 
 class ListingNotAvailable(Exception):
     pass
-
-
-def get_html_from_file(fname):
-    """Gets HTML soup from a local file (for offline testing).
-    
-    Deprecated; I haven't done any offline testing since the first day.
-    
-    """
-    with open(fname) as fhand:
-        c = fhand.read()
-    return BeautifulSoup(c, features='html.parser')
-
-
-def prettify_soup(soup_obj):
-    """Writes out HTML soup for manual parsing (for testing)
-    
-    Deprecated; I haven't done any offline testing since the first day.
-    
-    """
-    prettyhtml = soup_obj.prettify()
-    with open('html_source.txt', 'w') as fhand:
-        fhand.write(prettyhtml)
 
 
 def sign_into_website(driver):
@@ -134,9 +111,6 @@ def get_main_box(soup, dic):
                     'baths': vitals[1],
                     'sqft': vitals[2]}
 
-    for i in [address, citystate, vitals, badge]:
-        print('\t{}'.format(i))
-
 
 def get_price_info(soup, dic):
     """Add price info details to listing dictionary."""
@@ -170,13 +144,13 @@ def scrape_normal_card(attrib_list):
 def scrape_history_card(attrib_list):
     """Generate rows from the Listing History table.
 
-    :returns named tuple
+    Yields: named tuple
     """
     row_items = []
     for i, tag in enumerate(attrib_list):
         val = tag.text.strip()
         row_items.append(val)
-        if (i + 1) % 3 == 0:  # Third (last) item)
+        if (i + 1) % 3 == 0:  # Third (last) item
             current_row = (row_items[0], '{} --> {}'.format(row_items[1], row_items[2]))
             row_items = []
             yield current_row
@@ -235,10 +209,7 @@ def scrape_soup(soup):
 
 
 def scrape_from_url_list(url_df, quiet=True):
-    """Given an array of URLs, use soup scraper to save JSONs of the listing data.
-
-    Meant for use within a context manager for the webdriver.
-    """
+    """Given an array of URLs, use soup scraper to save JSONs of the listing data."""
     options = Options()
     if quiet:
         options.headless = True
@@ -271,6 +242,7 @@ def scrape_from_url_list(url_df, quiet=True):
             # Add a couple more fields
             listing_dict['_metadata'].update({'URL': row.url})
             listing_dict['_metadata'].update({'date_added': row.date_added})
+            # TODO: remove underscore from all JSON dict fields (reserved by DB)
 
             # Merge with previous dict
             json_handling.check_and_merge_dicts(listing_dict)

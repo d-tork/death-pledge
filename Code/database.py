@@ -12,7 +12,7 @@ Cloudant's docs:
 
 """
 
-from cloudant.client import Cloudant
+from cloudant import cloudant_iam
 from time import sleep
 
 from Code.api_calls.keys import db_creds
@@ -20,26 +20,24 @@ from Code.api_calls.keys import db_creds
 
 def push_to_db(doc):
     # Establish connection to service instance
-    client = Cloudant.iam(db_creds['username'], db_creds['apikey'])
-    client.connect()
+    with cloudant_iam(db_creds['username'], db_creds['apikey']) as client:
 
-    databaseName = 'deathpledge_raw'
-    try:
-        myDatabase = client[databaseName]
-        print(f"Connected to database '{databaseName}'\n")
-    except KeyError:
-        myDatabase = client.create_database(databaseName, partitioned=False)
-        if myDatabase.exists():
-            print(f"'{databaseName}' successfully created.\n")
+        databaseName = 'deathpledge_raw'
+        try:
+            myDatabase = client[databaseName]
+            print(f"Connected to database '{databaseName}'\n")
+        except KeyError:
+            myDatabase = client.create_database(databaseName, partitioned=False)
+            if myDatabase.exists():
+                print(f"'{databaseName}' successfully created.\n")
 
-    try:
-        newDocument = myDatabase.create_document(doc, throw_on_exists=True)
-        if newDocument.exists():
-            print('Document created.')
-    except Exception as e:
-        print(f'Document creation failed.\n{e}')
-    sleep(1)
+        try:
+            newDocument = myDatabase.create_document(doc, throw_on_exists=True)
+            if newDocument.exists():
+                print('Document created.')
+        except Exception as e:
+            print(f'Document creation failed.\n{e}')
+        sleep(1)
 
-    client.disconnect()
     raise(Exception)
 

@@ -91,6 +91,7 @@ class House(dict):
             # instance does not have addr or ID, fill them from scraped data
             self.address = scraped_address
             self.docid = scraped_addr_id
+        self['_id'] = self.docid
 
     def scrape(self, webdriver):
         """Fetch listing data from RealScout."""

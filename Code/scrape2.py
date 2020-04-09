@@ -144,8 +144,7 @@ def get_price_info(soup):
                 'list_price': list_price,
             })
     except AttributeError as e:
-        print(f'Error while getting price info: {e}')
-        # Most likely "Off Market"
+        logger.info(f'Error while getting price info: {e}, probably Off Market.')
     return info
 
 
@@ -289,7 +288,6 @@ def scrape_from_url_df(url_df, quiet=True):
             current_house = classes.House(url=row.url, added_date=row.date_added)
             current_house.scrape(wd)
             house_list.append(current_house)
-            logger.info('\n'+'#'*10+f' STARTING LOG FOR {current_house.address} '+'#'*10)
 
             print('Waiting {:.1f} seconds...'.format(wait_time))
             sleep(wait_time)

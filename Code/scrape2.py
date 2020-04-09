@@ -241,17 +241,23 @@ def scrape_soup(house, soup):
     return house
 
 
-def scrape_from_url_list(url_df, quiet=True):
-    """Given an array of URLs, use soup scraper to save JSONs of the listing data.
+def scrape_from_url_df(url_df, quiet=True):
+    """Given an array of URLs, create house instances and scrape web data.
 
-    TODO: will be deprecated in favor of looping through instances of the House class
-    and calling their scrape() method. Don't forget to include checks for a valid URL
-    and retain the random wait times elsewhere in the code.
+    Args:
+        url_df (DataFrame): Two-series dataframe of URL and date added.
+        quiet (bool): Whether to hide (True) or show (False) web browser as it
+            scrapes.
+
+    Returns:
+        list: Array of house instances.
 
     """
     options = Options()
     if quiet:
         options.headless = True
+
+    house_list = []
 
     with webdriver.Firefox(options=options, executable_path=Code.GECKODRIVER_PATH) as wd:
         print('Opening browser and signing in...')
@@ -267,24 +273,15 @@ def scrape_from_url_list(url_df, quiet=True):
                 print('URL did not return valid response code.')
                 continue
 
-            # Get soup, then scrape and wait before moving on
-            try:
-                soup = get_soup_for_url(row.url, wd)
-            except ListingNotAvailable as e:
-                print('\t{}'.format(e))
-                continue
-            except TimeoutException as e:
-                print('\t{}'.format(e))
-                continue
-            listing_dict = scrape_soup(soup)
+            # Create house instance
+            current_house = classes.House(url=row.url, added_date=row.date_added)
+            current_house.scrape(wd)
+            house_list.append(current_house)
 
-            # Merge with previous dict
-            json_handling.check_and_merge_dicts(listing_dict)
-
-            json_handling.add_dict_to_json(listing_dict)
             print('Waiting {:.1f} seconds...'.format(wait_time))
             sleep(wait_time)
             gc.collect()
+    return house_list
 
 
 if __name__ == '__main__':
@@ -293,10 +290,7 @@ if __name__ == '__main__':
 
     options = Options()
     #options.headless = True
-    with webdriver.Firefox(
-            options=options,
-            executable_path=Code.GECKODRIVER_PATH) as wd:
-        print('Opening browser and signing in...')
+    with webdriver.Firefox(options=options, executable_path=Code.GECKODRIVER_PATH) as wd:
         sign_into_website(wd)
         sample_house.scrape(wd)
         print(json.dumps(sample_house['main'], indent=2))

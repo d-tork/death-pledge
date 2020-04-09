@@ -105,13 +105,14 @@ def convert_dates(dic):
 
 def remove_dupe_fields(dic):
     dupe_fields = [
-        ('building_information', 'price_per_sqft'),  # found in basic_info
+        ('building_information', 'price_per_sqft'),  # found in basic_info, moved to listing
         ('basic_info', 'lot_size_acres'),            # found in exterior_information
         ('listing', 'tax_annual_amount'),            # found in expenses_taxes
         ('basic_info', 'structure_type'),            # found in building_information
         ('basic_info', 'architectural_style'),       # found in building_information
         ('basic_info', 'year_built'),                # found in building_information
         ('basic_info', 'hoa_fee'),                   # found in association_location_schools
+        ('basic_info', 'county'),                    # found in association_location_schools
     ]
     for key_tuple in dupe_fields:
         subdict, field = key_tuple

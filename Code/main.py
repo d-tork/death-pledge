@@ -8,7 +8,7 @@ import Code
 from Code.api_calls import google_sheets as gs
 from Code import scrape2, score2, modify, support, database
 
-logfile = os.path.join(Code.PROJ_PATH, 'logfile')
+logfile = os.path.join(Code.PROJ_PATH, 'Data', 'logfile.log')
 logging.basicConfig(
     filename=logfile, filemode='w',
     format='%(levelname)s:%(asctime)s - %(name)s - %(funcName)s - %(message)s',

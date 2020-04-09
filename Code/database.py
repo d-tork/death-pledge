@@ -172,7 +172,7 @@ def verify_bulk_upload(r, db_name):
     # Save status of all docs pushed
     outpath = path.join(Code.PROJ_PATH, 'Data', 'bulk_upload_all.csv')
     df = df.reindex(columns=['timestamp', 'database', 'ok', 'id', 'rev', 'error', 'reason'])
-    df.to_csv(outpath, mode='a', header=True, index=False)
+    df.to_csv(outpath, mode='a', header=False, index=False)
     return df.loc[df['ok'].isna()]
 
 

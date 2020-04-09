@@ -26,8 +26,24 @@ class House(dict):
     and all uppercase:
         123_NORTH_MAPLE_DR_456.json
 
+    Process
+    =======
+    1. Instantiate
+    2. Scrape
+    3. Write raw to db (all sub-dicts)
+    4. Clean
+    5. Enrich
+    6. Split and score
+    7. Write processed *data* to db (excluding listing sub-dict)
+
     Attributes:
         doctype (str): type of document to store
+
+    Args:
+        address (str): property street address in the form 123 NORTH MAPLE DR 456
+        url (str): url to be scraped for data
+        added_date (str): date house was first considered, in the form 1/1/2020
+
     """
     doctype = 'house'
 

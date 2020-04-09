@@ -6,7 +6,7 @@ import glob
 import copy
 
 import Code
-from Code import clean, support
+from Code import cleaning, support
 
 
 def read_dicts_from_json(filepath):
@@ -46,7 +46,7 @@ def add_dict_to_json(dic):
         pass
 
     # Clean any dict about to be saved to file
-    clean.clean_one(dic)
+    cleaning.clean_one(dic)
 
     # Check if newest scrape is different from previous one
     if all_scrapes:  # previous versions existed

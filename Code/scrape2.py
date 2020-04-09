@@ -173,7 +173,14 @@ def scrape_history_card(attrib_list):
 
 
 def get_cards(soup):
-    """Parse all cards and add to listing dictionary."""
+    """Parse all cards.
+
+    Args:
+        soup: BeautifulSoup object
+
+    Returns: dict
+
+    """
     house_data = {}
     # Get list of card tags
     result = soup.find_all('div', attrs={'class': 'card'})
@@ -226,18 +233,20 @@ def scrape_soup(house, soup):
     # Scrape three sections
     house['main'], house['listing'] = get_main_box(soup)
     house['listing'].update(get_price_info(soup))
-    house['data'] = get_cards(soup)
+    house.update(get_cards(soup))
 
     # Reorganize sub-dicts
     single_items = [
         ('basic_info', 'tax_annual_amount'),
         ('basic_info', 'price_per_sqft'),
+        ('basic_info', 'status'),
+        ('basic_info', 'mls_number'),
     ]
     for subdict, key in single_items:
-        house['listing'][key] = house['data'][subdict].pop(key, None)
+        house['listing'][key] = house[subdict].pop(key, None)
     # Whole sub-dicts
-    house['listing']['expenses_taxes'] = house['data'].pop('expenses_taxes')
-    house['listing']['listing_history'] = house['data'].pop('listing_history')
+    house['listing']['expenses_taxes'] = house.pop('expenses_taxes')
+    house['listing']['listing_history'] = house.pop('listing_history')
     return house
 
 

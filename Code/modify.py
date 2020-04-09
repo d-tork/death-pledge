@@ -14,7 +14,7 @@ from time import sleep
 from datetime import datetime as dt
 
 import Code
-from Code import json_handling, support, clean
+from Code import json_handling, support, cleaning
 from Code.api_calls import bing, citymapper, keys
 from Code.support import BadResponse
 
@@ -214,7 +214,7 @@ def change_from_initial(dic):
     for date, text in dic['listing history'].items():
         if 'Initial' in text:
             initial_price = text.split()[3]
-            initial_price = clean.convert_currency_to_int(initial_price)
+            initial_price = cleaning.currency_to_int(initial_price)
 
     price_diff = current_price - initial_price
     if price_diff != 0:

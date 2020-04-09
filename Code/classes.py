@@ -6,7 +6,7 @@ import json
 import warnings
 
 import Code
-from Code import scrape2, database, support
+from Code import scrape2, database, support, cleaning
 
 
 class House(dict):
@@ -100,7 +100,17 @@ class House(dict):
         self.update(listing_data)
         self.resolve_address_id()
 
-    def upload(self):
+    def clean(self):
+        """Parse and clean all string values meant to be numeric.
+
+        Also drops unneeded/duplicate fields.
+        """
+        cleaning.split_comma_delimited_fields(self)
+        cleaning.convert_numbers(self)
+        cleaning.convert_dates(self)
+        cleaning.remove_dupe_fields(self)
+
+    def upload(self, db_name):
         """Send JSON to database."""
         self.resolve_address_id()
         self['_id'] = self.docid

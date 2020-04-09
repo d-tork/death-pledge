@@ -79,6 +79,12 @@ def convert_numbers(dic):
                 logger.info(f'{dic["main"]["address"]} - One or more subdicts or fields do not exist: {e}')
                 continue
             dic[subdict1][subdict2][field] = parse_number(val)
+    # All numbers in building_information
+    for k, v in dic['building_information'].items():
+        try:
+            dic['building_information'][k] = int(v)
+        except (ValueError, TypeError):  # not a number
+            pass
 
 
 def convert_dates(dic):

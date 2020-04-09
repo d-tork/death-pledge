@@ -93,8 +93,8 @@ class House(dict):
         """Fetch listing data from RealScout."""
         try:
             soup = scrape2.get_soup_for_url(self.url, webdriver)
-        except AttributeError as e:  # url has not been set
-            print(f'URL has not been set for this house. \n\t{e}')
+        except Exception as e:
+            print(f'Failed to scrape {self.url}, listing data not obtained. \n\t{e}')
             return
         listing_data = scrape2.scrape_soup(self, soup)
         self.update(listing_data)

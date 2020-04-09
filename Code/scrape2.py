@@ -69,7 +69,10 @@ def get_soup_for_url(url, driver):
         TimeoutException: If listing details don't appear within 10 sec after navigation.
     
     """
-    url_suffix = url.rfind('/') + 3
+    try:
+        url_suffix = url.rfind('/') + 3
+    except AttributeError:
+        raise ValueError('URL has not been set for this house.')
     print('URL: {}'.format(url[url_suffix:]))
     driver.get(url)
 
@@ -274,10 +277,6 @@ def scrape_from_url_list(url_df, quiet=True):
                 print('\t{}'.format(e))
                 continue
             listing_dict = scrape_soup(soup)
-
-            # Add a couple more fields
-            listing_dict['_metadata'].update({'URL': row.url})
-            listing_dict['_metadata'].update({'date_added': row.date_added})
 
             # Merge with previous dict
             json_handling.check_and_merge_dicts(listing_dict)

@@ -115,7 +115,7 @@ class House(dict):
         self.resolve_address_id()
         self['_id'] = self.docid
         try:
-            database.push_one_to_db(self)
+            database.push_one_to_db(self, db_name=db_name)
         except Exception as e:
             print(f'Upload failed, saving to disk.\n\t{e}')
             outfilename = support.create_filename_from_addr(self.address)

@@ -19,18 +19,17 @@ from time import sleep
 from Code.api_calls.keys import db_creds
 
 
-def push_one_to_db(doc):
+def push_one_to_db(doc, db_name):
     # Establish connection to service instance
     with cloudant_iam(db_creds['username'], db_creds['apikey']) as client:
         # Access the database
-        databaseName = 'deathpledge_raw'
         try:
-            myDatabase = client[databaseName]
-            print(f"Connected to database '{databaseName}'\n")
+            myDatabase = client[db_name]
+            print(f"Connected to database '{db_name}'\n")
         except KeyError:
-            myDatabase = client.create_database(databaseName, partitioned=False)
+            myDatabase = client.create_database(db_name, partitioned=False)
             if myDatabase.exists():
-                print(f"'{databaseName}' successfully created.\n")
+                print(f"'{db_name}' successfully created.\n")
 
         # Create or update the document
         if doc.docid in myDatabase:
@@ -45,3 +44,6 @@ def push_one_to_db(doc):
                 print(f'Document creation failed.\n{e}')
                 raise
         sleep(1)
+
+    # TESTING
+    raise Exception('Forcing local save')

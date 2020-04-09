@@ -19,10 +19,13 @@ from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 import json
 from django.utils.text import slugify
+import logging
 
 import Code
 from Code import support, json_handling, classes
 from Code.api_calls import keys, google_sheets
+
+logger = logging.getLogger(__name__)
 
 
 class ListingNotAvailable(Exception):
@@ -286,6 +289,7 @@ def scrape_from_url_df(url_df, quiet=True):
             current_house = classes.House(url=row.url, added_date=row.date_added)
             current_house.scrape(wd)
             house_list.append(current_house)
+            logger.info('\n'+'#'*10+f' STARTING LOG FOR {current_house.address} '+'#'*10)
 
             print('Waiting {:.1f} seconds...'.format(wait_time))
             sleep(wait_time)

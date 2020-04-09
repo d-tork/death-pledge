@@ -4,9 +4,12 @@ from datetime import datetime
 from os import path
 import json
 import warnings
+import logging
 
 import Code
 from Code import scrape2, database, support, cleaning
+
+logger = logging.getLogger(__name__)
 
 
 class House(dict):
@@ -95,6 +98,7 @@ class House(dict):
             soup = scrape2.get_soup_for_url(self.url, webdriver)
         except Exception as e:
             print(f'Failed to scrape {self.url}, listing data not obtained. \n\t{e}')
+            logger.exception(f'Failed to scrape {self.url}, listing data not obtained.')
             return
         listing_data = scrape2.scrape_soup(self, soup)
         self.update(listing_data)

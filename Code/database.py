@@ -13,15 +13,16 @@ Cloudant's docs:
 """
 
 from cloudant import cloudant_iam
+from cloudant.document import Document
 from time import sleep
 
 from Code.api_calls.keys import db_creds
 
 
-def push_to_db(doc):
+def push_one_to_db(doc):
     # Establish connection to service instance
     with cloudant_iam(db_creds['username'], db_creds['apikey']) as client:
-
+        # Access the database
         databaseName = 'deathpledge_raw'
         try:
             myDatabase = client[databaseName]
@@ -31,13 +32,16 @@ def push_to_db(doc):
             if myDatabase.exists():
                 print(f"'{databaseName}' successfully created.\n")
 
-        try:
-            newDocument = myDatabase.create_document(doc, throw_on_exists=True)
-            if newDocument.exists():
-                print('Document created.')
-        except Exception as e:
-            print(f'Document creation failed.\n{e}')
+        # Create or update the document
+        if doc.docid in myDatabase:
+            print(f'Document for {doc.address} exists, updating with new revision')
+            with Document(myDatabase, doc.docid) as remote_doc:
+                remote_doc.update(doc)
+        else:
+            try:
+                myDatabase.create_document(doc, throw_on_exists=True)
+                print(f'Document created for {doc.address}')
+            except Exception as e:
+                print(f'Document creation failed.\n{e}')
+                raise
         sleep(1)
-
-    raise(Exception)
-

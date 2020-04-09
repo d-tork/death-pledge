@@ -300,5 +300,5 @@ if __name__ == '__main__':
         print('Opening browser and signing in...')
         sign_into_website(wd)
         sample_house.scrape(wd)
-        print(json.dumps(sample_house['listing'], indent=2))
+        print(json.dumps(sample_house['main'], indent=2))
         sample_house.upload()

@@ -104,9 +104,9 @@ def get_main_box(soup):
     main_box = result[0]
 
     # Extract strings from tags
-    badge = main_box.a.string
-    address = main_box.h1.string
-    citystate = main_box.h2.string
+    badge = str(main_box.a.string)
+    address = str(main_box.h1.string)
+    citystate = str(main_box.h2.string)
     vitals = main_box.h5.text.split(' |\xa0')
 
     # Add to dictionary
@@ -200,7 +200,7 @@ def get_cards(soup):
     for i in result:
         card_head = i.find('div', class_='card-header')
         if card_head:
-            card_title = card_head.string
+            card_title = str(card_head.string)
             if card_title:
                 discard = ['which', 'open houses', 'questions']
                 if any(x in card_title.lower() for x in discard):
@@ -269,6 +269,7 @@ def scrape_from_url_df(url_df, quiet=True):
         options.headless = True
 
     house_list = []
+    docid_list = []  # for checking for duplicate house instances
 
     with webdriver.Firefox(options=options, executable_path=Code.GECKODRIVER_PATH) as wd:
         print('Opening browser and signing in...')
@@ -287,7 +288,10 @@ def scrape_from_url_df(url_df, quiet=True):
             # Create house instance
             current_house = classes.House(url=row.url, added_date=row.date_added)
             current_house.scrape(wd)
-            house_list.append(current_house)
+            if current_house.docid not in docid_list:
+                # Don't add instance if docid (based on address) already exists
+                docid_list.append(current_house.docid)
+                house_list.append(current_house)
 
             print('Waiting {:.1f} seconds...'.format(wait_time))
             sleep(wait_time)

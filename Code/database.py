@@ -82,21 +82,21 @@ def bulk_upload(doclist, db_name):
             include_docs=False,
             keys=[doc['_id'] for doc in doclist]  # only check for docs I'm pushing
         )['rows']
-        # Create a mapping of id to rev
-        id_rev_mapping = {
-            doc['id']: doc['value']['rev']
-            for doc in remote_doclist
-            if not doc.get('error')  # error key exists when doc id is not found
-        }
-        # Add the current _rev to my local docs about to be pushed
-        for doc in doclist:
-            if doc['_id'] in id_rev_mapping:
-                doc['_rev'] = id_rev_mapping.get(doc['_id'])
-            else:
-                try:
-                    del doc['_rev']
-                except KeyError:
-                    pass
+    # Create a mapping of id to rev
+    id_rev_mapping = {
+        doc['id']: doc['value']['rev']
+        for doc in remote_doclist
+        if not doc.get('error')  # error key exists when doc id is not found
+    }
+    # Add the current _rev to my local docs about to be pushed
+    for doc in doclist:
+        if doc['_id'] in id_rev_mapping:
+            doc['_rev'] = id_rev_mapping.get(doc['_id'])
+        else:
+            try:
+                del doc['_rev']
+            except KeyError:
+                pass
 
     # Create HTTP POST request
     resp = post_bulk_upload(doclist, db_name)
@@ -104,17 +104,27 @@ def bulk_upload(doclist, db_name):
     df_failures = verify_bulk_upload(resp, db_name)
     print(f'Upload failures: {len(df_failures.index)}')
 
+    if len(df_failures.index) > 0:
+        retry_bulk_failed(doclist, df_failures, db_name)
+
     # Dump results
-    with open(path.join(Code.PROJ_PATH, 'Data', 'bulk_upload_status.txt'), 'a') as f:
+    write_response_to_file(resp, df_failures, db_name)
+    return
+
+
+def write_response_to_file(r, df_failures, db_name):
+    outpath = path.join(Code.PROJ_PATH, 'Data', 'bulk_upload_status.txt')
+    with open(outpath, 'a') as f:
         f.writelines([
             '#' * 5,
             f"\n{strftime('%d %b %Y %H:%M:%S', localtime())} - {db_name}\n",
             '#' * 5 + '\n',
-        ])
-        json.dump(resp.json(), f, indent=2)
+            ])
         if len(df_failures.index) > 0:
             f.writelines(['\n', '#'*3, f"\n Upload Errors \n", '#'*3, '\n'])
             f.write(df_failures.to_string())
+            f.write('\n')
+        json.dump(r.json(), f, indent=2)
         f.writelines(['\n', '#'*25, '\n'*2])
 
 
@@ -160,9 +170,19 @@ def verify_bulk_upload(r, db_name):
     df['timestamp'] = pd.to_datetime(datetime.now())
 
     # Save status of all docs pushed
-    outfile = path.join(Code.PROJ_PATH, 'Data', 'bulk_upload_all.csv')
-    df.to_csv(outfile, mode='a', header=False, index=False)
+    outpath = path.join(Code.PROJ_PATH, 'Data', 'bulk_upload_all.csv')
+    df = df.reindex(columns=['timestamp', 'database', 'ok', 'id', 'rev', 'error', 'reason'])
+    df.to_csv(outpath, mode='a', header=True, index=False)
     return df.loc[df['ok'].isna()]
+
+
+def retry_bulk_failed(doclist, df_failures, db_name):
+    """Call the upload() method on individual listings that failed."""
+    # Get only the docs that failed
+    filtered_doclist = [doc for doc in doclist if doc['_id'] in df_failures['id']]
+
+    for doc in filtered_doclist:
+        doc.upload(db_name)
 
 
 

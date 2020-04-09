@@ -1,5 +1,6 @@
-#Pycharm files
+#Pycharm/Jupyter files
 *.idea
+.ipynb_checkpoints/
 
 # Caches
 __pycache__/

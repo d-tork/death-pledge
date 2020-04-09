@@ -26,8 +26,8 @@ def split_comma_delimited_fields(dic):
         try:
             listlike_field = dic[subdict][key]
             value_list = listlike_field.split(', ')
-        except Exception as e:  # no longer a string
-            logger.info(f'Failed to split ({subdict}, {key}) into list.')
+        except Exception as e:
+            logger.info(f'{dic["main"]["address"]} - Failed to split ({subdict}, {key}) into list.')
             continue
         # Remove 'and' in final element
         value_list[-1] = value_list[-1].replace('and ', '')
@@ -55,18 +55,20 @@ def convert_numbers(dic):
         ('main', 'beds'),
         ('main', 'sqft'),
         ('exterior_information', 'lot_size_sqft'),
+        ('listing', 'expenses_taxes', 'tax_year'),
         # Floats
         ('main', 'baths'),
         ('basic_info', 'lot_size_acres'),
         ('exterior_information', 'lot_size_acres'),
     ]
+    # Enumerated fields
     for key_tuple in numeric_field_list:
         if len(key_tuple) == 2:
             subdict, field = key_tuple
             try:
                 val = dic[subdict][field]
             except KeyError as e:
-                logger.info(f'Subdict or field does not exist: {e}')
+                logger.info(f'{dic["main"]["address"]} - Subdict or field does not exist: {e}')
                 continue
             dic[subdict][field] = parse_number(val)
         else:
@@ -74,7 +76,7 @@ def convert_numbers(dic):
             try:
                 val = dic[subdict1][subdict2][field]
             except KeyError as e:
-                logger.info(f'One or more subdicts or fields do not exist: {e}')
+                logger.info(f'{dic["main"]["address"]} - One or more subdicts or fields do not exist: {e}')
                 continue
             dic[subdict1][subdict2][field] = parse_number(val)
 
@@ -90,7 +92,7 @@ def convert_dates(dic):
         try:
             val = dic[subdict][field]
         except KeyError as e:
-            logger.info(f'Subdict or field does not exist: {e}')
+            logger.info(f'{dic["main"]["address"]} - Subdict or field does not exist: {e}')
             continue
         dic[subdict][field] = parse_date(val)
 
@@ -110,7 +112,7 @@ def remove_dupe_fields(dic):
         try:
             del dic[subdict][field]
         except KeyError as e:
-            logger.info(f'Subdict or field does not exist: {e}')
+            logger.info(f'{dic["main"]["address"]} - Subdict or field does not exist: {e}')
             continue
 
 

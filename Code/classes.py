@@ -43,19 +43,19 @@ class House(dict):
         doctype (str): type of document to store
 
     Args:
-        address (str): property street address in the form 123 NORTH MAPLE DR 456
+        full_address (str): property street address in the form 123 NORTH MAPLE DR 456
         url (str): url to be scraped for data
         added_date (str): date house was first considered, in the form 1/1/2020
 
     """
     doctype = 'house'
 
-    def __init__(self, address=None, url=None, added_date=None):
+    def __init__(self, full_address=None, url=None, added_date=None):
         super().__init__()
         # If address is given to instance, create ID from it
-        self.address = address
-        if address:
-            self.docid = support.create_house_id(address)
+        self.address = full_address
+        if full_address:
+            self.docid = support.create_house_id(full_address)
         else:
             self.docid = None
 
@@ -77,7 +77,7 @@ class House(dict):
         scraped from the URL (if given). Also creates a unique ID for
         the address.
         """
-        scraped_address = support.clean_address(self['main']['address'])
+        scraped_address = support.clean_address(self['main']['full_address'])
         scraped_addr_id = support.create_house_id(scraped_address)
         if self.docid:
             # address was provided to instance
@@ -115,6 +115,13 @@ class House(dict):
         cleaning.convert_dates(self)
         cleaning.remove_dupe_fields(self)
 
+    def save_local(self, filename=None):
+        if not filename:
+            filename = support.create_filename_from_addr(self['main']['address'])
+        outfilepath = path.join(Code.LISTINGS_DIR, filename)
+        with open(outfilepath, 'w') as f:
+            f.write(json.dumps(self, indent=4))
+
     def upload(self, db_name):
         """Send JSON to database."""
         self.resolve_address_id()
@@ -123,7 +130,4 @@ class House(dict):
             database.push_one_to_db(self, db_name=db_name)
         except Exception as e:
             print(f'Upload failed, saving to disk.\n\t{e}')
-            outfilename = support.create_filename_from_addr(self.address)
-            outfilepath = path.join(Code.LISTINGS_DIR, outfilename)
-            with open(outfilepath, 'w') as f:
-                f.write(json.dumps(self, indent=4))
+            self.save_local()

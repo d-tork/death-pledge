@@ -48,7 +48,7 @@ class House(dict):
         added_date (str): date house was first considered, in the form 1/1/2020
 
     """
-    doctype = 'house'
+    doctype = 'home'
 
     def __init__(self, full_address=None, url=None, added_date=None):
         super().__init__()

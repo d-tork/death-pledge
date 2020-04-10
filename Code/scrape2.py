@@ -93,7 +93,7 @@ def get_soup_for_url(url, driver):
 
 
 def get_main_box(soup):
-    """Add box details to listing dictionary.
+    """Add box details to home instance.
 
     Args: 
         soup: bs4 soup object.
@@ -125,7 +125,7 @@ def get_main_box(soup):
 
 
 def get_price_info(soup):
-    """Add price info details to listing dictionary."""
+    """Add price info details to home instance."""
     info = {}
     # Get tags
     result = soup.find_all('div', attrs={'class': 'col-4 col-sm-4 col-md-5 text-right'})
@@ -183,24 +183,28 @@ def get_cards(soup):
     Returns: dict
 
     """
-    house_data = {}
+    data = {}
+    data.setdefault('basic_info', {})
+    data.setdefault('listing', {})
     # Get list of card tags
-    result = soup.find_all('div', attrs={'class': 'card'})
+    cards = soup.find_all('div', attrs={'class': 'card'})
 
     # First card, no title (basic info)
-    tag_basic_info = result[0]
+    # except for MLS Number and Status, these are duplicates from further down the page
+    tag_basic_info = cards[0]
     basic_info_list = tag_basic_info.find_all('div', class_='col-12')
-    house_data['basic_info'] = house_data.setdefault('basic_info', {})
-    for i in basic_info_list:
-        attr_tup = tuple(i.text.split(u':\xa0 '))
+    for field in basic_info_list:
+        attr_tup = tuple(field.text.split(u':\xa0 '))
         attr_tup = (slugify(attr_tup[0]).replace('-', '_'), attr_tup[1])
-        house_data['basic_info'].update([attr_tup])
+        data['basic_info'].update([attr_tup])
 
     # All good cards
-    for i in result:
-        card_head = i.find('div', class_='card-header')
-        if card_head:
-            card_title = str(card_head.string)
+    for i, card in enumerate(cards):
+        card_head = card.find('div', class_='card-header')
+        if i == 0:  # Description paragraph
+            data['listing']['description'] = card_head.text
+        elif card_head:
+            card_title = card_head.string
             if card_title:
                 discard = ['which', 'open houses', 'questions']
                 if any(x in card_title.lower() for x in discard):
@@ -208,16 +212,16 @@ def get_cards(soup):
                 card_title = slugify(card_title).replace('-', '_')
 
                 # Create the key, in case names change or it's new
-                house_data.setdefault(card_title, {})
-                card_attrib_list = i.find_all('div', class_='col-12')
+                data.setdefault(card_title, {})
+                card_attrib_list = card.find_all('div', class_='col-12')
                 if card_attrib_list:
                     for field_attrib in scrape_normal_card(card_attrib_list):
-                        house_data[card_title].update([field_attrib])
-                if not card_attrib_list:  # the Listing History card
-                    card_attrib_list = i.find_all('div', class_='col-4')
+                        data[card_title].update([field_attrib])
+                else:  # the Listing History card
+                    card_attrib_list = card.find_all('div', class_='col-4')
                     for row in scrape_history_card(card_attrib_list):
-                        house_data[card_title].update({row[0]: row[1]})
-    return house_data
+                        data[card_title].update({row[0]: row[1]})
+    return data
 
 
 def scrape_soup(house, soup):
@@ -303,7 +307,8 @@ if __name__ == '__main__':
     import subprocess
 
     sample_url_list = [keys.sample_url, keys.sample_url2, keys.sample_url3]
-    sample_house = classes.House(url=sample_url_list[0])
+    #sample_house = classes.House(url=sample_url_list[0])
+    sample_house = classes.House(url='https://daniellebiegner.realscout.com/homesearch/listings/p-5825-piedmont-dr-alexandria-22310-brightmls-33')
 
     options = Options()
     options.headless = True
@@ -313,7 +318,7 @@ if __name__ == '__main__':
         version = output.stdout.splitlines()[0]
         print(f'Geckodriver version: {version}\n')
 
-        sign_into_website(wdriver)
+        #sign_into_website(wdriver)
         sample_house.scrape(wdriver)
         print(json.dumps(sample_house['main'], indent=2))
         sample_house.upload('deathpledge_test')

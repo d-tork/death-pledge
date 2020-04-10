@@ -300,13 +300,20 @@ def scrape_from_url_df(url_df, quiet=True):
 
 
 if __name__ == '__main__':
+    import subprocess
+
     sample_url_list = [keys.sample_url, keys.sample_url2, keys.sample_url3]
     sample_house = classes.House(url=sample_url_list[0])
 
     options = Options()
-    #options.headless = True
-    with webdriver.Firefox(options=options, executable_path=Code.GECKODRIVER_PATH) as wd:
-        sign_into_website(wd)
-        sample_house.scrape(wd)
+    options.headless = True
+    with webdriver.Firefox(options=options, executable_path=Code.GECKODRIVER_PATH) as wdriver:
+        # Check geckodriver version (SO 50359334)
+        output = subprocess.run(['geckodriver', '-V'], stdout=subprocess.PIPE, encoding='utf-8')
+        version = output.stdout.splitlines()[0]
+        print(f'Geckodriver version: {version}\n')
+
+        sign_into_website(wdriver)
+        sample_house.scrape(wdriver)
         print(json.dumps(sample_house['main'], indent=2))
-        sample_house.upload()
+        sample_house.upload('deathpledge_test')

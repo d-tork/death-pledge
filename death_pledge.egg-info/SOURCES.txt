@@ -3,7 +3,7 @@ setup.py
 Code/__init__.py
 Code/class_module.py
 Code/classes.py
-Code/clean.py
+Code/cleaning.py
 Code/database.py
 Code/json_handling.py
 Code/main.py

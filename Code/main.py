@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 @support.timing
 def main():
     google_creds = gs.get_creds()
-    df_urls = gs.get_url_dataframe(google_creds, last_n=None, force_all=True)
+    df_urls = gs.get_url_dataframe(google_creds, last_n=28, force_all=False)
     house_list = scrape2.scrape_from_url_df(df_urls, quiet=True)
     database.bulk_upload(house_list, 'deathpledge_raw')
     for house in house_list:

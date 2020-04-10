@@ -35,9 +35,8 @@ def single_sample():
     df_urls = gs.get_url_dataframe(gs.get_creds(), last_n=1)
     house_list = scrape2.scrape_from_url_df(df_urls, quiet=True)
     house1 = house_list[0]
-    house1.upload(db_name='deathpledge_raw')
     house1.clean()
-    house1.upload(db_name='deathpledge_clean')
+    house1.upload(db_name='deathpledge_test')
 
     """
     modify.modify_one(house1)

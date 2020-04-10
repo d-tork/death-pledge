@@ -20,7 +20,10 @@ def split_comma_delimited_fields(dic):
         ('building_information', 'basement_type'),
         ('building_information', 'wall_ceiling_types'),
         ('building_information', 'accessibility_features'),
-        ('building_information', 'utilities'),
+        ('building_information', 'utilities'),  # may have permanently moved
+        ('building_information', 'property_condition'),
+        ('building_information', 'security_features'),
+        ('utilities', 'utilities'),
     ]
     for subdict, key in field_list:
         try:

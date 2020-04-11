@@ -31,6 +31,23 @@ logger = logging.Logger(__name__)
 
 
 def push_one_to_db(doc, db_name):
+    """Upload single doc to database.
+
+    If doc id is already in database, compares the contents of the home
+    dictionary to the remote copy (excluding the scrape_data sub-dict,
+    since the scraped date is guaranteed to be different).
+
+    If there are no differences, it skips the upload. If there are any
+    differences, the _rev gets added so that the database will accept the
+    updated document and increment the revision.
+
+    Args:
+        doc (House): Home instance to be uploaded.
+        db_name (str): Database to upload to.
+
+    Returns: HTTP response
+
+    """
     # Establish connection to service instance
     with cloudant_iam(db_creds['username'], db_creds['apikey']) as client:
         # Access the database
@@ -53,6 +70,7 @@ def push_one_to_db(doc, db_name):
         else:
             logger.info(f'{doc.docid}: no changes pushed to database.')
     sleep(1)
+    return r
 
 
 def bulk_upload(doclist, db_name):

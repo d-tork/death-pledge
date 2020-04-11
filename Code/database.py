@@ -142,7 +142,7 @@ def bulk_upload(doclist, db_name):
         # Save status of all docs pushed
         outpath = path.join(Code.PROJ_PATH, 'Data', 'bulk_upload_all.csv')
         df = df.reindex(columns=['timestamp', 'database', 'ok', 'id', 'rev', 'error', 'reason'])
-        df.to_csv(outpath, index=False)
+        df.to_csv(outpath, mode='a', index=True)
         return df.loc[df['ok'].isna()]
 
     def retry_bulk_failed():

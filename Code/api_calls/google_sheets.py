@@ -92,7 +92,7 @@ def process_url_list(df, force_all=False):
 
     Args:
         df (DataFrame): Raw URL dataframe from Google sheets.
-        force_all: Scrape all listings, even if status is 'no' or 'Sold'.
+        force_all: Keep all URLs, even if status is 'no' or 'Sold'.
 
     Returns: DataFrame
     """

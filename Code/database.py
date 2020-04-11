@@ -17,8 +17,6 @@ from cloudant import cloudant_iam       # Context manager
 from cloudant.document import Document  # Context manager
 from time import sleep, localtime, strftime
 from os import path
-import requests
-from urllib import parse
 import pandas as pd
 import json
 import logging
@@ -28,6 +26,14 @@ import Code
 from Code.api_calls.keys import db_creds
 
 logger = logging.Logger(__name__)
+
+
+class FailedUpload(Exception):
+    """For a bad HTTP response code, but nothing wrong with the module."""
+    def __init__(self, msg, code):
+        self.msg = msg
+        self.code = code
+        logger.warning(self.msg)
 
 
 def push_one_to_db(doc, db_name):
@@ -61,16 +67,15 @@ def push_one_to_db(doc, db_name):
 
         # Create or update the document
         if replace_or_create(doc, db):
-            try:
-                end_point = f'{client.server_url}/{db_name}/{doc.docid}'
-                r = client.r_session.post(url=end_point, json=doc)
-            except Exception as e:
+            end_point = f'{client.server_url}/{db_name}/{doc.docid}'
+            r = client.r_session.post(url=end_point, json=doc)
+            if r.status_code not in [200, 201]:
                 print(f'Document creation failed.\n\tResponse: {r}: {r.text}')
-                raise
+                raise FailedUpload(f'Document creation failed with code {r.response_code}')
         else:
             logger.info(f'{doc.docid}: no changes pushed to database.')
     sleep(1)
-    return r
+    return
 
 
 def bulk_upload(doclist, db_name):

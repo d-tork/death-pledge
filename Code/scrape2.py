@@ -30,9 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 class ListingNotAvailable(Exception):
-    def __init__(self, msg, code):
-        self.msg = msg
-        self.code = code
+    pass
 
 
 def sign_into_website(driver):
@@ -330,7 +328,6 @@ def scrape_from_url_df(url_df, quiet=True):
 
 
 if __name__ == '__main__':
-
     sample_url_list = [keys.sample_url, keys.sample_url2, keys.sample_url3]
     #sample_house = classes.Home(url=sample_url_list[0])
     sample_house = classes.Home(url='https://daniellebiegner.realscout.com/homesearch/listings/p-5825-piedmont-dr-alexandria-22310-brightmls-33')

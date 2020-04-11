@@ -30,10 +30,7 @@ logger = logging.Logger(__name__)
 
 class FailedUpload(Exception):
     """For a bad HTTP response code, but nothing wrong with the module."""
-    def __init__(self, msg, code):
-        self.msg = msg
-        self.code = code
-        logger.warning(self.msg)
+    pass
 
 
 def push_one_to_db(doc, db_name):
@@ -59,7 +56,7 @@ def push_one_to_db(doc, db_name):
         # Access the database
         try:
             db = client[db_name]
-            print(f"Connected to database '{db_name}'\n")
+            print(f"\nConnected to database '{db_name}'")
         except KeyError:
             db = client.create_database(db_name, partitioned=False)
             if db.exists():
@@ -68,11 +65,12 @@ def push_one_to_db(doc, db_name):
         # Create or update the document
         if replace_or_create(doc, db):
             end_point = f'{client.server_url}/{db_name}/{doc.docid}'
-            r = client.r_session.post(url=end_point, json=doc)
+            r = client.r_session.put(url=end_point, json=doc)
             if r.status_code not in [200, 201]:
                 print(f'Document creation failed.\n\tResponse: {r}: {r.text}')
                 raise FailedUpload(f'Document creation failed with code {r.status_code}')
         else:
+            print('\t no changes pushed to database.')
             logger.info(f'{doc.docid}: no changes pushed to database.')
     sleep(1)
     return
@@ -109,7 +107,7 @@ def bulk_upload(doclist, db_name):
         return r
 
     def write_response_to_file():
-        outpath = path.join(Code.PROJ_PATH, 'Data', 'bulk_upload_status.txt')
+        outpath = path.join(Code.PROJ_PATH, 'Data', 'bulk_upload_status.log')
         with open(outpath, 'a') as f:
             f.writelines([
                 '#' * 5,
@@ -144,7 +142,7 @@ def bulk_upload(doclist, db_name):
         # Save status of all docs pushed
         outpath = path.join(Code.PROJ_PATH, 'Data', 'bulk_upload_all.csv')
         df = df.reindex(columns=['timestamp', 'database', 'ok', 'id', 'rev', 'error', 'reason'])
-        df.to_csv(outpath, mode='a', header=False, index=False)
+        df.to_csv(outpath, index=False)
         return df.loc[df['ok'].isna()]
 
     def retry_bulk_failed():
@@ -160,7 +158,7 @@ def bulk_upload(doclist, db_name):
     with cloudant_iam(db_creds['username'], db_creds['apikey']) as client:
         try:
             db = client[db_name]
-            print(f"Connected to database '{db_name}'\n")
+            print(f"\nConnected to database '{db_name}'")
         except KeyError:
             print(f'Database {db_name} does not exist!')
             raise

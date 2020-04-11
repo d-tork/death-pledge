@@ -43,6 +43,7 @@ def sign_into_website(driver):
         driver: Selenium WebDriver for navigating on the internet.
     
     """
+    print('Opening browser and signing in...')
     driver.get(keys.website_url)
     username = driver.find_element_by_id('email_field')
     password = driver.find_element_by_id('user_password')
@@ -88,6 +89,7 @@ def get_soup_for_url(url, driver=None, quiet=True):
         options = Options()
         options.headless = quiet
         driver = webdriver.Firefox(options=options, executable_path=Code.GECKODRIVER_PATH)
+        sign_into_website(driver)
     else:
         close_driver = False  # it's part of a context manager, no need to quit it
 
@@ -299,7 +301,6 @@ def scrape_from_url_df(url_df, quiet=True):
         print(f'Geckodriver version: {version}\n')
 
         # On to the scraping
-        print('Opening browser and signing in...')
         sign_into_website(wd)
         print('Navigating to URLs...\n')
         for row in url_df.itertuples():

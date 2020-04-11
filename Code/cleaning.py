@@ -1,6 +1,7 @@
 """Clean a dictionary of listing details."""
 
 import time
+from datetime import datetime
 import logging
 
 logger = logging.getLogger(__name__)
@@ -94,7 +95,7 @@ def convert_numbers(dic):
 
 def convert_dates(dic):
     def parse_date(s):
-        return time.strptime(s, '%m/%d/%Y')
+        return datetime.strptime(s, '%m/%d/%Y')
     date_list = [
         ('listing', 'sold')
     ]

@@ -124,7 +124,17 @@ class Home(dict):
 
     def upload(self, db_name):
         """Send JSON to database."""
-        self.resolve_address_id()
+        try:
+            self.resolve_address_id()
+        except KeyError:
+            print("Could not resolve address and doc id.",
+                  "Are you sure you've scraped the listing?",
+                  "\n\tSaving to disk.")
+            self.added_date = str(self.added_date)
+            self.update(vars(self))
+            outfilename = f'Unknown_home-{datetime.now().strftime("%Y_%m_%d-%H_%M_%S")}.json'
+            self.save_local(filename=outfilename)
+            return
         self['_id'] = self.docid
         try:
             database.push_one_to_db(self, db_name=db_name)

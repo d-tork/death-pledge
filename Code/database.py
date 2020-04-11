@@ -25,7 +25,7 @@ from datetime import datetime
 import Code
 from Code.api_calls.keys import db_creds
 
-logger = logging.Logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class FailedUpload(Exception):

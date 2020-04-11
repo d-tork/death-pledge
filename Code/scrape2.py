@@ -193,18 +193,17 @@ def scrape_history_card(attrib_list):
             yield current_row
 
 
-def get_cards(soup):
+def get_cards(soup, data):
     """Parse all cards.
 
     Args:
         soup: BeautifulSoup object
+        data (Home): instance of Home, dict to be updated
 
     Returns: dict
 
     """
-    data = {}
-    data.setdefault('basic_info', {})
-    data.setdefault('listing', {})
+    data['basic_info'] = data.setdefault('basic_info', {})
     # Get list of card tags
     cards = soup.find_all('div', attrs={'class': 'card'})
 
@@ -231,7 +230,7 @@ def get_cards(soup):
                 card_title = slugify(card_title).replace('-', '_')
 
                 # Create the key, in case names change or it's new
-                data.setdefault(card_title, {})
+                data[card_title] = data.setdefault(card_title, {})
                 card_attrib_list = card.find_all('div', class_='col-12')
                 if card_attrib_list:
                     for field_attrib in scrape_normal_card(card_attrib_list):
@@ -240,7 +239,7 @@ def get_cards(soup):
                     card_attrib_list = card.find_all('div', class_='col-4')
                     for row in scrape_history_card(card_attrib_list):
                         data[card_title].update({row[0]: row[1]})
-    return data
+    return
 
 
 def scrape_soup(house, soup):
@@ -258,7 +257,7 @@ def scrape_soup(house, soup):
     # Scrape three sections
     house['main'], house['listing'] = get_main_box(soup)
     house['listing'].update(get_price_info(soup))
-    house.update(get_cards(soup))
+    get_cards(soup, house)
 
     # Reorganize sub-dicts
     single_items = [
@@ -331,7 +330,7 @@ if __name__ == '__main__':
     sample_url_list = [keys.sample_url, keys.sample_url2, keys.sample_url3]
     #sample_house = classes.Home(url=sample_url_list[0])
     sample_house = classes.Home(url='https://daniellebiegner.realscout.com/homesearch/listings/p-5825-piedmont-dr-alexandria-22310-brightmls-33')
-
     sample_house.scrape(quiet=False)
+    sample_house.clean()
     print(json.dumps(sample_house['main'], indent=2))
     sample_house.upload('deathpledge_test')

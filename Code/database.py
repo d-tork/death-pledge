@@ -176,78 +176,29 @@ def bulk_upload(doclist, db_name):
     return
 
 
-def write_response_to_file(r, df_failures, db_name):
-    outpath = path.join(Code.PROJ_PATH, 'Data', 'bulk_upload_status.txt')
-    with open(outpath, 'a') as f:
-        f.writelines([
-            '#' * 5,
-            f"\n{strftime('%d %b %Y %H:%M:%S', localtime())} - {db_name}\n",
-            '#' * 5 + '\n',
-            ])
-        if len(df_failures.index) > 0:
-            f.writelines(['\n', '#'*3, f"\n Upload Errors \n", '#'*3, '\n'])
-            f.write(df_failures.to_string())
-            f.write('\n')
-        json.dump(r.json(), f, indent=2)
-        f.writelines(['\n', '#'*25, '\n'*2])
+def replace_or_create(local_doc, db):
+    """Checks if doc is in db and if new version is different.
 
-
-def post_bulk_upload(doclist, db_name):
-    post_data = {'docs': doclist}
-    post_url = parse.urlunparse(
-        # (scheme, netloc, path, params, query, fragment)
-        ('https', db_creds['host'], f'/{db_name}/_bulk_docs', '', '', '')
-    )
-    headers = {  # supported headers in Cloudant, but usually not necessary
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Content-Encoding': '',  # gzip or deflate
-        'If-None-Match': '',     # optional
-    }
-    r = requests.post(
-        url=post_url,
-        auth=(db_creds['username'], db_creds['password']),
-        json=post_data
-    )
-    return r
-
-
-def verify_bulk_upload(r, db_name):
-    """Checks if all docs made it to the database.
-
-    Args:
-        r (Response): Response from request.
-        db_name (str): Database name (for adding to dataframe)
-
-    Returns: DataFrame
-        Docs that encountered errors. Can be an empty dataframe.
+    Returns: bool
+        True: If the new doc has valid changes (other than a different scraped
+    time), replace. If the doc id is not yet in the database, create.
+        False: No difference between remote and local doc.
 
     """
-    if r.status_code not in [200, 201]:
-        print('Bulk POST request failed.')
-    else:
-        print('Bulk POST request succeeded.')
-    # Turn doc statuses into dataframe
-    df = pd.json_normalize(r.json())
-    # Add some metadata for appending
-    df['database'] = db_name
-    df['timestamp'] = pd.to_datetime(datetime.now())
+    if local_doc.docid in db:
+        # Retrieve remote doc and make carbon copy without scrape_data and _rev
+        remote_doc = db[local_doc.docid]
+        exclude_keys = ['scrape_data', '_rev']
+        remote_compare = {k: v for k, v in remote_doc.items() if k not in exclude_keys}
+        local_compare = {k: v for k, v in local_doc.items() if k not in exclude_keys}
 
-    # Save status of all docs pushed
-    outpath = path.join(Code.PROJ_PATH, 'Data', 'bulk_upload_all.csv')
-    df = df.reindex(columns=['timestamp', 'database', 'ok', 'id', 'rev', 'error', 'reason'])
-    df.to_csv(outpath, mode='a', header=False, index=False)
-    return df.loc[df['ok'].isna()]
-
-
-def retry_bulk_failed(doclist, df_failures, db_name):
-    """Call the upload() method on individual listings that failed."""
-    # Get only the docs that failed
-    filtered_doclist = [doc for doc in doclist if doc['_id'] in df_failures['id']]
-
-    for doc in filtered_doclist:
-        doc.upload(db_name)
-
+        if remote_compare == local_compare:
+            return False
+        print(f'Document for {local_doc.address} exists, updating with new revision')
+        local_doc['_rev'] = remote_doc['_rev']
+        return True
+    print(f'Creating document for {local_doc.address}')
+    return True
 
 
 

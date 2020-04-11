@@ -104,7 +104,7 @@ def convert_dates(dic):
             val = dic[subdict][field]
         except KeyError as e:
             continue
-        dic[subdict][field] = parse_date(val)
+        dic[subdict][field] = parse_date(val).strftime('%Y-%m-%d')
 
 
 def remove_dupe_fields(dic):

@@ -66,13 +66,11 @@ def str_coords(coords):
     return ','.join(str_list)
 
 
-# TODO: is this getting used anywhere??
 def check_status_of_website(url):
     """Make sure get() returns a 200"""
     ua = UserAgent()
     header = {'User-Agent': str(ua.firefox)}
     result = requests.get(url, headers=header)
-    time.sleep(random.random()*10)
     return result.status_code
 
 

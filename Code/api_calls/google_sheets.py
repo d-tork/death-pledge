@@ -73,7 +73,7 @@ def get_url_dataframe(google_creds, spreadsheet_dict=SPREADSHEET_DICT, last_n=No
     sheet_obj = service.spreadsheets()
     request = sheet_obj.values().get(spreadsheetId=spreadsheet_id, range=spreadsheet_dict['url_range'])
     response = request.execute()
-    print('Done')
+    print('\tdone')
 
     df = pd.DataFrame.from_records(data=response['values'])
     # Use first row of values as headers

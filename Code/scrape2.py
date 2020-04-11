@@ -20,6 +20,7 @@ from bs4 import BeautifulSoup
 import json
 from django.utils.text import slugify
 import logging
+import subprocess
 
 import Code
 from Code import support, json_handling, classes
@@ -29,7 +30,9 @@ logger = logging.getLogger(__name__)
 
 
 class ListingNotAvailable(Exception):
-    pass
+    def __init__(self, msg, code):
+        self.msg = msg
+        self.code = code
 
 
 def sign_into_website(driver):
@@ -58,38 +61,56 @@ def sign_into_website(driver):
         print('\tfailed to sign in.')
 
 
-def get_soup_for_url(url, driver):
+def get_soup_for_url(url, driver=None, quiet=True):
     """Get BeautifulSoup object for a URL.
     
     Args:
         url (str): URL for listing.
-        driver: Selenium WebDriver
+        driver (optional): Selenium WebDriver; if not provided, this scrape
+            is not part of bulk collection, thus a webdriver must be opened.
+        quiet (bool, optional): True to hide browser, False to show it.
 
     Returns:
         bs4 soup object
 
     Raises:
+        ValueError: If URL is invalid.
+        ListingNotAvailable
         TimeoutException: If listing details don't appear within 10 sec after navigation.
     
     """
+    print(f'URL: {url}')
+    # Check if URL is valid before signing in, potentially saving the trouble
+    result_code = support.check_status_of_website(url)
+    if result_code != 200:
+        raise ValueError('URL did not return valid response code.')
+
+    if not driver:
+        close_driver = True
+        options = Options()
+        options.headless = quiet
+        driver = webdriver.Firefox(options=options, executable_path=Code.GECKODRIVER_PATH)
+    else:
+        close_driver = False  # it's part of a context manager, no need to quit it
+
     try:
-        url_suffix = url.rfind('/') + 3
-    except AttributeError:
-        raise ValueError('URL has not been set for this house.')
-    print('URL: {}'.format(url[url_suffix:]))
-    driver.get(url)
+        driver.get(url)
+        if 'Listing unavailable.' in driver.page_source:
+            raise ListingNotAvailable("Bad URL or listing no longer exists.")
 
-    if 'Listing unavailable.' in driver.page_source:
-        raise ListingNotAvailable("Bad URL or listing no longer exists.")
+        try:
+            WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.ID, 'listing-detail')))
+        except TimeoutException:
+            raise TimeoutException('Listing page did not load.')
 
-    try:
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.ID, 'listing-detail'))
-        )
-    except TimeoutException:
-        raise TimeoutException('Listing page did not load.')
-
-    return BeautifulSoup(driver.page_source, 'html.parser')
+        return BeautifulSoup(driver.page_source, 'html.parser')
+    except Exception:
+        # to ensure manually created driver is quit
+        raise
+    finally:
+        if close_driver:
+            driver.quit()
 
 
 def get_main_box(soup):
@@ -269,13 +290,18 @@ def scrape_from_url_df(url_df, quiet=True):
 
     """
     options = Options()
-    if quiet:
-        options.headless = True
+    options.headless = quiet
 
     house_list = []
     docid_list = []  # for checking for duplicate house instances
 
     with webdriver.Firefox(options=options, executable_path=Code.GECKODRIVER_PATH) as wd:
+        # Check geckodriver version (SO 50359334)
+        output = subprocess.run(['geckodriver', '-V'], stdout=subprocess.PIPE, encoding='utf-8')
+        version = output.stdout.splitlines()[0]
+        print(f'Geckodriver version: {version}\n')
+
+        # On to the scraping
         print('Opening browser and signing in...')
         sign_into_website(wd)
         print('Navigating to URLs...\n')
@@ -283,7 +309,7 @@ def scrape_from_url_df(url_df, quiet=True):
             random.seed()
             wait_time = random.random() * 5
 
-            # Check if URL is still valid
+            # Check if URL is valid
             result_code = support.check_status_of_website(row.url)
             if result_code != 200:
                 print('URL did not return valid response code.')
@@ -291,7 +317,7 @@ def scrape_from_url_df(url_df, quiet=True):
 
             # Create house instance
             current_house = classes.Home(url=row.url, added_date=row.date_added)
-            current_house.scrape(wd)
+            current_house.scrape(driver=wd)
             if current_house.docid not in docid_list:
                 # Don't add instance if docid (based on address) already exists
                 docid_list.append(current_house.docid)
@@ -304,21 +330,11 @@ def scrape_from_url_df(url_df, quiet=True):
 
 
 if __name__ == '__main__':
-    import subprocess
 
     sample_url_list = [keys.sample_url, keys.sample_url2, keys.sample_url3]
     #sample_house = classes.Home(url=sample_url_list[0])
     sample_house = classes.Home(url='https://daniellebiegner.realscout.com/homesearch/listings/p-5825-piedmont-dr-alexandria-22310-brightmls-33')
 
-    options = Options()
-    options.headless = True
-    with webdriver.Firefox(options=options, executable_path=Code.GECKODRIVER_PATH) as wdriver:
-        # Check geckodriver version (SO 50359334)
-        output = subprocess.run(['geckodriver', '-V'], stdout=subprocess.PIPE, encoding='utf-8')
-        version = output.stdout.splitlines()[0]
-        print(f'Geckodriver version: {version}\n')
-
-        #sign_into_website(wdriver)
-        sample_house.scrape(wdriver)
-        print(json.dumps(sample_house['main'], indent=2))
-        sample_house.upload('deathpledge_test')
+    sample_house.scrape(quiet=False)
+    print(json.dumps(sample_house['main'], indent=2))
+    sample_house.upload('deathpledge_test')

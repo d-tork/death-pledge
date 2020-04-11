@@ -93,10 +93,10 @@ class Home(dict):
             self.docid = scraped_addr_id
         self['_id'] = self.docid
 
-    def scrape(self, webdriver):
+    def scrape(self, **kwargs):
         """Fetch listing data from RealScout."""
         try:
-            soup = scrape2.get_soup_for_url(self.url, webdriver)
+            soup = scrape2.get_soup_for_url(self.url, **kwargs)
         except Exception as e:
             print(f'Failed to scrape {self.url}, listing data not obtained. \n\t{e}')
             logger.exception(f'Failed to scrape {self.url}, listing data not obtained.')
@@ -131,3 +131,5 @@ class Home(dict):
         except Exception as e:
             print(f'Upload failed, saving to disk.\n\t{e}')
             self.save_local()
+            raise
+        return

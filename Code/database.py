@@ -71,7 +71,7 @@ def push_one_to_db(doc, db_name):
             r = client.r_session.post(url=end_point, json=doc)
             if r.status_code not in [200, 201]:
                 print(f'Document creation failed.\n\tResponse: {r}: {r.text}')
-                raise FailedUpload(f'Document creation failed with code {r.response_code}')
+                raise FailedUpload(f'Document creation failed with code {r.status_code}')
         else:
             logger.info(f'{doc.docid}: no changes pushed to database.')
     sleep(1)
@@ -147,7 +147,7 @@ def bulk_upload(doclist, db_name):
         df.to_csv(outpath, mode='a', header=False, index=False)
         return df.loc[df['ok'].isna()]
 
-    def retry_bulk_failed(doclist, df_failures, db_name):
+    def retry_bulk_failed():
         """Call the upload() method on individual listings that failed."""
         # Get only the docs that failed
         filtered_doclist = [doc for doc in doclist if doc['_id'] in df_failures['id']]
@@ -188,14 +188,14 @@ def bulk_upload(doclist, db_name):
         resp = bulk_upload_post_request()
 
     # Check that all docs made it
-    df_failures = verify_bulk_upload(resp, db_name)
+    df_failures = verify_bulk_upload()
     print(f'Upload failures: {len(df_failures.index)}')
 
     if len(df_failures.index) > 0:
-        retry_bulk_failed(doclist, df_failures, db_name)
+        retry_bulk_failed()
 
     # Dump results
-    write_response_to_file(resp, df_failures, db_name)
+    write_response_to_file()
     return
 
 

@@ -12,7 +12,7 @@ from Code import scrape2, database, support, cleaning
 logger = logging.getLogger(__name__)
 
 
-class House(dict):
+class Home(dict):
     """Container for a property's attributes.
 
     Instances can be created given an address (which will be standardized) OR
@@ -85,7 +85,7 @@ class House(dict):
             if addr_ids_match:
                 pass  # great!
             else:
-                warnings.warn('address of House instance does not match \
+                warnings.warn('address of Home instance does not match \
                 address from scraped URL. Keeping docid from instantiation.')
         else:
             # instance does not have addr or ID, fill them from scraped data

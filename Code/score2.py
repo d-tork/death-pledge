@@ -148,7 +148,7 @@ def score_house_dict(dic, scorecard, cont_scorecard):
     """Evaluates a house listing against scorecard.
 
     Args:
-        dic (dict): House listing.
+        dic (dict): Home listing.
         scorecard (dict): From full scorecard, standard attributes.
         cont_scorecard (dict): From full scorecard, continuous attributes.
 
@@ -286,7 +286,7 @@ def all_continuous_scoring(dic, house_sc, cont_sc):
     If it's not, prints the error and moves on without scoring it.
 
     Args:
-        dic (dict): House listing.
+        dic (dict): Home listing.
         house_sc (dict): Scorecard being updated for individual house listing.
         cont_sc (dict): Continuous scoring criteria dictionaries.
             For each criteria (subdict) in this dict, unpack the values to use as the

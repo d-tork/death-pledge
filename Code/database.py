@@ -42,7 +42,7 @@ def push_one_to_db(doc, db_name):
     updated document and increment the revision.
 
     Args:
-        doc (House): Home instance to be uploaded.
+        doc (Home): Home instance to be uploaded.
         db_name (str): Database to upload to.
 
     Returns: HTTP response

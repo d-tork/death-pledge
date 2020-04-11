@@ -290,7 +290,7 @@ def scrape_from_url_df(url_df, quiet=True):
                 continue
 
             # Create house instance
-            current_house = classes.House(url=row.url, added_date=row.date_added)
+            current_house = classes.Home(url=row.url, added_date=row.date_added)
             current_house.scrape(wd)
             if current_house.docid not in docid_list:
                 # Don't add instance if docid (based on address) already exists
@@ -307,8 +307,8 @@ if __name__ == '__main__':
     import subprocess
 
     sample_url_list = [keys.sample_url, keys.sample_url2, keys.sample_url3]
-    #sample_house = classes.House(url=sample_url_list[0])
-    sample_house = classes.House(url='https://daniellebiegner.realscout.com/homesearch/listings/p-5825-piedmont-dr-alexandria-22310-brightmls-33')
+    #sample_house = classes.Home(url=sample_url_list[0])
+    sample_house = classes.Home(url='https://daniellebiegner.realscout.com/homesearch/listings/p-5825-piedmont-dr-alexandria-22310-brightmls-33')
 
     options = Options()
     options.headless = True

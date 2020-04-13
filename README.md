@@ -25,6 +25,12 @@ A requirements.txt file is included for use with `venv`, for my dumb Raspberry P
 
 Also be sure to have the linux version of `geckodriver` and an appropriate version of Firefox, with the Selenium version to match.
 
+```
+$ source venv/bin/activate
+$ pip install -r requirements.txt
+$ pip install .
+```
+
 ## Usage
 Only with the proper credentials can this be run:
 * Google OAuth for my spreadsheet, or else feed it your own list of URLs

@@ -1,4 +1,3 @@
-#!/Users/dtork/.local/share/virtualenvs/death-pledge-ki0k_bpH/bin/python
 """Run actions on housing search spreadsheet."""
 
 import os

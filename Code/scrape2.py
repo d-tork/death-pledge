@@ -88,13 +88,7 @@ def get_soup_for_url(url, driver=None, quiet=True):
         close_driver = True
         options = Options()
         options.headless = quiet
-        while True:
-            try:
-                driver = webdriver.Firefox(options=options, executable_path=Code.GECKODRIVER_PATH)
-            except WebDriverException:
-                options.headless = True  # override preference because it can't display browser
-                continue
-            break
+        driver = webdriver.Firefox(options=options, executable_path=Code.GECKODRIVER_PATH)
         sign_into_website(driver)
     else:
         close_driver = False  # it's part of a context manager, no need to quit it

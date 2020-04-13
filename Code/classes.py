@@ -141,5 +141,4 @@ class Home(dict):
         except Exception as e:
             print(f'Upload failed, saving to disk.\n\t{e}')
             self.save_local()
-            raise
         return

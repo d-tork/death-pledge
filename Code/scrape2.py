@@ -11,7 +11,7 @@ import gc
 from datetime import datetime
 from time import sleep
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, WebDriverException
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -88,7 +88,13 @@ def get_soup_for_url(url, driver=None, quiet=True):
         close_driver = True
         options = Options()
         options.headless = quiet
-        driver = webdriver.Firefox(options=options, executable_path=Code.GECKODRIVER_PATH)
+        while True:
+            try:
+                driver = webdriver.Firefox(options=options, executable_path=Code.GECKODRIVER_PATH)
+            except WebDriverException:
+                options.headless = True  # override preference because it can't display browser
+                continue
+            break
         sign_into_website(driver)
     else:
         close_driver = False  # it's part of a context manager, no need to quit it

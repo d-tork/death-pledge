@@ -45,7 +45,7 @@ import numpy as np
 from scipy import stats
 
 import Code
-from Code import json_handling, enrich
+from Code import enrich
 
 
 def get_scorecard(filepath=None, mode='regular'):

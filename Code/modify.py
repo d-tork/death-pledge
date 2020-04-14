@@ -1,9 +1,6 @@
 """
 Module for modifying the contents of a house listing dictionary.
 
-Most often they come directly from scrape2.py, or are read in
-from a locally saved JSON file via functions in json_handling.py.
-
 The majority of these functions are dedicated to adding the values
 and attributes that come from external data sources, or else are
 transformations of existing attributes, post-scraping.
@@ -14,7 +11,7 @@ from time import sleep
 from datetime import datetime as dt
 
 import Code
-from Code import json_handling, support, cleaning
+from Code import support, cleaning
 from Code.api_calls import bing, citymapper, keys
 from Code.support import BadResponse
 

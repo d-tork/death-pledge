@@ -21,7 +21,7 @@ Code/api_calls/token.pickle
 /Data/Processed/saved_listings/
 /Data/Processed/
 /Code/geckodriver.log
-/Code/api_calls/credentials.json
+/Code/api_calls/google_credentials.json
 
 # virtual environment
 venv/

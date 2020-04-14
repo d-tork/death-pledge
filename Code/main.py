@@ -32,8 +32,9 @@ def main():
 
 @support.timing
 def single_sample():
-    #house1 = Code.classes.Home(url='https://daniellebiegner.realscout.com/homesearch/listings/p-5825-piedmont-dr-alexandria-22310-brightmls-33')
-    house1 = Code.classes.Home(url='https://daniellebiegner.realscout.com/homesearch/listings/p-1724-kingsgate-ct-304-alexandria-22302-brightmls-346')
+    df_urls = gs.get_url_dataframe(gs.get_creds(), last_n=1)
+    house1 = Code.classes.Home(url=df_urls.iloc[0]['url'], added_date=df_urls.iloc[0]['date_added'])
+    #house1 = Code.classes.Home(url='https://daniellebiegner.realscout.com/homesearch/listings/p-1724-kingsgate-ct-304-alexandria-22302-brightmls-346')
     house1.scrape(quiet=True)
     house1.clean()
     house1.upload(db_name='deathpledge_clean')
@@ -47,5 +48,5 @@ def single_sample():
 
 
 if __name__ == '__main__':
-    main()
-    #single_sample()
+    #main()
+    single_sample()

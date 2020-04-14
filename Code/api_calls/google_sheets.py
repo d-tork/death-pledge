@@ -5,7 +5,7 @@ import pandas as pd
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
-from Code import pandas_handling, support
+from Code import support
 
 GREEN = dict(red=.34, green=.73, blue=.54)
 WHITE = dict(red=1, green=1, blue=1)
@@ -42,7 +42,7 @@ def get_creds():
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            cred_file = os.path.join(dir_path, 'credentials.json')
+            cred_file = os.path.join(dir_path, 'google_credentials.json')
             flow = InstalledAppFlow.from_client_secrets_file(
                 cred_file, SCOPES)
             creds = flow.run_local_server()
@@ -116,11 +116,8 @@ def process_url_list(df, force_all=False):
 def upload_dataframes(creds):
     # TODO: get fully merged dataframe, then only clean_dataframe_columns() on the one going to google
     # (don't send scores to Google, I don't think I have need for them there)
-    cumulative, merged, scores = pandas_handling.merge_data_and_scores()
-    merged.set_index('MLS Number', inplace=True)
 
     # Set column headers for slim version of merged (master_list)
-    master_list = pandas_handling.master_list_columns(merged)
 
     cumulative = prep_dataframe(cumulative)
     master_list = prep_dataframe(master_list)
@@ -197,7 +194,6 @@ if __name__ == '__main__':
     #sample_url_list = get_url_list()
     # score2.score_all()
     google_creds = get_creds()
-    upload_dataframes(google_creds)
     from pprint import pprint
 
     """Here's how this needs to go: 

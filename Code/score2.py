@@ -45,7 +45,7 @@ import numpy as np
 from scipy import stats
 
 import Code
-from Code import json_handling, modify
+from Code import modify
 
 
 def get_scorecard(filepath=None, mode='regular'):
@@ -384,7 +384,6 @@ def write_score_percentiles_to_jsons(sc_list_path=None):
     """
     if sc_list_path is None:
         sc_list_path = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'scorecards.json')
-    scorecards = json_handling.read_dicts_from_json(sc_list_path)
 
     # Collect all total scores for percentile
     all_scores = np.array([])
@@ -392,7 +391,6 @@ def write_score_percentiles_to_jsons(sc_list_path=None):
         all_scores = np.append(all_scores, card.get('TOTAL_SCORE'))
 
     for f in glob.glob(Code.LISTINGS_GLOB):
-        house = json_handling.read_dicts_from_json(f)[0]
         mls = house['basic info'].get('MLS Number')
         for card in scorecards:
             if card.get('MLS Number') == mls:
@@ -401,7 +399,6 @@ def write_score_percentiles_to_jsons(sc_list_path=None):
                 percentile = stats.percentileofscore(all_scores, score)
                 pct_str = 'higher than {:.0f}% of listings'.format(percentile)
                 modify.update_house_dict(house, ('_metadata', 'percentile'), pct_str)
-        _ = json_handling.add_dict_to_json(house)
 
 
 def score_all():
@@ -411,7 +408,6 @@ def score_all():
 
     house_sc_list = []  # for JSON output
     for house_file in glob.glob(Code.LISTINGS_GLOB):
-        house_dict = json_handling.read_dicts_from_json(house_file)[0]
         house_sc = score_house_dict(house_dict, my_scorecard, my_cont_scorecard)
         house_sc_list.append(house_sc)
 
@@ -425,7 +421,6 @@ def sample():
     my_cont_scorecard = get_scorecard(mode='continuous')
     sample_fname = '4304_34TH_ST_S_B2.json'
     sample_path = os.path.join(Code.LISTINGS_DIR, sample_fname)
-    sample_house = json_handling.read_dicts_from_json(sample_path)[0]
 
     sample_house_sc = score_house_dict(sample_house, my_scorecard, my_cont_scorecard)
 

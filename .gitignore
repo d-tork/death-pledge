@@ -2,8 +2,9 @@
 *.idea
 .ipynb_checkpoints/
 
-# Caches
+# Caches and compiled files
 __pycache__/
+*.pyc
 
 #Temp files
 *.swp
@@ -25,3 +26,4 @@ Code/api_calls/token.pickle
 
 # virtual environment
 venv/
+env*/

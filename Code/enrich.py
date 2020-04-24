@@ -16,53 +16,6 @@ from Code.api_calls import bing, citymapper, keys
 from Code.support import BadResponse
 
 
-def update_house_dict(dic, keys_tuple, value):
-    """Safely add or update any value in house dict.
-
-    Args:
-        dic (dict): house dictionary
-        keys_tuple (tuple): a tuple of (category, field)
-        value (str, int, float, iterable): whatever's being stored
-
-    """
-    # Check if outer key (category) exists; if not, create it
-    dic.setdefault(keys_tuple[0], {})
-    # Update with new {field: value}
-    dic[keys_tuple[0]].update({keys_tuple[1]: value})
-
-
-def rename_key(dic, old, new, level):
-    if level == 1:
-        dic[new] = dic.pop(old)
-    elif level == 2:
-        for k, v in dic.items():
-            try:
-                v[new] = v.pop(old)
-            except KeyError:
-                continue
-    else:
-        raise ValueError("Not a valid level in the dictionary.")
-
-
-def remove_key(dic, key, level):
-    """Remove a key from the listing dict. Use sparingly."""
-    if level == 1:
-        try:
-            dic.pop(key)
-            print('\tRemoved: {} from level {}'.format(key, level))
-        except KeyError:
-            pass
-    elif level == 2:
-        for k, v in dic.items():
-            try:
-                v.pop(key)
-                print("\tRemoved: '{}' from level {}".format(key, level))
-            except KeyError:
-                continue
-    else:
-        raise ValueError("Not a valid level in the dictionary.")
-
-
 def add_coords(dic, force=False):
     """Add geocoords to house dictionary"""
     # Check for existing value
@@ -76,7 +29,6 @@ def add_coords(dic, force=False):
             print('Could not retrieve geocoords for this address.')
             print(e)
             coords = None
-        update_house_dict(dic, ('_metadata', 'geocoords'), coords)
 
 
 def add_citymapper_commute(dic, force=False):

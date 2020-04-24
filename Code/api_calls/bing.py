@@ -1,4 +1,6 @@
-"""Get latitude and longitude for an address from Bing geocode."""
+"""
+Update properties retrieved with Bing Maps.
+"""
 
 import requests
 import datetime as dt

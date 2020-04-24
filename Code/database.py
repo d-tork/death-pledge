@@ -215,10 +215,10 @@ def replace_or_create(local_doc, db):
 
         if remote_compare == local_compare:
             return False
-        print(f'Document for {local_doc.address} exists, updating with new revision')
+        print(f'Document for {local_doc.full_address} exists, updating with new revision')
         local_doc['_rev'] = remote_doc['_rev']
         return True
-    print(f'Creating document for {local_doc.address}')
+    print(f'Creating document for {local_doc.full_address}')
     return True
 
 

@@ -146,7 +146,7 @@ def clean_address(addr):
 
 
 def create_house_id(addr):
-    """Get SHA-1 hash from address."""
+    """Get SHA-1 hash from address (slugified and space-separated)."""
     clean_addr = clean_address(addr)
     return sha1(clean_addr.encode()).hexdigest()
 

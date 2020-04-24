@@ -53,10 +53,11 @@ class Home(dict):
     def __init__(self, full_address=None, url=None, added_date=None):
         super().__init__()
         # If address is given to instance, create ID from it
-        self.address = full_address
         if full_address:
-            self.docid = support.create_house_id(full_address)
+            self.full_address = support.clean(full_address)
+            self.docid = support.create_house_id(self.full_address)
         else:
+            self.full_address = None
             self.docid = None
 
         self.url = url
@@ -89,7 +90,7 @@ class Home(dict):
                 address from scraped URL. Keeping docid from instantiation.')
         else:
             # instance does not have addr or ID, fill them from scraped data
-            self.address = scraped_address
+            self.full_address = scraped_address
             self.docid = scraped_addr_id
         self['_id'] = self.docid
 
@@ -114,10 +115,15 @@ class Home(dict):
         cleaning.convert_numbers(self)
         cleaning.convert_dates(self)
         cleaning.remove_dupe_fields(self)
+        cleaning.parse_address(self)
+
+    def enrich(self):
+        """Add additional values from external sources."""
+        pass
 
     def save_local(self, filename=None):
         if not filename:
-            filename = support.create_filename_from_addr(self['main']['address'])
+            filename = support.create_filename_from_addr(self.full_address)
         outfilepath = path.join(Code.LISTINGS_DIR, filename)
         with open(outfilepath, 'w') as f:
             f.write(json.dumps(self, indent=4))

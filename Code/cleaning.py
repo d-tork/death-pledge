@@ -3,11 +3,12 @@
 import time
 from datetime import datetime
 import logging
+import usaddress
 
 logger = logging.getLogger(__name__)
 
 
-def split_comma_delimited_fields(dic):
+def split_comma_delimited_fields(home):
     """Create lists out of comma-separated values in certain fields."""
     field_list = [
         ('association_location_schools', 'hoa_condo_coop_amenities'),
@@ -28,7 +29,7 @@ def split_comma_delimited_fields(dic):
     ]
     for subdict, key in field_list:
         try:
-            listlike_field = dic[subdict][key]
+            listlike_field = home[subdict][key]
             value_list = listlike_field.split(', ')
         except Exception as e:
             logger.info(f'Failed to split ({subdict}, {key}) into list.')
@@ -36,10 +37,10 @@ def split_comma_delimited_fields(dic):
         # Remove 'and' in final element
         value_list[-1] = value_list[-1].replace('and ', '')
         # Replace original value
-        dic[subdict][key] = value_list
+        home[subdict][key] = value_list
 
 
-def convert_numbers(dic):
+def convert_numbers(home):
     """Parse a float from strings containing currencies and commas."""
     def parse_number(s):
         return float(s.split()[0].replace(',', '').replace('$', ''))
@@ -70,30 +71,30 @@ def convert_numbers(dic):
         if len(key_tuple) == 2:
             subdict, field = key_tuple
             try:
-                val = dic[subdict][field]
+                val = home[subdict][field]
             except KeyError as e:
                 continue
-            dic[subdict][field] = parse_number(val)
+            home[subdict][field] = parse_number(val)
         else:
             subdict1, subdict2, field = key_tuple
             try:
-                val = dic[subdict1][subdict2][field]
+                val = home[subdict1][subdict2][field]
             except KeyError as e:
                 continue
-            dic[subdict1][subdict2][field] = parse_number(val)
+            home[subdict1][subdict2][field] = parse_number(val)
     # All numbers in building_information
 
     try:
-        for k, v in dic['building_information'].items():
+        for k, v in home['building_information'].items():
             try:
-                dic['building_information'][k] = int(v)
+                home['building_information'][k] = int(v)
             except (ValueError, TypeError):  # individual field not a number
                 continue
     except KeyError:  # No building_information
         pass
 
 
-def convert_dates(dic):
+def convert_dates(home):
     def parse_date(s):
         return datetime.strptime(s, '%m/%d/%Y')
     date_list = [
@@ -102,13 +103,13 @@ def convert_dates(dic):
     for key_tuple in date_list:
         subdict, field = key_tuple
         try:
-            val = dic[subdict][field]
+            val = home[subdict][field]
         except KeyError as e:
             continue
-        dic[subdict][field] = parse_date(val).strftime('%Y-%m-%d')
+        home[subdict][field] = parse_date(val).strftime('%Y-%m-%d')
 
 
-def remove_dupe_fields(dic):
+def remove_dupe_fields(home):
     dupe_fields = [
         ('building_information', 'price_per_sqft'),  # found in basic_info, moved to listing
         ('basic_info', 'lot_size_acres'),            # found in exterior_information
@@ -122,8 +123,13 @@ def remove_dupe_fields(dic):
     for key_tuple in dupe_fields:
         subdict, field = key_tuple
         try:
-            del dic[subdict][field]
+            del home[subdict][field]
         except KeyError as e:
             continue
 
 
+def parse_address(home):
+    """Split address into parsed fields."""
+    addr_tuples = usaddress.parse(home.full_address)
+    parsed = {v: k for k, v in addr_tuples}  # format as proper dict
+    home['main']['parsed_address'] = parsed

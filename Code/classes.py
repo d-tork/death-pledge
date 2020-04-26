@@ -7,7 +7,7 @@ import warnings
 import logging
 
 import Code
-from Code import scrape2, database, support, cleaning
+from Code import scrape2, database, support, cleaning, enrich
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +119,9 @@ class Home(dict):
 
     def enrich(self):
         """Add additional values from external sources."""
-        pass
+        enrich.add_coords(self, force=False)
+        enrich.add_bing_commute(self)
+
 
     def save_local(self, filename=None):
         if not filename:

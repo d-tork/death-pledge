@@ -43,7 +43,8 @@ class Home(dict):
         doctype (str): type of document to store
 
     Args:
-        full_address (str): property street address in the form 123 NORTH MAPLE DR 456
+        full_address (str): property street address in the form
+            123 NORTH MAPLE DR 456 ALEXANDRIA VA 22302
         url (str): url to be scraped for data
         added_date (str): date house was first considered, in the form 1/1/2020
 
@@ -54,7 +55,7 @@ class Home(dict):
         super().__init__()
         # If address is given to instance, create ID from it
         if full_address:
-            self.full_address = support.clean(full_address)
+            self.full_address = support.clean_address(full_address)
             self.docid = support.create_house_id(self.full_address)
         else:
             self.full_address = None
@@ -70,6 +71,9 @@ class Home(dict):
 
         # Add type to dictionary
         self['type'] = self.doctype
+
+    def __str__(self):
+        return json.dumps(self, indent=2)
 
     def resolve_address_id(self):
         """Update address and ID as instance attributes.
@@ -93,6 +97,21 @@ class Home(dict):
             self.full_address = scraped_address
             self.docid = scraped_addr_id
         self['_id'] = self.docid
+
+    def in_db(self):
+        """Check if home in database."""
+        return database.check_for_doc(Code.DATABASE_NAME, self.docid)
+
+    def fetch(self):
+        """Retrieve existing data from database."""
+        if not self.docid:
+            self.resolve_address_id()
+        try:
+            existing_doc = database.retrieve_doc(Code.DATABASE_NAME, self.docid)
+        except KeyError:
+            logger.info('Document was not fetched.')
+            return
+        self.update(existing_doc)
 
     def scrape(self, **kwargs):
         """Fetch listing data from RealScout."""

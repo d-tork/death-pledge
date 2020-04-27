@@ -25,7 +25,7 @@ def main():
     database.bulk_upload(house_list, 'deathpledge_raw')
     for house in house_list:
         house.clean()
-    database.bulk_upload(house_list, 'deathpledge_clean')
+    database.bulk_upload(house_list, Code.DATABASE_NAME)
     #modify.modify_all()
     #score2.score_all()
 
@@ -37,7 +37,7 @@ def single_sample():
     #house1 = Code.classes.Home(url='https://daniellebiegner.realscout.com/homesearch/listings/p-1724-kingsgate-ct-304-alexandria-22302-brightmls-346')
     house1.scrape(quiet=True)
     house1.clean()
-    #house1.upload(db_name='deathpledge_clean')
+    #house1.upload(db_name=Code.DATABASE_NAME)
 
     """
     modify.modify_one(house1)

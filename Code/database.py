@@ -222,5 +222,31 @@ def replace_or_create(local_doc, db):
     return True
 
 
+def check_for_doc(db_name, doc_id):
+    """Boolean check for existing doc."""
+    with cloudant_iam(db_creds['username'], db_creds['apikey']) as client:
+        doc_exists = doc_id in client[db_name]
+    return doc_exists
+
+
+def retrieve_doc(db_name, doc_id):
+    """Fetch a doc from the database."""
+    with cloudant_iam(db_creds['username'], db_creds['apikey']) as client:
+        # Access the database
+        try:
+            db = client[db_name]
+        except KeyError:
+            print(f'Could not connect to {db_name}.')
+            raise
+
+        try:
+            doc = db[doc_id]
+            print(f'\tFetched document {doc_id}')
+        except KeyError:
+            print(f'Could not find doc_id {doc_id}')
+            raise
+    return doc
+
+
 
 

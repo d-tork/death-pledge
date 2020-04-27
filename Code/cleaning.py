@@ -4,6 +4,7 @@ import time
 from datetime import datetime
 import logging
 import usaddress
+from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
@@ -133,5 +134,8 @@ def remove_dupe_fields(home):
 def parse_address(home):
     """Split address into parsed fields."""
     addr_tuples = usaddress.parse(home.full_address)
-    parsed = {v: k for k, v in addr_tuples}  # format as proper dict
+    parsed = defaultdict(list)  # format as proper dict
+    for v, k in addr_tuples:
+        parsed[k].append(v)  # for multi-word values belonging to same key
+    parsed = {k: ' '.join(v) for k, v in parsed.items()}
     home['main']['parsed_address'] = parsed

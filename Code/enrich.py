@@ -30,6 +30,7 @@ def add_coords(home, force=False):
         except BadResponse as e:
             print(f'Could not retrieve geocoords for this address: \n{e}')
             coords = None
+    home['main']['geocoords'] = coords
 
 
 def add_citymapper_commute(dic, force=False):
@@ -58,24 +59,24 @@ def add_citymapper_commute(dic, force=False):
 def add_bing_commute(home, force=False):
     """Add the bing transit time."""
     # Checks for existing values
-    key_name_dict = {
-        'Work commute (Bing)': home['local travel'].setdefault('Work commute (Bing)', None),
-        'first_walk_mins': home['quickstats'].setdefault('first_walk_mins', None)
+    travel_dict = home.setdefault('travel', dict())
+    commute_items = {
+        'work_commute': travel_dict.setdefault('work_commute', None),
+        'first_walk_mins': travel_dict.setdefault('first_walk_mins', None)
     }
-    if (not all([v for k, v in key_name_dict.items()])) | force:
+    if (not all([v for k, v in commute_items.items()])) | force:
         # At least one of them is empty or force=True, Bing API call is necessary
         # If not force, and if all values exist, then end function
-        house_coords = home['_metadata']['geocoords']
+        house_coords = home['main']['geocoords']
         try:
             commute_time, first_walk_time, first_leg = bing.get_bing_commute_time(house_coords, keys.work_coords)
         except BadResponse as e:
-            print('Could not retrieve commute time for this address.')
-            print(e)
+            print(f'Could not retrieve commute time for this address.\n{e}')
             commute_time, first_walk_time, first_leg = None, None, None
         finally:
-            update_house_dict(home, ('local travel', 'Work commute (Bing)'), commute_time)
-            update_house_dict(home, ('quickstats', 'first_walk_mins'), round(first_walk_time, 1))
-            update_house_dict(home, ('quickstats', 'first_leg_type'), first_leg)
+            home['travel']['work_commute'] = commute_time
+            home['travel']['first_walk_mins'] = round(first_walk_time, 1)
+            home['travel']['first_leg_type'] = first_leg
 
 
 def add_nearest_metro(dic, force=False):

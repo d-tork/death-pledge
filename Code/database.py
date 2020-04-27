@@ -229,6 +229,18 @@ def check_for_doc(db_name, doc_id):
     return doc_exists
 
 
+def is_closed(db_name, doc_id):
+    """Boolean check for whether listing is already sold."""
+    with cloudant_iam(db_creds['username'], db_creds['apikey']) as client:
+        db = client[db_name]
+        if doc_id in db:
+            doc = db[doc_id]
+            if doc['listing']['status'] == 'Closed':
+                return True
+        else:
+            return False
+
+
 def retrieve_doc(db_name, doc_id):
     """Fetch a doc from the database."""
     with cloudant_iam(db_creds['username'], db_creds['apikey']) as client:

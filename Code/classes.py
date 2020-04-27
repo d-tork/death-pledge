@@ -115,26 +115,41 @@ class Home(dict):
 
     def scrape(self, **kwargs):
         """Fetch listing data from RealScout."""
-        try:
-            soup = scrape2.get_soup_for_url(self.url, **kwargs)
-        except Exception as e:
-            print(f'Failed to scrape {self.url}, listing data not obtained. \n\t{e}')
-            logger.exception(f'Failed to scrape {self.url}, listing data not obtained.')
-            return
-        listing_data = scrape2.scrape_soup(self, soup)
-        self.update(listing_data)
-        self.resolve_address_id()
+        # If listing is already in db and is closed, don't re-scrape
+        if database.is_closed(Code.DATABASE_NAME, self.docid):
+            logger.info('Listing is closed, skipping web scrape.')
+            self.fetch()
+        else:
+            try:
+                soup = scrape2.get_soup_for_url(self.url, **kwargs)
+            except Exception as e:
+                print(f'Failed to scrape {self.url}, listing data not obtained. \n\t{e}')
+                logger.exception(f'Failed to scrape {self.url}, listing data not obtained.')
+                return
+            listing_data = scrape2.scrape_soup(self, soup)
+            self.update(listing_data)
+            self.resolve_address_id()
 
     def clean(self):
         """Parse and clean all string values meant to be numeric.
 
-        Also drops unneeded/duplicate fields.
+        Also drops unneeded/duplicate fields. Set up to catch exceptions
+        so cleaning can happen or fail to happen without disrupting the flow.
+        For example, a home fetched from the database would not need cleaning.
         """
-        cleaning.split_comma_delimited_fields(self)
-        cleaning.convert_numbers(self)
-        cleaning.convert_dates(self)
-        cleaning.remove_dupe_fields(self)
-        cleaning.parse_address(self)
+        cleaning_funcs = [
+            cleaning.split_comma_delimited_fields,
+            cleaning.convert_numbers,
+            cleaning.convert_dates,
+            cleaning.remove_dupe_fields,
+            cleaning.parse_address,
+        ]
+        for fn in cleaning_funcs:
+            try:
+                fn(self)
+            except (AttributeError, ValueError) as e:
+                logger.exception(f'Cleaning step failed: {e}')
+                continue
 
     def enrich(self):
         """Add additional values from external sources."""

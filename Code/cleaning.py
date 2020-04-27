@@ -30,9 +30,11 @@ def split_comma_delimited_fields(home):
     for subdict, key in field_list:
         try:
             listlike_field = home[subdict][key]
+        except KeyError:  # field not in dict
+            continue
+        try:
             value_list = listlike_field.split(', ')
-        except Exception as e:
-            logger.info(f'Failed to split ({subdict}, {key}) into list.')
+        except AttributeError:  # listlike_field is not a string
             continue
         # Remove 'and' in final element
         value_list[-1] = value_list[-1].replace('and ', '')

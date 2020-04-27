@@ -51,15 +51,15 @@ class Home(dict):
     """
     doctype = 'home'
 
-    def __init__(self, full_address=None, url=None, added_date=None):
+    def __init__(self, full_address=None, url=None, added_date=None, docid=None, **kwargs):
         super().__init__()
         # If address is given to instance, create ID from it
+        self.docid = docid
         if full_address:
             self.full_address = support.clean_address(full_address)
             self.docid = support.create_house_id(self.full_address)
         else:
             self.full_address = None
-            self.docid = None
 
         self.url = url
 
@@ -116,19 +116,20 @@ class Home(dict):
     def scrape(self, **kwargs):
         """Fetch listing data from RealScout."""
         # If listing is already in db and is closed, don't re-scrape
-        if database.is_closed(Code.DATABASE_NAME, self.docid):
-            logger.info('Listing is closed, skipping web scrape.')
-            self.fetch()
-        else:
-            try:
-                soup = scrape2.get_soup_for_url(self.url, **kwargs)
-            except Exception as e:
-                print(f'Failed to scrape {self.url}, listing data not obtained. \n\t{e}')
-                logger.exception(f'Failed to scrape {self.url}, listing data not obtained.')
+        if self.docid:  # brand-new entries won't have a docid
+            if database.is_closed(Code.DATABASE_NAME, self.docid):
+                logger.info('Listing is closed, skipping web scrape.')
+                self.fetch()
                 return
-            listing_data = scrape2.scrape_soup(self, soup)
-            self.update(listing_data)
-            self.resolve_address_id()
+        try:
+            soup = scrape2.get_soup_for_url(self.url, **kwargs)
+        except Exception as e:
+            print(f'Failed to scrape {self.url}, listing data not obtained. \n\t{e}')
+            logger.exception(f'Failed to scrape {self.url}, listing data not obtained.')
+            return
+        listing_data = scrape2.scrape_soup(self, soup)
+        self.update(listing_data)
+        self.resolve_address_id()
 
     def clean(self):
         """Parse and clean all string values meant to be numeric.

@@ -303,18 +303,19 @@ def scrape_from_url_df(url_df, quiet=True):
         # On to the scraping
         sign_into_website(wd)
         print('Navigating to URLs...\n')
-        for row in url_df.itertuples():
+        for row in url_df.itertuples(index=False):
             random.seed()
             wait_time = random.random() * 5
 
             # Check if URL is valid
             result_code = support.check_status_of_website(row.url)
             if result_code != 200:
+                # TODO: separate logger for bad URLs, so I can fix them
                 print('URL did not return valid response code.')
                 continue
 
             # Create house instance
-            current_house = classes.Home(url=row.url, added_date=row.date_added)
+            current_house = classes.Home(**row._asdict())  # unpacks the named tuple
             current_house.scrape(driver=wd)
             if current_house.docid not in docid_list:
                 # Don't add instance if docid (based on address) already exists

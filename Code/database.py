@@ -235,8 +235,7 @@ def is_closed(db_name, doc_id):
         db = client[db_name]
         if doc_id in db:
             doc = db[doc_id]
-            if doc['listing']['status'] == 'Closed':
-                return True
+            return doc['listing']['status'] == 'Closed'
         else:
             return False
 
@@ -260,5 +259,15 @@ def retrieve_doc(db_name, doc_id):
     return doc
 
 
+def get_url_list():
+    """Get all docs from URL view."""
+    with cloudant_iam(db_creds['username'], db_creds['apikey']) as client:
+        db = client[Code.DATABASE_NAME]
+        ddoc_id = '_design/simpleViews'
+        view_name = 'urlList'
+        results = db.get_view_result(ddoc_id, view_name, raw_result=True, include_docs=False)
+    # Turn into dict of {index: <row data>} for easier dataframing
+    results = {i: x['key'] for i, x in enumerate(results['rows'])}
+    return results
 
 

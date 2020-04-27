@@ -9,11 +9,14 @@ import os
 import glob
 from time import sleep
 from datetime import datetime as dt
+import logging
 
 import Code
 from Code import support, cleaning
 from Code.api_calls import bing, citymapper, keys
 from Code.support import BadResponse
+
+logger = logging.getLogger(__name__)
 
 
 def add_coords(home, force=False):
@@ -71,11 +74,11 @@ def add_bing_commute(home, force=False):
         try:
             commute_time, first_walk_time, first_leg = bing.get_bing_commute_time(house_coords, keys.work_coords)
         except BadResponse as e:
-            print(f'Could not retrieve commute time for this address.\n{e}')
+            logger.info(f'Could not retrieve commute time for {home.full_address}.\n{e}')
             commute_time, first_walk_time, first_leg = None, None, None
         finally:
             home['travel']['work_commute'] = commute_time
-            home['travel']['first_walk_mins'] = round(first_walk_time, 1)
+            home['travel']['first_walk_mins'] = first_walk_time
             home['travel']['first_leg_type'] = first_leg
 
 

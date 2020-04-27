@@ -66,7 +66,7 @@ def get_bing_commute_time(startcoords, endcoords):
         travel_time = r_dict['resourceSets'][0]['resources'][0]['travelDuration']
     except KeyError:
         raise support.BadResponse('JSON response does not have travel_time_minutes key.')
-    commute_time = str(dt.timedelta(seconds=travel_time))
+    commute_time = str(dt.timedelta(seconds=travel_time))  # TODO: consider returning as minutes
 
     # Function detour to get walk time of first leg of trip
     itin = r_dict['resourceSets'][0]['resources'][0]['routeLegs'][0]['itineraryItems']

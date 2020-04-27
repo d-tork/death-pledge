@@ -322,8 +322,10 @@ def scrape_from_url_df(url_df, quiet=True):
                 docid_list.append(current_house.docid)
                 house_list.append(current_house)
 
-            print('Waiting {:.1f} seconds...'.format(wait_time))
-            sleep(wait_time)
+            if not current_house.skipped:
+                # wait some time to be a courteous web scraper
+                print('Waiting {:.1f} seconds...'.format(wait_time))
+                sleep(wait_time)
             gc.collect()
     return house_list
 

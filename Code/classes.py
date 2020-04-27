@@ -71,6 +71,8 @@ class Home(dict):
 
         # Add type to dictionary
         self['type'] = self.doctype
+        # Whether to skip the web scraping
+        self.skipped = False
 
     def __str__(self):
         return json.dumps(self, indent=2)
@@ -120,6 +122,7 @@ class Home(dict):
             if database.is_closed(Code.DATABASE_NAME, self.docid):
                 logger.info('Listing is closed, skipping web scrape.')
                 self.fetch()
+                self.skipped = True
                 return
         try:
             soup = scrape2.get_soup_for_url(self.url, **kwargs)

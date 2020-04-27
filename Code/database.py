@@ -252,7 +252,7 @@ def retrieve_doc(db_name, doc_id):
 
         try:
             doc = db[doc_id]
-            print(f'\tFetched document {doc_id}')
+            print(f'Fetched document {doc_id}')
         except KeyError:
             print(f'Could not find doc_id {doc_id}')
             raise

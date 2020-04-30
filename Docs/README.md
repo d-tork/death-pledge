@@ -35,3 +35,7 @@ https://www.kaggle.com/c/house-prices-advanced-regression-techniques/data
 
 ### Income & poverty, homelessness
 
+## Development environments
+### RPI3
+* https://stackoverflow.com/questions/52534658/webdriverexception-message-invalid-argument-cant-kill-an-exited-process-with
+* Get the latest [_linux_ release](https://github.com/mozilla/geckodriver/releases) of geckodriver as well

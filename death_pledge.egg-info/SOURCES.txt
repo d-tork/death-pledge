@@ -1,12 +1,11 @@
 README.md
 setup.py
 Code/__init__.py
-Code/class_module.py
-Code/clean.py
-Code/json_handling.py
+Code/classes.py
+Code/cleaning.py
+Code/database.py
+Code/enrich.py
 Code/main.py
-Code/modify.py
-Code/pandas_handling.py
 Code/score2.py
 Code/scrape2.py
 Code/support.py

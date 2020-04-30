@@ -7,6 +7,8 @@ import datetime
 from datetime import datetime as dt
 import time
 from fake_useragent import UserAgent
+from django.utils.text import slugify
+from hashlib import sha1
 
 
 class BadResponse(Exception):
@@ -64,13 +66,11 @@ def str_coords(coords):
     return ','.join(str_list)
 
 
-# TODO: is this getting used anywhere??
 def check_status_of_website(url):
     """Make sure get() returns a 200"""
     ua = UserAgent()
     header = {'User-Agent': str(ua.firefox)}
     result = requests.get(url, headers=header)
-    time.sleep(random.random()*10)
     return result.status_code
 
 
@@ -132,6 +132,23 @@ def haversine(coords1, coords2):
     a = sin(dLat/2)**2 + cos(lat1)*cos(lat2)*sin(dLon/2)**2
     c = 2*asin(sqrt(a))
     return R * c
+
+
+def create_filename_from_addr(addr):
+    """Generate a JSON filename from house address."""
+    filename = clean_address(addr).replace(' ', '_')
+    return '{}.json'.format(filename)
+
+
+def clean_address(addr):
+    """Standardize house address for filenames and doc ID."""
+    return slugify(addr).replace('-', ' ').upper()
+
+
+def create_house_id(addr):
+    """Get SHA-1 hash from address (slugified and space-separated)."""
+    clean_addr = clean_address(addr)
+    return sha1(clean_addr.encode()).hexdigest()
 
 
 if __name__ == '__main__':

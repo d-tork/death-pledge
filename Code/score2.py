@@ -45,7 +45,7 @@ import numpy as np
 from scipy import stats
 
 import Code
-from Code import json_handling, modify
+from Code import enrich
 
 
 def get_scorecard(filepath=None, mode='regular'):
@@ -148,7 +148,7 @@ def score_house_dict(dic, scorecard, cont_scorecard):
     """Evaluates a house listing against scorecard.
 
     Args:
-        dic (dict): House listing.
+        dic (dict): Home listing.
         scorecard (dict): From full scorecard, standard attributes.
         cont_scorecard (dict): From full scorecard, continuous attributes.
 
@@ -286,7 +286,7 @@ def all_continuous_scoring(dic, house_sc, cont_sc):
     If it's not, prints the error and moves on without scoring it.
 
     Args:
-        dic (dict): House listing.
+        dic (dict): Home listing.
         house_sc (dict): Scorecard being updated for individual house listing.
         cont_sc (dict): Continuous scoring criteria dictionaries.
             For each criteria (subdict) in this dict, unpack the values to use as the
@@ -397,10 +397,10 @@ def write_score_percentiles_to_jsons(sc_list_path=None):
         for card in scorecards:
             if card.get('MLS Number') == mls:
                 score = card.get('TOTAL_SCORE')
-                modify.update_house_dict(house, ('_metadata', 'total_score'), score)
+                enrich.update_house_dict(house, ('_metadata', 'total_score'), score)
                 percentile = stats.percentileofscore(all_scores, score)
                 pct_str = 'higher than {:.0f}% of listings'.format(percentile)
-                modify.update_house_dict(house, ('_metadata', 'percentile'), pct_str)
+                enrich.update_house_dict(house, ('_metadata', 'percentile'), pct_str)
         _ = json_handling.add_dict_to_json(house)
 
 

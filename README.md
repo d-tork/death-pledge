@@ -23,6 +23,14 @@ $ pipenv run python citymapper.py
 
 A requirements.txt file is included for use with `venv`, for my dumb Raspberry Pi that couldn't handle `pipenv`.
 
+Also be sure to have the linux version of `geckodriver` and an appropriate version of Firefox, with the Selenium version to match.
+
+```
+$ source venv/bin/activate
+$ pip install -r requirements.txt
+$ pip install .
+```
+
 ## Usage
 Only with the proper credentials can this be run:
 * Google OAuth for my spreadsheet, or else feed it your own list of URLs
@@ -30,9 +38,11 @@ Only with the proper credentials can this be run:
 * Bing Maps API token
 * Citymapper token
 
-1. Run `main.py` to gather details into JSON files
-2. Run `score2.py` to apply scorecard
-3. (unfinished) Run ______ to add coordinates, walk score, commute time, etc.
+1. Run `main.py`, after checking which of the two functions is active. Or, 
+2. Run a specific function from the command line: 
+```
+$ python -c 'from Code import main; main.single_sample()'
+```
 
 ## Sources
 * https://homescout.homescouting.com/

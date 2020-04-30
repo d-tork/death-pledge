@@ -5,7 +5,9 @@ import pandas as pd
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
-from Code import pandas_handling, support
+
+import Code
+from Code import support, database
 
 GREEN = dict(red=.34, green=.73, blue=.54)
 WHITE = dict(red=1, green=1, blue=1)
@@ -15,7 +17,6 @@ RED = dict(red=.90, green=.49, blue=.45)
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 # If modifying these scopes, delete the file token.pickle.
-#SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
 # The ID and range of my master spreadsheet
@@ -42,7 +43,7 @@ def get_creds():
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            cred_file = os.path.join(dir_path, 'credentials.json')
+            cred_file = os.path.join(dir_path, 'google_credentials.json')
             flow = InstalledAppFlow.from_client_secrets_file(
                 cred_file, SCOPES)
             creds = flow.run_local_server()
@@ -52,24 +53,20 @@ def get_creds():
     return creds
 
 
-def get_url_dataframe(google_creds, spreadsheet_dict=SPREADSHEET_DICT):
+def get_url_dataframe(google_creds, spreadsheet_dict=SPREADSHEET_DICT, last_n=None, **kwargs):
     """Shows basic usage of the Sheets API.
     Prints values from a sample spreadsheet.
 
-    Parameters
-    ----------
-    spreadsheet_dict : dict
-        The spreadsheet object as a dict (parameters, sheets, named ranges, etc.)
+    Args:
+        spreadsheet_dict (dict): The spreadsheet object as a dict (parameters, sheets,
+            named ranges, etc.).
+        last_n (int): Get only last n rows (will trump a force_all parameter).
 
-    Returns
-    -------
-    values_dict : dict
-       Data from whole spreadsheet, each key is a month and its values are a list
-       of lists, where the inner list is a row of data
+    Returns:
+        DataFrame: Two-column dataframe of URL and date added.
+
     """
-
     service = build('sheets', 'v4', credentials=google_creds)
-
     spreadsheet_id = spreadsheet_dict['spreadsheetId']
 
     # Call the Sheets API
@@ -77,92 +74,70 @@ def get_url_dataframe(google_creds, spreadsheet_dict=SPREADSHEET_DICT):
     sheet_obj = service.spreadsheets()
     request = sheet_obj.values().get(spreadsheetId=spreadsheet_id, range=spreadsheet_dict['url_range'])
     response = request.execute()
-    print('Done')
+    print('\tdone')
 
     df = pd.DataFrame.from_records(data=response['values'])
     # Use first row of values as headers
     df = df.rename(columns=df.iloc[0]).drop(df.index[0])
     # Drop null rows
     df.dropna(subset=['url'], inplace=True)
-    return df
+
+    df_clean = process_url_list(df, **kwargs)
+    if last_n:
+        return df_clean[-last_n:]
+    return df_clean
 
 
 def process_url_list(df, force_all=False):
     """Make adjustments to URL dataframe before passing as small dataframe.
 
     Args:
-        force_all: scrape all listings, even if status is 'no' or 'Sold'
+        df (DataFrame): Raw URL dataframe from Google sheets.
+        force_all: Keep all URLs, even if status is 'no' or 'Sold'.
+
+    Returns: DataFrame
     """
 
     def trim_url(url_str):
-        """Remove extra params from URL"""
+        """Remove extra params from URL."""
         q_mark = url_str.find('?')
         if q_mark > -1:
             return url_str[:q_mark]
         else:
             return url_str
-
-    # Trim urls to their base
     df['url'] = df['url'].apply(trim_url)
 
     if not force_all:
-        # drop rows that I've marked inactive (either Sold or definite no)
-        df = df.loc[df['inactive'] == '']
-    # Slice for columns needed
-    df_url = df[['url', 'date_added']].copy()
-    return df_url
+        # drop rows that are Closed (sold)
+        df = df.loc[df['status'] != 'Closed']
+
+    return df.copy()
 
 
-def get_url_list(creds, last_n=None, **kwargs):
-    """Get list of URLs to scrape from google sheets.
+def refresh_url_sheet(creds):
+    """Push document list from db back to URL sheet."""
 
-    Args:
-        last_n (int): get only last n rows (will trump a force_all parameter)
-    """
-    my_creds = get_creds()
-    df_raw = get_url_dataframe(creds)
-    df_clean = process_url_list(df_raw, **kwargs)
-    if last_n:
-        return df_clean[-last_n:]
-    return df_clean
-
-
-def upload_dataframes(creds):
-    # TODO: get fully merged dataframe, then only clean_dataframe_columns() on the one going to google
-    # (don't send scores to Google, I don't think I have need for them there)
-    cumulative, merged, scores = pandas_handling.merge_data_and_scores()
-    merged.set_index('MLS Number', inplace=True)
-
-    # Set column headers for slim version of merged (master_list)
-    master_list = pandas_handling.master_list_columns(merged)
-
-    cumulative = prep_dataframe(cumulative)
-    master_list = prep_dataframe(master_list)
-    scores = prep_dataframe(scores)
+    url_view = database.get_url_list()
+    url_df = pd.DataFrame.from_dict(
+        url_view, orient='index',
+        columns=['added_date', 'status', 'url', 'mls_number', 'full_address', 'docid']
+    )
+    url_df = url_df.set_index('added_date')
+    url_list = prep_dataframe(url_df)
 
     # Send to google
     service = build('sheets', 'v4', credentials=creds)
-    raw_data_obj = dict(
-        range=SPREADSHEET_DICT['raw_data'],
+    url_obj = dict(
+        range=SPREADSHEET_DICT['url_range'],
         majorDimension='ROWS',
-        values=cumulative)
-    master_obj = dict(
-        range=SPREADSHEET_DICT['master_range'],
-        majorDimension='ROWS',
-        values=master_list)
-    scores_obj = dict(
-        range=SPREADSHEET_DICT['scores'],
-        majorDimension='ROWS',
-        values=scores)
+        values=url_list)
     response = service.spreadsheets().values().batchUpdate(
         spreadsheetId=SPREADSHEET_DICT['spreadsheetId'],
         body=dict(
             valueInputOption='USER_ENTERED',
             includeValuesInResponse=False,
             data=[
-                raw_data_obj,
-                master_obj,
-                scores_obj
+                url_obj
             ])
     ).execute()
     print(response)
@@ -180,59 +155,8 @@ def prep_dataframe(df):
     return df
 
 
-def apply_desc_gradient_3(sheet_id, start_col_index, end_col_index, ascending=True):
-    # TODO: finish implementing this
-    if ascending:
-        mincolor, maxcolor = RED, GREEN
-    else:
-        mincolor, maxcolor = GREEN, RED
-    grid_range = dict(
-        sheetId=sheet_id,
-        startRowIndex=1,
-        startColumnIndex=start_col_index,
-        endColumnIndex=end_col_index)
-    gradient_rule = dict(
-        minpoint=dict(color=mincolor, type='MIN'),
-        midpoint=dict(color=WHITE, type='PERCENTILE', value='50'),
-        maxpoint=dict(color=maxcolor, type='MAX'))
-    format_rule = {
-        'ranges': [grid_range],
-        'gradientRule': gradient_rule}
-    conditional_format_rule_request = {
-        'rule': format_rule,
-        'index': 0}
-    rule_request = {
-        'addConditionalFormatRule': conditional_format_rule_request
-    }
-    return rule_request
-
-
 if __name__ == '__main__':
-    #sample_url_list = get_url_list()
-    # score2.score_all()
     google_creds = get_creds()
-    upload_dataframes(google_creds)
-    from pprint import pprint
+    refresh_url_sheet(google_creds)
 
-    """Here's how this needs to go: 
-    1. first, apply all rules I want (can do this from the web interface)
-    2. get response and label the rules by their index number with code comments
-    3. change all function calls from add... to updateConditionalFormatting
-    4. Any new rules, it must be "add", otherwise, always update
-    """
-    """
-    my_creds = get_creds()
-    service = build('sheets', 'v4', credentials=my_creds)
-    spreadsheet_id = SPREADSHEET_DICT['spreadsheetId']
-    batch_update_spreadsheet_request_body = {
-        'requests': [
-            # apply_desc_gradient_3(936588282, 35, 36)
-        ],
-        'includeSpreadsheetInResponse': True
-    }
-    request = service.spreadsheets().batchUpdate(
-        spreadsheetId=spreadsheet_id,
-        body=batch_update_spreadsheet_request_body)
-    response = request.execute()
-    pprint(response)
-    """
+

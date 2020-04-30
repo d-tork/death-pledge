@@ -22,7 +22,7 @@ def main():
     google_creds = gs.get_creds()
     df_urls = gs.get_url_dataframe(google_creds, last_n=None, force_all=True)
     house_list = scrape2.scrape_from_url_df(df_urls, quiet=True)
-    #database.bulk_upload(house_list, 'deathpledge_raw')
+    database.bulk_upload(house_list, 'deathpledge_raw')
     for house in house_list:
         house.clean()
         house.enrich()
@@ -35,10 +35,9 @@ def main():
 @support.timing
 def single_sample():
     df_urls = gs.get_url_dataframe(gs.get_creds(), last_n=1)
-    #house1 = Code.classes.Home(**df_urls.squeeze())  # ONLY works if df_urls is a single row
+    house1 = Code.classes.Home(**df_urls.squeeze())  # ONLY works if df_urls is a single row
     #house1 = Code.classes.Home(url='https://daniellebiegner.realscout.com/homesearch/listings/p-1724-kingsgate-ct-304-alexandria-22302-brightmls-346')
     #house1 = Code.classes.Home('1777 WESTWIND WAY MCLEAN, VA 22102')
-    house1 = Code.classes.Home(docid='13a1799840af35ba32a8a3a5370bba1c5a3cd527')
     house1.scrape(quiet=True, force=True)
     house1.clean()
     house1.enrich()
@@ -53,5 +52,5 @@ def single_sample():
 
 
 if __name__ == '__main__':
-    #main()
-    single_sample()
+    main()
+    #single_sample()

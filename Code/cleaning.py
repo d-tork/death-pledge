@@ -73,14 +73,14 @@ def convert_numbers(home):
             subdict, field = key_tuple
             try:
                 val = home[subdict][field]
-            except KeyError as e:
+            except (KeyError, AttributeError) as e:
                 continue
             home[subdict][field] = parse_number(val)
         else:
             subdict1, subdict2, field = key_tuple
             try:
                 val = home[subdict1][subdict2][field]
-            except KeyError as e:
+            except (KeyError, AttributeError) as e:
                 continue
             home[subdict1][subdict2][field] = parse_number(val)
     # All numbers in building_information

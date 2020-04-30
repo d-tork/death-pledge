@@ -35,7 +35,7 @@ def main():
 @support.timing
 def single_sample():
     df_urls = gs.get_url_dataframe(gs.get_creds(), last_n=1)
-    house1 = Code.classes.Home(**df_urls.squeeze())  # ONLY works if df_urls is a single row
+    #house1 = Code.classes.Home(**df_urls.squeeze())  # ONLY works if df_urls is a single row
     #house1 = Code.classes.Home(url='https://daniellebiegner.realscout.com/homesearch/listings/p-1724-kingsgate-ct-304-alexandria-22302-brightmls-346')
     #house1 = Code.classes.Home('1777 WESTWIND WAY MCLEAN, VA 22102')
     house1.scrape(quiet=True)
@@ -52,5 +52,5 @@ def single_sample():
 
 
 if __name__ == '__main__':
-    main()
-    #single_sample()
+    #main()
+    single_sample()

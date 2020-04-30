@@ -63,12 +63,6 @@ class Home(dict):
 
         self.url = url
 
-        # Format date properly; if not passed, set it to today
-        if added_date:
-            self.added_date = datetime.strptime(added_date, '%m/%d/%Y').date()
-        else:
-            self.added_date = datetime.now().date()
-
         # Add type to dictionary
         self['type'] = self.doctype
         # Whether to skip the web scraping
@@ -159,7 +153,6 @@ class Home(dict):
         """Add additional values from external sources."""
         enrich.add_coords(self, force=False)
         enrich.add_bing_commute(self)
-
 
     def save_local(self, filename=None):
         if not filename:

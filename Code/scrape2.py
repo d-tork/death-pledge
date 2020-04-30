@@ -158,6 +158,7 @@ def get_price_info(soup):
         badge = box.p
         if 'sold' in badge.text.lower():
             date_sold = badge.text.split(': ')[-1]
+            date_sold = datetime.strptime(date_sold, '%m/%d/%Y').date()
             list_price = box.small.text.split()[-1]
             info.update({
                 'sold': date_sold,
@@ -172,7 +173,7 @@ def get_price_info(soup):
 def scrape_normal_card(attrib_list):
     """Generate field, attribute tuples from normal cards."""
     for tag in attrib_list:
-        attr_tup = tag.text.split(u':\xa0 ')
+        attr_tup = tag.text.split(u':')
         attr_tup = [x.strip() for x in attr_tup]  # Strip whitespace from k and v
         attr_tup = [slugify(attr_tup[0]).replace('-', '_'), attr_tup[1]]
         yield attr_tup
@@ -214,7 +215,7 @@ def get_cards(soup, data):
     tag_basic_info = cards[0]
     basic_info_list = tag_basic_info.find_all('div', class_='col-12')
     for field in basic_info_list:
-        attr_tup = tuple(field.text.split(u':\xa0 '))
+        attr_tup = tuple(field.text.split(':'))
         attr_tup = (slugify(attr_tup[0]).replace('-', '_'), attr_tup[1])
         data['basic_info'].update([attr_tup])
 
@@ -334,7 +335,7 @@ if __name__ == '__main__':
     sample_url_list = [keys.sample_url, keys.sample_url2, keys.sample_url3]
     #sample_house = classes.Home(url=sample_url_list[0])
     sample_house = classes.Home(url='https://daniellebiegner.realscout.com/homesearch/listings/p-5825-piedmont-dr-alexandria-22310-brightmls-33')
-    sample_house.scrape(quiet=False)
+    sample_house.scrape(quiet=False, force=True)
     sample_house.clean()
     print(json.dumps(sample_house['main'], indent=2))
     sample_house.upload('deathpledge_test')

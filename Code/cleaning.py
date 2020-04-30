@@ -133,7 +133,7 @@ def remove_dupe_fields(home):
 
 def parse_address(home):
     """Split address into parsed fields."""
-    addr_tuples = usaddress.parse(home.full_address)
+    addr_tuples = usaddress.parse(home['main']['full_address'])
     parsed = defaultdict(list)  # format as proper dict
     for v, k in addr_tuples:
         parsed[k].append(v)  # for multi-word values belonging to same key

@@ -6,6 +6,7 @@ LISTINGS_DIR = path.join(PROJ_PATH, 'Data', 'Processed', 'saved_listings')
 LISTINGS_GLOB = path.join(PROJ_PATH, 'Data', 'Processed', 'saved_listings', '*.json')
 SCORECARD_PATH = path.join(PROJ_PATH, 'Data', 'scorecard.json')
 DATABASE_NAME = 'deathpledge_clean'
+RAW_DATABASE_NAME = 'deathpledge_raw'
 
 if platform == 'linux':
     GECKODRIVER_PATH = path.join(PROJ_PATH, 'Code', 'Drivers', 'geckodriver_linux')

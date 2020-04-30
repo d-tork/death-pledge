@@ -38,7 +38,8 @@ def single_sample():
     #house1 = Code.classes.Home(**df_urls.squeeze())  # ONLY works if df_urls is a single row
     #house1 = Code.classes.Home(url='https://daniellebiegner.realscout.com/homesearch/listings/p-1724-kingsgate-ct-304-alexandria-22302-brightmls-346')
     #house1 = Code.classes.Home('1777 WESTWIND WAY MCLEAN, VA 22102')
-    house1.scrape(quiet=True)
+    house1 = Code.classes.Home(docid='13a1799840af35ba32a8a3a5370bba1c5a3cd527')
+    house1.scrape(quiet=True, force=True)
     house1.clean()
     house1.enrich()
     house1.upload(db_name=Code.DATABASE_NAME)

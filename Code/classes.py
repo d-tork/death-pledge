@@ -68,6 +68,21 @@ class Home(dict):
         # Whether to skip the web scraping
         self.skipped = False
 
+        # Try fetching existing dict
+        try:
+            self.fetch()
+            if not url:
+                self.url = self['scrape_data'].get('url')
+            self.full_address = self['main'].get('full_address')
+        except Exception as e:
+            logger.info(f'Self-fetch failed: {e}')
+
+        # Format date properly; if not passed or fetched, set it to today
+        if added_date:
+            self.added_date = datetime.strptime(added_date, '%m/%d/%Y').date()
+        else:
+            self.added_date = datetime.now().date()
+
     def __str__(self):
         return json.dumps(self, indent=2)
 
@@ -103,17 +118,17 @@ class Home(dict):
         if not self.docid:
             self.resolve_address_id()
         try:
-            existing_doc = database.retrieve_doc(Code.DATABASE_NAME, self.docid)
+            existing_doc = database.retrieve_doc(Code.RAW_DATABASE_NAME, self.docid)
         except KeyError:
             logger.info('Document was not fetched.')
             return
         self.update(existing_doc)
 
-    def scrape(self, **kwargs):
+    def scrape(self, force=False, **kwargs):
         """Fetch listing data from RealScout."""
         # If listing is already in db and is closed, don't re-scrape
         if self.docid:  # brand-new entries won't have a docid
-            if database.is_closed(Code.DATABASE_NAME, self.docid):
+            if database.is_closed(Code.DATABASE_NAME, self.docid) & ~force:
                 logger.info('Listing is closed, skipping web scrape.')
                 self.fetch()
                 self.skipped = True

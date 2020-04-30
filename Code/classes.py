@@ -79,9 +79,9 @@ class Home(dict):
 
         # Format date properly; if not passed or fetched, set it to today
         if added_date:
-            self.added_date = str(datetime.strptime(added_date, '%m/%d/%Y'))
+            self.added_date = datetime.strptime(added_date, '%m/%d/%Y')
         else:
-            self.added_date = str(datetime.now())
+            self.added_date = datetime.now()
 
     def __str__(self):
         return json.dumps(self, indent=2)
@@ -184,7 +184,6 @@ class Home(dict):
             print("Could not resolve address and doc id.",
                   "Are you sure you've scraped the listing?",
                   "\n\tSaving to disk.")
-            self.added_date = str(self.added_date)
             self.update(vars(self))
             outfilename = f'Unknown_home-{datetime.now().strftime("%Y_%m_%d-%H_%M_%S")}.json'
             self.save_local(filename=outfilename)

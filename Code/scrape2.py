@@ -261,9 +261,9 @@ def scrape_soup(house, soup):
     """
     # Initialize dict with metadata
     scrape_data = house.setdefault('scrape_data', {})
-    scrape_data['added_date'] = str(house.added_date)
+    scrape_data['added_date'] = house.added_date.strftime(Code.TIMEFORMAT)
     scrape_data['url'] = house.url
-    scrape_data['scraped_time'] = str(datetime.now())
+    scrape_data['scraped_time'] = datetime.now().strftime(Code.TIMEFORMAT)
     scrape_data['scraped_source'] = 'RealScout'
 
     # Scrape three sections
@@ -321,13 +321,12 @@ def scrape_from_url_df(url_df, quiet=True):
             # Check if URL is valid
             result_code = support.check_status_of_website(row.url)
             if result_code != 200:
-                # TODO: separate logger for bad URLs, so I can fix them
                 print('URL did not return valid response code.')
                 continue
 
             # Create house instance
             current_house = classes.Home(**row._asdict())  # unpacks the named tuple
-            current_house.scrape(driver=wd)
+            current_house.scrape(driver=wd, force=True)
             if current_house.docid not in docid_list:
                 # Don't add instance if docid (based on address) already exists
                 docid_list.append(current_house.docid)

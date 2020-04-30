@@ -1,6 +1,5 @@
 """Clean a dictionary of listing details."""
 
-import time
 from datetime import datetime
 import logging
 import usaddress
@@ -46,7 +45,7 @@ def split_comma_delimited_fields(home):
 def convert_numbers(home):
     """Parse a float from strings containing currencies and commas."""
     def parse_number(s):
-        return float(s.split()[0].replace(',', '').replace('$', ''))
+        return float(s.split()[0].replace(',', '').replace('$', '').replace('+', ''))
 
     numeric_field_list = [
         # Currencies
@@ -99,7 +98,7 @@ def convert_numbers(home):
 
 def convert_dates(home):
     def parse_date(s):
-        return datetime.strptime(s, '%m/%d/%Y')
+        return str(datetime.strptime(s, '%m/%d/%Y'))
     date_list = [
         ('listing', 'sold')
     ]
@@ -109,7 +108,10 @@ def convert_dates(home):
             val = home[subdict][field]
         except KeyError as e:
             continue
-        home[subdict][field] = parse_date(val).strftime('%Y-%m-%d')
+        try:
+            home[subdict][field] = parse_date(val)
+        except AttributeError:  # likely already a date object
+            continue
 
 
 def remove_dupe_fields(home):

@@ -79,9 +79,9 @@ class Home(dict):
 
         # Format date properly; if not passed or fetched, set it to today
         if added_date:
-            self.added_date = datetime.strptime(added_date, '%m/%d/%Y').date()
+            self.added_date = str(datetime.strptime(added_date, '%m/%d/%Y'))
         else:
-            self.added_date = datetime.now().date()
+            self.added_date = str(datetime.now())
 
     def __str__(self):
         return json.dumps(self, indent=2)
@@ -153,7 +153,7 @@ class Home(dict):
         cleaning_funcs = [
             cleaning.split_comma_delimited_fields,
             cleaning.convert_numbers,
-            cleaning.convert_dates,
+            # cleaning.convert_dates,
             cleaning.remove_dupe_fields,
             cleaning.parse_address,
         ]

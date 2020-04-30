@@ -158,7 +158,7 @@ def get_price_info(soup):
         badge = box.p
         if 'sold' in badge.text.lower():
             date_sold = badge.text.split(': ')[-1]
-            date_sold = datetime.strptime(date_sold, '%m/%d/%Y').date()
+            date_sold = str(datetime.strptime(date_sold, '%m/%d/%Y'))
             list_price = box.small.text.split()[-1]
             info.update({
                 'sold': date_sold,

@@ -70,7 +70,7 @@ def add_bing_commute(home, force=False):
     if (not all([v for k, v in commute_items.items()])) | force:
         # At least one of them is empty or force=True, Bing API call is necessary
         # If not force, and if all values exist, then end function
-        house_coords = home['main']['geocoords']
+        house_coords = tuple(home['main']['geocoords'].values())
         try:
             commute_time, first_walk_time, first_leg = bing.get_bing_commute_time(house_coords, keys.work_coords)
         except BadResponse as e:
@@ -87,7 +87,7 @@ def add_nearest_metro(dic, force=False):
     # Check for existing value
     station_list = dic['local travel'].setdefault('Nearby Metro', None)
     if (station_list is None) or force:
-        house_coords = dic['_metadata']['geocoords']
+        house_coords = tuple(dic['main']['geocoords'].values())
         try:
             station_list = bing.find_nearest_metro(house_coords)
         except BadResponse as e:

@@ -9,7 +9,13 @@ from Code import support
 
 
 def get_coords(address, zip_code=None):
-    """Geocode a mailing address"""
+    """Geocode a mailing address into lat/lon.
+
+    Args:
+        zip_code (int): helps with accuracy of results, optional
+
+    Returns: dict of keys lat, lon
+    """
     baseurl = r"http://dev.virtualearth.net/REST/v1/Locations"
 
     url_dict = {
@@ -29,7 +35,8 @@ def get_coords(address, zip_code=None):
     resp_dict = response.json()
     #coords = resp_dict['resourceSets'][0]['resources'][0]['point']['coordinates']  # Rooftop coordinates
     coords = resp_dict['resourceSets'][0]['resources'][0]['geocodePoints'][-1]['coordinates']  # Route coordinates
-    return tuple(coords)
+    coords_dict = dict(zip(('lat', 'lon'), coords))
+    return coords_dict
 
 
 def get_bing_commute_time(startcoords, endcoords):
@@ -190,7 +197,7 @@ def add_bing_properties(home):
 
 if __name__ == '__main__':
     SAMPLE_ADDR = '10217 ROLLING GREEN WAY FORT WASHINGTON, MD'
-    sample_coords = get_coords(SAMPLE_ADDR)
+    sample_coords = tuple(get_coords(SAMPLE_ADDR).values())
     sample_commute_time = get_bing_commute_time(sample_coords, keys.work_coords)
     sample_metro = find_nearest_metro(sample_coords)
     sample_drive = get_driving_info(sample_coords, keys.work_coords, 0, '07:00')

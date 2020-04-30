@@ -21,6 +21,7 @@ import json
 from django.utils.text import slugify
 import logging
 import subprocess
+from itertools import zip_longest
 
 import Code
 from Code import support, classes
@@ -180,20 +181,29 @@ def scrape_normal_card(attrib_list):
 
 
 def scrape_history_card(attrib_list):
-    """Generate rows from the Listing History table.
+    """Create array of listing history objects."""
+    history_array = []
+    for row in grouper(attrib_list, 3):
+        key_list = ['date', 'from', 'to']
+        val_list = [tag.text.strip() for tag in row]
 
-    Yields: named tuple
-    """
-    row_items = []
-    for i, tag in enumerate(attrib_list):
-        val = tag.text.strip()
-        row_items.append(val)
-        if (i + 1) % 3 == 0:  # Third (last) item
-            datestr = datetime.strptime(row_items[0], '%b %d, %Y').date()
-            from_event, to_event = row_items[1], row_items[2]
-            current_row = (str(datestr), f'{from_event} --> {to_event}')
-            row_items = []
-            yield current_row
+        obj = dict(zip(key_list, val_list))
+        obj['date'] = str(datetime.strptime(obj.get('date'), '%b %d, %Y').date())
+
+        # Parse currencies
+        for k, v in obj.items():
+            try:
+                obj[k] = float(v.replace(',', '').replace('$', ''))
+            except ValueError:
+                continue
+        history_array.append(obj)
+    return history_array
+
+
+def grouper(iterable, n, fillvalue=None):
+    """For iterating over a list in chunks of n size"""
+    args = [iter(iterable)] * n
+    return zip_longest(*args, fillvalue=fillvalue)
 
 
 def get_cards(soup, data):
@@ -240,8 +250,7 @@ def get_cards(soup, data):
                         data[card_title].update([field_attrib])
                 else:  # the Listing History card
                     card_attrib_list = card.find_all('div', class_='col-4')
-                    for row in scrape_history_card(card_attrib_list):
-                        data[card_title].update({row[0]: row[1]})
+                    data[card_title] = scrape_history_card(card_attrib_list)
     return
 
 

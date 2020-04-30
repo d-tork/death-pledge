@@ -65,7 +65,6 @@ def convert_numbers(home):
         ('listing', 'expenses_taxes', 'tax_year'),
         # Floats
         ('main', 'baths'),
-        ('basic_info', 'lot_size_acres'),
         ('exterior_information', 'lot_size_acres'),
     ]
     # Enumerated fields

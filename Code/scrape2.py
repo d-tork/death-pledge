@@ -225,7 +225,7 @@ def get_cards(soup, data):
     tag_basic_info = cards[0]
     basic_info_list = tag_basic_info.find_all('div', class_='col-12')
     for field in basic_info_list:
-        attr_tup = tuple(field.text.split(':'))
+        attr_tup = tuple(field.text.split(u':\xa0 '))
         attr_tup = (slugify(attr_tup[0]).replace('-', '_'), attr_tup[1])
         data['basic_info'].update([attr_tup])
 
@@ -280,6 +280,7 @@ def scrape_soup(house, soup):
     ]
     for subdict, key in single_items:
         house['listing'][key] = house[subdict].pop(key, None)
+    del house['basic_info']
     # Whole sub-dicts
     house['listing']['expenses_taxes'] = house.pop('expenses_taxes')
     house['listing']['listing_history'] = house.pop('listing_history')

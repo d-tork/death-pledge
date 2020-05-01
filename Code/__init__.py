@@ -7,7 +7,7 @@ LISTINGS_GLOB = path.join(PROJ_PATH, 'Data', 'Processed', 'saved_listings', '*.j
 SCORECARD_PATH = path.join(PROJ_PATH, 'Data', 'scorecard.json')
 DATABASE_NAME = 'deathpledge_clean'
 RAW_DATABASE_NAME = 'deathpledge_raw'
-TIMEFORMAT = '%Y-%m-%dT%H:%M:%S'
+TIMEFORMAT = '%Y-%m-%dT%H:%M:%SR'
 
 if platform == 'linux':
     GECKODRIVER_PATH = path.join(PROJ_PATH, 'Code', 'Drivers', 'geckodriver_linux')

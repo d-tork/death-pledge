@@ -122,6 +122,7 @@ def refresh_url_sheet(creds):
         url_view, orient='index',
         columns=['added_date', 'status', 'url', 'mls_number', 'full_address', 'docid']
     )
+    url_df['added_date'] = pd.to_datetime(url_df['added_date']).dt.strftime('%m/%d/%Y')
     url_df = url_df.set_index('added_date')
     url_list = prep_dataframe(url_df)
 

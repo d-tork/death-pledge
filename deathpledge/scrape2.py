@@ -330,7 +330,8 @@ def scrape_from_url_df(url_df, force_all=False, quiet=True):
 
     with webdriver.Firefox(options=options, executable_path=deathpledge.GECKODRIVER_PATH) as wd:
         # Check geckodriver version (SO 50359334)
-        output = subprocess.run(['geckodriver', '-V'], stdout=subprocess.PIPE, encoding='utf-8')
+        print(deathpledge.GECKODRIVER_PATH)
+        output = subprocess.run([deathpledge.GECKODRIVER_PATH, '-V'], stdout=subprocess.PIPE, encoding='utf-8')
         version = output.stdout.splitlines()[0]
         print(f'Geckodriver version: {version}\n')
 

@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 @support.timing
-def single_sample():
+def main():
     df_urls = gs.get_url_dataframe(gs.get_creds(), last_n=1)
     house1 = Home(**df_urls.squeeze())  # ONLY works if df_urls is a single row
     #house1 = Home(full_address='1777 WESTWIND WAY MCLEAN, VA 22102')
@@ -32,6 +32,5 @@ def single_sample():
     house1.enrich()
     house1.upload(db_name=deathpledge.DATABASE_NAME)
 
-
 if __name__ == '__main__':
-    single_sample()
+    main()

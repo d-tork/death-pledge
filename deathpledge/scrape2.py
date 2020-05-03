@@ -326,7 +326,7 @@ def scrape_from_url_df(url_df, quiet=True):
 
             # Create house instance
             current_house = classes.Home(**row._asdict())  # unpacks the named tuple
-            current_house.scrape(driver=wd, force=True)
+            current_house.scrape(driver=wd, force=False)
             if current_house.docid not in docid_list:
                 # Don't add instance if docid (based on address) already exists
                 docid_list.append(current_house.docid)

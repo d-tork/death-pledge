@@ -3,6 +3,7 @@
 
 import os
 import logging
+from sys import argv
 
 import deathpledge
 from deathpledge.api_calls import google_sheets as gs
@@ -19,9 +20,9 @@ logger = logging.getLogger(__name__)
 
 
 @support.timing
-def main():
+def main(last_n=None):
     google_creds = gs.get_creds()
-    df_urls = gs.get_url_dataframe(google_creds, last_n=10, force_all=False)
+    df_urls = gs.get_url_dataframe(google_creds, last_n=last_n, force_all=False)
     house_list = scrape2.scrape_from_url_df(df_urls, quiet=True)
     database.bulk_upload(house_list, 'deathpledge_raw')
     for house in house_list:
@@ -31,4 +32,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    last = int(argv[1])
+    main(last)

@@ -24,7 +24,7 @@ import subprocess
 from itertools import zip_longest
 
 import deathpledge
-from deathpledge import support, classes
+from deathpledge import support, classes, database
 from deathpledge.api_calls import keys, google_sheets
 
 logger = logging.getLogger(__name__)
@@ -287,7 +287,23 @@ def scrape_soup(house, soup):
     return house
 
 
-def scrape_from_url_df(url_df, quiet=True):
+def bulk_fetch(url_df):
+    """Create Home instances from data already in raw."""
+    responses = database.get_multiple_docs(doc_ids=list(url_df['docid']))
+    for response in responses:
+        raw_doc = response['doc']
+        home = classes.Home(
+            full_address=raw_doc['main'].get('full_address'),
+            url=raw_doc['scrape_data'].get('url'),
+            added_date=raw_doc['scrape_data'].get('added_date'),
+            docid=raw_doc.get('_id')
+        )
+        home.update(raw_doc)
+        home.skipped = True
+        yield home
+
+
+def scrape_from_url_df(url_df, force_all=False, quiet=True):
     """Given an array of URLs, create house instances and scrape web data.
 
     Args:
@@ -299,11 +315,18 @@ def scrape_from_url_df(url_df, quiet=True):
         list: Array of house instances.
 
     """
+    home_list = []
+    docid_list = []  # for checking for duplicate house instances
+
+    # Fetch existing raw data for no-scrape listings, if not forced
+    if not force_all:
+        to_scrape, not_to_scrape = split_scrape_from_noscrape(url_df)
+        home_list.extend([home for home in bulk_fetch(not_to_scrape)])
+    else:
+        to_scrape = url_df
+
     options = Options()
     options.headless = quiet
-
-    house_list = []
-    docid_list = []  # for checking for duplicate house instances
 
     with webdriver.Firefox(options=options, executable_path=deathpledge.GECKODRIVER_PATH) as wd:
         # Check geckodriver version (SO 50359334)
@@ -314,7 +337,7 @@ def scrape_from_url_df(url_df, quiet=True):
         # On to the scraping
         sign_into_website(wd)
         print('Navigating to URLs...\n')
-        for row in url_df.itertuples(index=False):
+        for row in to_scrape.itertuples(index=False):
             random.seed()
             wait_time = random.random() * 5
 
@@ -326,18 +349,30 @@ def scrape_from_url_df(url_df, quiet=True):
 
             # Create house instance
             current_house = classes.Home(**row._asdict())  # unpacks the named tuple
-            current_house.scrape(driver=wd, force=False)
+            current_house.scrape(driver=wd, force=True)    # if it made it this far, it should be scraped
             if current_house.docid not in docid_list:
                 # Don't add instance if docid (based on address) already exists
                 docid_list.append(current_house.docid)
-                house_list.append(current_house)
+                home_list.append(current_house)
 
             if not current_house.skipped:
                 # wait some time to be a courteous web scraper
-                print('Waiting {:.1f} seconds...'.format(wait_time))
-                sleep(wait_time)
+                #print('Waiting {:.1f} seconds...'.format(wait_time))
+                #sleep(wait_time)
+                pass
             gc.collect()
-    return house_list
+    return home_list
+
+
+def split_scrape_from_noscrape(url_df):
+    """Split dataframe rows into those to be scraped and those to be fetched.
+
+    Returns: tuple of dataframes
+        scrape, and no_scrape
+    """
+    scrape = url_df.loc[url_df['status'] != 'Closed'].copy()
+    no_scrape = url_df.loc[url_df['status'] == 'Closed'].copy()
+    return scrape, no_scrape
 
 
 if __name__ == '__main__':

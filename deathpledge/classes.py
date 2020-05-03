@@ -47,17 +47,20 @@ class Home(dict):
             123 NORTH MAPLE DR 456 ALEXANDRIA VA 22302
         url (str): url to be scraped for data
         added_date (str): date house was first considered, in the form 1/1/2020
+        docid (str): hash of address
 
     """
     doctype = 'home'
 
     def __init__(self, full_address=None, url=None, added_date=None, docid=None, **kwargs):
         super().__init__()
-        # If address is given to instance, create ID from it
         self.docid = docid
+        # If address is given to instance, make sure it's cleaned
         if full_address:
             self.full_address = support.clean_address(full_address)
-            self.docid = support.create_house_id(self.full_address)
+            if not self.docid:
+                # If docid not given, generate it now
+                self.docid = support.create_house_id(self.full_address)
         else:
             self.full_address = None
 
@@ -68,18 +71,13 @@ class Home(dict):
         # Whether to skip the web scraping
         self.skipped = False
 
-        # Try fetching existing dict
-        try:
-            self.fetch()
-            if not url:
-                self.url = self['scrape_data'].get('url')
-            self.full_address = self['main'].get('full_address')
-        except Exception as e:
-            logger.info(f'Self-fetch failed: {e}')
-
         # Format date properly; if not passed or fetched, set it to today
         if added_date:
-            self.added_date = datetime.strptime(added_date, '%m/%d/%Y')
+            try:
+                added_date = datetime.strptime(added_date, '%m/%d/%Y')
+            except ValueError:
+                pass
+            self.added_date = added_date
         else:
             self.added_date = datetime.now()
 
@@ -118,7 +116,7 @@ class Home(dict):
         if not self.docid:
             self.resolve_address_id()
         try:
-            existing_doc = database.retrieve_doc(deathpledge.RAW_DATABASE_NAME, self.docid)
+            existing_doc = database.get_single_doc(deathpledge.RAW_DATABASE_NAME, self.docid)
         except KeyError:
             logger.info('Document was not fetched.')
             return
@@ -127,12 +125,16 @@ class Home(dict):
     def scrape(self, force=False, **kwargs):
         """Fetch listing data from RealScout."""
         # If listing is already in db and is closed, don't re-scrape
-        if self.docid:  # brand-new entries won't have a docid
-            if database.is_closed(deathpledge.DATABASE_NAME, self.docid) & ~force:
-                logger.info('Listing is closed, skipping web scrape.')
-                self.fetch()
-                self.skipped = True
+        if not force:
+            if self.skipped:
+                print('Instance property "skipped" set to True, will not scrape.')
                 return
+            if self.docid:  # brand-new entries won't have a docid
+                if database.is_closed(deathpledge.DATABASE_NAME, self.docid):
+                    logger.info('Listing is closed, skipping web scrape.')
+                    self.fetch()
+                    self.skipped = True
+                    return
         try:
             soup = scrape2.get_soup_for_url(self.url, **kwargs)
         except Exception as e:

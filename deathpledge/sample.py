@@ -32,5 +32,6 @@ def main():
     house1.enrich()
     house1.upload(db_name=deathpledge.DATABASE_NAME)
 
+
 if __name__ == '__main__':
     main()

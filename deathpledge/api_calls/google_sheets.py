@@ -64,7 +64,7 @@ def get_url_dataframe(google_creds, spreadsheet_dict=SPREADSHEET_DICT, last_n=No
         google_creds: pickled (?) credentials
         spreadsheet_dict (dict): The spreadsheet object as a dict (parameters, sheets,
             named ranges, etc.).
-        last_n (int): Get only last n rows (will trump a force_all parameter).
+        last_n (int): Get only last n rows
 
     Returns:
         DataFrame: Two-column dataframe of URL and date added.

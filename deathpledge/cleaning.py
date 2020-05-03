@@ -44,6 +44,7 @@ def split_comma_delimited_fields(home):
 
 def convert_numbers(home):
     """Parse a float from strings containing currencies and commas."""
+
     def parse_number(s):
         return float(s.split()[0].replace(',', '').replace('$', '').replace('+', ''))
 
@@ -98,6 +99,7 @@ def convert_numbers(home):
 def convert_dates(home):
     def parse_date(s):
         return str(datetime.strptime(s, '%m/%d/%Y'))
+
     date_list = [
         ('listing', 'sold')
     ]
@@ -116,13 +118,13 @@ def convert_dates(home):
 def remove_dupe_fields(home):
     dupe_fields = [
         ('building_information', 'price_per_sqft'),  # found in basic_info, moved to listing
-        ('basic_info', 'lot_size_acres'),            # found in exterior_information
-        ('listing', 'tax_annual_amount'),            # found in expenses_taxes
-        ('basic_info', 'structure_type'),            # found in building_information
-        ('basic_info', 'architectural_style'),       # found in building_information
-        ('basic_info', 'year_built'),                # found in building_information
-        ('basic_info', 'hoa_fee'),                   # found in association_location_schools
-        ('basic_info', 'county'),                    # found in association_location_schools
+        ('basic_info', 'lot_size_acres'),  # found in exterior_information
+        ('listing', 'tax_annual_amount'),  # found in expenses_taxes
+        ('basic_info', 'structure_type'),  # found in building_information
+        ('basic_info', 'architectural_style'),  # found in building_information
+        ('basic_info', 'year_built'),  # found in building_information
+        ('basic_info', 'hoa_fee'),  # found in association_location_schools
+        ('basic_info', 'county'),  # found in association_location_schools
     ]
     for key_tuple in dupe_fields:
         subdict, field = key_tuple
@@ -134,9 +136,11 @@ def remove_dupe_fields(home):
 
 def parse_address(home):
     """Split address into parsed fields."""
-    addr_tuples = usaddress.parse(home['main']['full_address'])
+    full_address = home['main']['full_address']
+    addr_tuples = usaddress.parse(full_address)
     parsed = defaultdict(list)  # format as proper dict
     for v, k in addr_tuples:
+        v = v.replace(',', '')  # remove comma from city name
         parsed[k].append(v)  # for multi-word values belonging to same key
     parsed = {k: ' '.join(v) for k, v in parsed.items()}
     home['main']['parsed_address'] = parsed

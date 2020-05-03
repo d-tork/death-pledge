@@ -261,10 +261,10 @@ def scrape_soup(house, soup):
     """
     # Initialize dict with metadata
     scrape_data = house.setdefault('scrape_data', {})
-    scrape_data['added_date'] = house.added_date.strftime(deathpledge.TIMEFORMAT)
     scrape_data['url'] = house.url
     scrape_data['scraped_time'] = datetime.now().strftime(deathpledge.TIMEFORMAT)
     scrape_data['scraped_source'] = 'RealScout'
+    house['added_date'] = house.added_date.strftime(deathpledge.TIMEFORMAT)
 
     # Scrape three sections
     house['main'], house['listing'] = get_main_box(soup)
@@ -295,7 +295,7 @@ def bulk_fetch(url_df):
         home = classes.Home(
             full_address=raw_doc['main'].get('full_address'),
             url=raw_doc['scrape_data'].get('url'),
-            added_date=raw_doc['scrape_data'].get('added_date'),
+            added_date=raw_doc.get('added_date'),
             docid=raw_doc.get('_id')
         )
         home.update(raw_doc)

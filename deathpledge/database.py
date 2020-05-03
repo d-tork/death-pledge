@@ -22,8 +22,8 @@ import json
 import logging
 from datetime import datetime
 
-import Code
-from Code.api_calls.keys import db_creds
+import deathpledge
+from deathpledge.api_calls.keys import db_creds
 
 logger = logging.getLogger(__name__)
 
@@ -107,7 +107,7 @@ def bulk_upload(doclist, db_name):
         return r
 
     def write_response_to_file():
-        outpath = path.join(Code.PROJ_PATH, 'Data', 'bulk_upload_status.log')
+        outpath = path.join(deathpledge.PROJ_PATH, 'Data', 'bulk_upload_status.log')
         with open(outpath, 'a') as f:
             f.writelines([
                 '#' * 5,
@@ -140,7 +140,7 @@ def bulk_upload(doclist, db_name):
         df['timestamp'] = pd.to_datetime(datetime.now())
 
         # Save status of all docs pushed
-        outpath = path.join(Code.PROJ_PATH, 'Data', 'bulk_upload_all.csv')
+        outpath = path.join(deathpledge.PROJ_PATH, 'Data', 'bulk_upload_all.csv')
         df = df.reindex(columns=['timestamp', 'database', 'ok', 'id', 'rev', 'error', 'reason'])
         df.to_csv(outpath, mode='a', index=True)
         return df.loc[df['ok'].isna()]
@@ -262,7 +262,7 @@ def retrieve_doc(db_name, doc_id):
 def get_url_list():
     """Get all docs from URL view."""
     with cloudant_iam(db_creds['username'], db_creds['apikey']) as client:
-        db = client[Code.DATABASE_NAME]
+        db = client[deathpledge.DATABASE_NAME]
         ddoc_id = '_design/simpleViews'
         view_name = 'urlList'
         results = db.get_view_result(ddoc_id, view_name, raw_result=True, include_docs=False)

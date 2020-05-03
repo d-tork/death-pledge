@@ -23,9 +23,9 @@ import logging
 import subprocess
 from itertools import zip_longest
 
-import Code
-from Code import support, classes
-from Code.api_calls import keys, google_sheets
+import deathpledge
+from deathpledge import support, classes
+from deathpledge.api_calls import keys, google_sheets
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +89,7 @@ def get_soup_for_url(url, driver=None, quiet=True):
         close_driver = True
         options = Options()
         options.headless = quiet
-        driver = webdriver.Firefox(options=options, executable_path=Code.GECKODRIVER_PATH)
+        driver = webdriver.Firefox(options=options, executable_path=deathpledge.GECKODRIVER_PATH)
         sign_into_website(driver)
     else:
         close_driver = False  # it's part of a context manager, no need to quit it
@@ -261,9 +261,9 @@ def scrape_soup(house, soup):
     """
     # Initialize dict with metadata
     scrape_data = house.setdefault('scrape_data', {})
-    scrape_data['added_date'] = house.added_date.strftime(Code.TIMEFORMAT)
+    scrape_data['added_date'] = house.added_date.strftime(deathpledge.TIMEFORMAT)
     scrape_data['url'] = house.url
-    scrape_data['scraped_time'] = datetime.now().strftime(Code.TIMEFORMAT)
+    scrape_data['scraped_time'] = datetime.now().strftime(deathpledge.TIMEFORMAT)
     scrape_data['scraped_source'] = 'RealScout'
 
     # Scrape three sections
@@ -305,7 +305,7 @@ def scrape_from_url_df(url_df, quiet=True):
     house_list = []
     docid_list = []  # for checking for duplicate house instances
 
-    with webdriver.Firefox(options=options, executable_path=Code.GECKODRIVER_PATH) as wd:
+    with webdriver.Firefox(options=options, executable_path=deathpledge.GECKODRIVER_PATH) as wd:
         # Check geckodriver version (SO 50359334)
         output = subprocess.run(['geckodriver', '-V'], stdout=subprocess.PIPE, encoding='utf-8')
         version = output.stdout.splitlines()[0]

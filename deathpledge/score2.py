@@ -44,8 +44,8 @@ import pandas as pd
 import numpy as np
 from scipy import stats
 
-import Code
-from Code import enrich
+import deathpledge
+from deathpledge import enrich
 
 
 def get_scorecard(filepath=None, mode='regular'):
@@ -65,7 +65,7 @@ def get_scorecard(filepath=None, mode='regular'):
 
     """
     if filepath is None:
-        filepath = Code.SCORECARD_PATH
+        filepath = deathpledge.SCORECARD_PATH
 
     if mode == 'regular':
         index = 0
@@ -344,7 +344,7 @@ def write_scorecards_to_file(cards):
     """
     if isinstance(cards, dict):
         cards = [cards]
-    json_output_file = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'scorecards.json')
+    json_output_file = os.path.join(deathpledge.PROJ_PATH, 'Data', 'Processed', 'scorecards.json')
     with open(json_output_file, 'w') as f:
         f.write(json.dumps(cards, indent=4))
     print('Scorecards written to {}'.format(json_output_file))
@@ -383,7 +383,7 @@ def write_score_percentiles_to_jsons(sc_list_path=None):
 
     """
     if sc_list_path is None:
-        sc_list_path = os.path.join(Code.PROJ_PATH, 'Data', 'Processed', 'scorecards.json')
+        sc_list_path = os.path.join(deathpledge.PROJ_PATH, 'Data', 'Processed', 'scorecards.json')
     scorecards = json_handling.read_dicts_from_json(sc_list_path)
 
     # Collect all total scores for percentile
@@ -391,7 +391,7 @@ def write_score_percentiles_to_jsons(sc_list_path=None):
     for card in scorecards:
         all_scores = np.append(all_scores, card.get('TOTAL_SCORE'))
 
-    for f in glob.glob(Code.LISTINGS_GLOB):
+    for f in glob.glob(deathpledge.LISTINGS_GLOB):
         house = json_handling.read_dicts_from_json(f)[0]
         mls = house['basic info'].get('MLS Number')
         for card in scorecards:
@@ -410,7 +410,7 @@ def score_all():
     my_cont_scorecard = get_scorecard(mode='continuous')
 
     house_sc_list = []  # for JSON output
-    for house_file in glob.glob(Code.LISTINGS_GLOB):
+    for house_file in glob.glob(deathpledge.LISTINGS_GLOB):
         house_dict = json_handling.read_dicts_from_json(house_file)[0]
         house_sc = score_house_dict(house_dict, my_scorecard, my_cont_scorecard)
         house_sc_list.append(house_sc)
@@ -424,7 +424,7 @@ def sample():
     my_scorecard = get_scorecard(mode='regular')
     my_cont_scorecard = get_scorecard(mode='continuous')
     sample_fname = '4304_34TH_ST_S_B2.json'
-    sample_path = os.path.join(Code.LISTINGS_DIR, sample_fname)
+    sample_path = os.path.join(deathpledge.LISTINGS_DIR, sample_fname)
     sample_house = json_handling.read_dicts_from_json(sample_path)[0]
 
     sample_house_sc = score_house_dict(sample_house, my_scorecard, my_cont_scorecard)

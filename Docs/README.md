@@ -1,6 +1,16 @@
 # Documentation
 
 ## Data sources
+### Bing Maps
+* [Find a location by address](https://docs.microsoft.com/en-us/bingmaps/rest-services/locations/find-a-location-by-address#examples)
+* [My apps/keys](https://www.bingmapsportal.com/Application)
+* [Sessions, map control, batch geocoding](https://docs.microsoft.com/en-us/bingmaps/getting-started/bing-maps-api-best-practices)
+* [More options with Bing](https://docs.microsoft.com/en-us/bingmaps/rest-services/routes/)
+	* likely to replace Citymapper with Bing, since the CM API is failing me and times are wildly inconsistent.
+
+### Citymapper maps
+* [Citymapper API](https://citymapper.3scale.net/)
+
 ### Data.gov
 https://catalog.data.gov/group/finance3432#topic=finance_navigation
 * housing and communities
@@ -35,7 +45,12 @@ https://www.kaggle.com/c/house-prices-advanced-regression-techniques/data
 
 ### Income & poverty, homelessness
 
-## Development environments
+## Development tools
 ### RPI3
 * https://stackoverflow.com/questions/52534658/webdriverexception-message-invalid-argument-cant-kill-an-exited-process-with
 * Get the latest [_linux_ release](https://github.com/mozilla/geckodriver/releases) of geckodriver as well
+
+### Google sheets
+* Google sheets API
+  * https://developers.google.com/sheets/api/
+* [gspread: Write data back to Google sheets](https://github.com/burnash/gspread#authorization-using-oauth2)

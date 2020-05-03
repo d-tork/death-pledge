@@ -2,8 +2,8 @@
 
 import requests
 import datetime as dt
-from Code.api_calls import keys
-from Code import support
+from deathpledge.api_calls import keys
+from deathpledge import support
 
 
 class Sleepytime(Exception):

@@ -14,15 +14,15 @@ __pycache__/
 geckodriver.log
 token.pickle
 keys.py
-Code/token.pickle
-Code/api_calls/token.pickle
+deathpledge/token.pickle
+deathpledge/api_calls/token.pickle
 
 # Mac Desktop Services file (folder display options)
 .DS_Store
 /Data/Processed/saved_listings/
 /Data/Processed/
-/Code/geckodriver.log
-/Code/api_calls/google_credentials.json
+/deathpledge/geckodriver.log
+/deathpledge/api_calls/google_credentials.json
 
 # virtual environment
 venv/

@@ -11,10 +11,10 @@ from time import sleep
 from datetime import datetime as dt
 import logging
 
-import Code
-from Code import support, cleaning
-from Code.api_calls import bing, citymapper, keys
-from Code.support import BadResponse
+import deathpledge
+from deathpledge import support, cleaning
+from deathpledge.api_calls import bing, citymapper, keys
+from deathpledge.support import BadResponse
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +83,9 @@ def add_bing_commute(home, force=False):
 
 
 def add_nearest_metro(dic, force=False):
-    """Add the three nearest metro stations in distance order"""
+    """Add the three nearest metro stations in distance order.
+    TODO: refactor
+    """
     # Check for existing value
     station_list = dic['local travel'].setdefault('Nearby Metro', None)
     if (station_list is None) or force:
@@ -99,8 +101,10 @@ def add_nearest_metro(dic, force=False):
 
 
 def add_frequent_driving(dic, favorites_dic, force=False):
-    """Add the road distance and drive time to frequented places by car."""
-    house_coords = dic['_metadata']['geocoords']
+    """Add the road distance and drive time to frequented places by car.
+    TODO: refactor
+    """
+    house_coords = tuple(dic['main']['geocoords'].values())
     for place, attribs in favorites_dic.items():
         # Check for existing value
         place_coords = dic['local travel'].setdefault(place, None)

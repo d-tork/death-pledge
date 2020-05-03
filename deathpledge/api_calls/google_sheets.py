@@ -6,15 +6,16 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
-import Code
-from Code import support, database
+import deathpledge
+from deathpledge import support, database
 
 GREEN = dict(red=.34, green=.73, blue=.54)
 WHITE = dict(red=1, green=1, blue=1)
 RED = dict(red=.90, green=.49, blue=.45)
 
 # Get this file's path
-dir_path = os.path.dirname(os.path.realpath(__file__))
+DIRPATH = os.path.dirname(os.path.realpath(__file__))
+TOKENPATH = os.path.join(DIRPATH, 'token.pickle')
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
@@ -30,25 +31,27 @@ SPREADSHEET_DICT = {
 }
 
 
-def get_creds():
+def get_creds(token_path=TOKENPATH):
     creds = None
     # The file token.pickle stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time.
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
+    if os.path.exists(token_path):
+        with open(token_path, 'rb') as token:
             creds = pickle.load(token)
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            cred_file = os.path.join(dir_path, 'google_credentials.json')
+            print(f'DIRPATH IS: {DIRPATH}')
+            cred_file = os.path.join(DIRPATH, 'google_credentials.json')
+            print(f'cred_file IS: {cred_file}')
             flow = InstalledAppFlow.from_client_secrets_file(
                 cred_file, SCOPES)
             creds = flow.run_local_server()
         # Save the credentials for the next run
-        with open('token.pickle', 'wb') as token:
+        with open(token_path, 'wb') as token:
             pickle.dump(creds, token)
     return creds
 
@@ -58,6 +61,7 @@ def get_url_dataframe(google_creds, spreadsheet_dict=SPREADSHEET_DICT, last_n=No
     Prints values from a sample spreadsheet.
 
     Args:
+        google_creds: pickled (?) credentials
         spreadsheet_dict (dict): The spreadsheet object as a dict (parameters, sheets,
             named ranges, etc.).
         last_n (int): Get only last n rows (will trump a force_all parameter).
@@ -93,7 +97,8 @@ def process_url_list(df, force_all=False):
 
     Args:
         df (DataFrame): Raw URL dataframe from Google sheets.
-        force_all: Keep all URLs, even if status is 'no' or 'Sold'.
+        force_all: Keep all URLs, even if status is 'Closed'.
+            Note that this does not guarantee they will be re-scraped.
 
     Returns: DataFrame
     """
@@ -157,7 +162,7 @@ def prep_dataframe(df):
 
 
 if __name__ == '__main__':
-    google_creds = get_creds()
-    refresh_url_sheet(google_creds)
+    sample_creds = get_creds()
+    refresh_url_sheet(sample_creds)
 
 

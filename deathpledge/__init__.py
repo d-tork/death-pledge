@@ -10,9 +10,9 @@ RAW_DATABASE_NAME = 'deathpledge_raw'
 TIMEFORMAT = '%Y-%m-%dT%H:%M:%S'
 
 if platform == 'linux':
-    GECKODRIVER_PATH = path.join(PROJ_PATH, 'Code', 'Drivers', 'geckodriver_linux')
+    GECKODRIVER_PATH = path.join(PROJ_PATH, 'deathpledge', 'Drivers', 'geckodriver_linux')
 else:
-    GECKODRIVER_PATH = path.join(PROJ_PATH, 'Code', 'Drivers', 'geckodriver')
+    GECKODRIVER_PATH = path.join(PROJ_PATH, 'deathpledge', 'Drivers', 'geckodriver')
 
 makedirs(LISTINGS_DIR, exist_ok=True)
 

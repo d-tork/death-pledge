@@ -6,8 +6,8 @@ import json
 import warnings
 import logging
 
-import Code
-from Code import scrape2, database, support, cleaning, enrich
+import deathpledge
+from deathpledge import scrape2, database, support, cleaning, enrich
 
 logger = logging.getLogger(__name__)
 
@@ -111,14 +111,14 @@ class Home(dict):
 
     def in_db(self):
         """Check if home in database."""
-        return database.check_for_doc(Code.DATABASE_NAME, self.docid)
+        return database.check_for_doc(deathpledge.DATABASE_NAME, self.docid)
 
     def fetch(self):
         """Retrieve existing data from database."""
         if not self.docid:
             self.resolve_address_id()
         try:
-            existing_doc = database.retrieve_doc(Code.RAW_DATABASE_NAME, self.docid)
+            existing_doc = database.retrieve_doc(deathpledge.RAW_DATABASE_NAME, self.docid)
         except KeyError:
             logger.info('Document was not fetched.')
             return
@@ -128,7 +128,7 @@ class Home(dict):
         """Fetch listing data from RealScout."""
         # If listing is already in db and is closed, don't re-scrape
         if self.docid:  # brand-new entries won't have a docid
-            if database.is_closed(Code.DATABASE_NAME, self.docid) & ~force:
+            if database.is_closed(deathpledge.DATABASE_NAME, self.docid) & ~force:
                 logger.info('Listing is closed, skipping web scrape.')
                 self.fetch()
                 self.skipped = True
@@ -166,13 +166,13 @@ class Home(dict):
 
     def enrich(self):
         """Add additional values from external sources."""
-        enrich.add_coords(self, force=False)
+        enrich.add_coords(self, force=True)
         enrich.add_bing_commute(self)
 
     def save_local(self, filename=None):
         if not filename:
             filename = support.create_filename_from_addr(self.full_address)
-        outfilepath = path.join(Code.LISTINGS_DIR, filename)
+        outfilepath = path.join(deathpledge.LISTINGS_DIR, filename)
         with open(outfilepath, 'w') as f:
             f.write(json.dumps(self, indent=4))
 

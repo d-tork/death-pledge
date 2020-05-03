@@ -4,8 +4,8 @@ Update properties retrieved with Bing Maps.
 
 import requests
 import datetime as dt
-from Code.api_calls import keys
-from Code import support
+from deathpledge.api_calls import keys
+from deathpledge import support
 
 
 def get_coords(address, zip_code=None):

@@ -21,7 +21,8 @@ logger = logging.getLogger(__name__)
 
 @support.timing
 def main():
-    df_urls = gs.get_url_dataframe(gs.get_creds(), last_n=1)
+    google_creds = gs.get_creds()
+    df_urls = gs.get_url_dataframe(google_creds, last_n=1)
     house1 = Home(**df_urls.squeeze())  # ONLY works if df_urls is a single row
     #house1 = Home(full_address='1777 WESTWIND WAY MCLEAN, VA 22102')
 
@@ -31,6 +32,9 @@ def main():
     house1.clean()
     house1.enrich()
     house1.upload(db_name=deathpledge.DATABASE_NAME)
+
+    gs.refresh_url_sheet(google_creds)
+
 
 if __name__ == '__main__':
     main()

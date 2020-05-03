@@ -240,7 +240,7 @@ def is_closed(db_name, doc_id):
             return False
 
 
-def retrieve_doc(db_name, doc_id):
+def get_single_doc(db_name, doc_id):
     """Fetch a doc from the database."""
     with cloudant_iam(db_creds['username'], db_creds['apikey']) as client:
         # Access the database
@@ -259,8 +259,21 @@ def retrieve_doc(db_name, doc_id):
     return doc
 
 
+def get_multiple_docs(doc_ids, db_name=deathpledge.RAW_DATABASE_NAME):
+    """Bulk-fetch a list of documents.
+
+    More expedient than individually fetching them.
+
+    Returns: list
+    """
+    with cloudant_iam(db_creds['username'], db_creds['apikey']) as client:
+        db = client[db_name]
+        result = db.all_docs(keys=doc_ids, include_docs=True)
+    return result['rows']
+
+
 def get_url_list():
-    """Get all docs from URL view."""
+    """Get all docs from URL view, for filling in Google sheet."""
     with cloudant_iam(db_creds['username'], db_creds['apikey']) as client:
         db = client[deathpledge.DATABASE_NAME]
         ddoc_id = '_design/simpleViews'

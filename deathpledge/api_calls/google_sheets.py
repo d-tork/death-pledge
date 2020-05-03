@@ -70,6 +70,15 @@ def get_url_dataframe(google_creds, spreadsheet_dict=SPREADSHEET_DICT, last_n=No
         DataFrame: Two-column dataframe of URL and date added.
 
     """
+
+    def trim_url(url_str):
+        """Remove extra params from URL."""
+        q_mark = url_str.find('?')
+        if q_mark > -1:
+            return url_str[:q_mark]
+        else:
+            return url_str
+
     service = build('sheets', 'v4', credentials=google_creds)
     spreadsheet_id = spreadsheet_dict['spreadsheetId']
 
@@ -86,37 +95,12 @@ def get_url_dataframe(google_creds, spreadsheet_dict=SPREADSHEET_DICT, last_n=No
     # Drop null rows
     df.dropna(subset=['url'], inplace=True)
 
-    df_clean = process_url_list(df, **kwargs)
-    if last_n:
-        return df_clean[-last_n:]
-    return df_clean
-
-
-def process_url_list(df, force_all=False):
-    """Make adjustments to URL dataframe before passing as small dataframe.
-
-    Args:
-        df (DataFrame): Raw URL dataframe from Google sheets.
-        force_all: Keep all URLs, even if status is 'Closed'.
-            Note that this does not guarantee they will be re-scraped.
-
-    Returns: DataFrame
-    """
-
-    def trim_url(url_str):
-        """Remove extra params from URL."""
-        q_mark = url_str.find('?')
-        if q_mark > -1:
-            return url_str[:q_mark]
-        else:
-            return url_str
+    # Remove junk from URLs
     df['url'] = df['url'].apply(trim_url)
 
-    if not force_all:
-        # drop rows that are Closed (sold)
-        df = df.loc[df['status'] != 'Closed']
-
-    return df.copy()
+    if last_n:
+        return df[-last_n:]
+    return df
 
 
 def refresh_url_sheet(creds):
@@ -163,6 +147,7 @@ def prep_dataframe(df):
 
 if __name__ == '__main__':
     sample_creds = get_creds()
+    print(get_url_dataframe(sample_creds))
     refresh_url_sheet(sample_creds)
 
 

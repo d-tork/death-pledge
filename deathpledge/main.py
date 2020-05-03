@@ -30,6 +30,7 @@ def main(last_n=None):
         house.clean()
         house.enrich()
     database.bulk_upload(house_list, deathpledge.DATABASE_NAME)
+    gs.refresh_url_sheet(google_creds)
 
 
 if __name__ == '__main__':

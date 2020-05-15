@@ -42,6 +42,8 @@ https://www.kaggle.com/c/house-prices-advanced-regression-techniques/data
 
 ### Crime stats
 * not just violent crimes, but 311 non-emergency complaints, street & sidewalk cleaning, property damage, graffiti, street defects
+* Arlington County
+	- [Incident tracking](https://police.arlingtonva.us/incident-tracking/) - download a bunch of files, enrich them with geocoords, add to elasticsearch index for map overlay
 
 ### Income & poverty, homelessness
 

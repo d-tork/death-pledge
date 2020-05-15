@@ -295,7 +295,7 @@ def bulk_fetch(url_df):
         home = classes.Home(
             full_address=raw_doc['main'].get('full_address'),
             url=raw_doc['scrape_data'].get('url'),
-            added_date=raw_doc['scrape_data'].get('added_date'),
+            added_date=raw_doc.get('added_date'),
             docid=raw_doc.get('_id')
         )
         home.update(raw_doc)

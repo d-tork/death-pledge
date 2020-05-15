@@ -44,6 +44,8 @@ https://www.kaggle.com/c/house-prices-advanced-regression-techniques/data
 * not just violent crimes, but 311 non-emergency complaints, street & sidewalk cleaning, property damage, graffiti, street defects
 * Arlington County
 	- [Incident tracking](https://police.arlingtonva.us/incident-tracking/) - download a bunch of files, enrich them with geocoords, add to elasticsearch index for map overlay
+* Alexandria
+	- [Crime Database Search](https://apps.alexandriava.gov/CrimeReport/Result.aspx?&sd=20190506&ed=20200513) - will need to scrape and parse, possibly browsing through pages. Should be an easy requests or BS4 project though.
 
 ### Income & poverty, homelessness
 

@@ -46,6 +46,7 @@ https://www.kaggle.com/c/house-prices-advanced-regression-techniques/data
 	- [Incident tracking](https://police.arlingtonva.us/incident-tracking/) - download a bunch of files, enrich them with geocoords, add to elasticsearch index for map overlay
 * Alexandria
 	- [Crime Database Search](https://apps.alexandriava.gov/CrimeReport/Result.aspx?&sd=20190506&ed=20200513) - will need to scrape and parse, possibly browsing through pages. Should be an easy requests or BS4 project though.
+	- [SpotCrime Crime Blotter](https://spotcrime.com/va/alexandria/daily) - individual pages with tabulated data, requires scraping and parsing
 
 ### Income & poverty, homelessness
 

@@ -1,16 +1,3 @@
-In main.py, create functions I will frequently want to run on all the listings:
-scrape all URLs
-re-scrape all on-market JSONs
-supplement all (rename modify.py to supplement, or something like that)
-score all
-pull from google (checks for any new information)
-push all to google (pushing scores and some listing info...not the individual bed/bath counts, but the important info)
-	-here's where we practice a little opsec.
-
-
-Batch update: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/batchUpdate
-Conditional formatting: https://developers.google.com/sheets/api/samples/conditional-formatting
-
 
 # TODO: 
 - [x] rename 'change_from_initial' to 'change', then 'pct_change'

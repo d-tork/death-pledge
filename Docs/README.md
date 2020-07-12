@@ -3,13 +3,13 @@
 ## Additional Measures
 
 ### Neighborhood
-* crime
-* school distances
-* bus stops
-* median income
-* median age
-* owner-occupied vs. rented
-* education
+* [ ] crime
+* [ ] school distances
+* [ ] bus stops
+* [ ] median income
+* [ ] median age
+* [ ] owner-occupied vs. rented
+* [ ] education
 
 ## Data sources
 ### Bing Maps
@@ -32,6 +32,7 @@ https://www.kaggle.com/c/house-prices-advanced-regression-techniques/data
 * predicting sale price with machine learning
 
 ### Airbnb
+Room rent prices, vacancies
 
 ### City/county assessor
 **Fairfax County:** https://icare.fairfaxcounty.gov/ffxcare/search/commonsearch.aspx?mode=address
@@ -62,9 +63,13 @@ https://www.kaggle.com/c/house-prices-advanced-regression-techniques/data
 ### Income & poverty, homelessness
 
 ## Development tools
+### Cloudant
+see [Cloudant docs](cloudant.md)
+
 ### RPI3
 * https://stackoverflow.com/questions/52534658/webdriverexception-message-invalid-argument-cant-kill-an-exited-process-with
 * Get the latest [_linux_ release](https://github.com/mozilla/geckodriver/releases) of geckodriver as well
+* **new** (12 Jul): containerize it, then it should run just fine
 
 ### Google sheets
 * Google sheets API

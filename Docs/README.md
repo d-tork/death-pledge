@@ -1,5 +1,16 @@
 # Documentation
 
+## Additional Measures
+
+### Neighborhood
+* crime
+* school distances
+* bus stops
+* median income
+* median age
+* owner-occupied vs. rented
+* education
+
 ## Data sources
 ### Bing Maps
 * [Find a location by address](https://docs.microsoft.com/en-us/bingmaps/rest-services/locations/find-a-location-by-address#examples)

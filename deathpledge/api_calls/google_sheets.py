@@ -56,54 +56,62 @@ def get_creds(token_path=TOKENPATH):
     return creds
 
 
-def get_url_dataframe(google_creds, spreadsheet_dict=SPREADSHEET_DICT, last_n=None, **kwargs):
-    """Shows basic usage of the Sheets API.
-    Prints values from a sample spreadsheet.
+def get_url_dataframe(google_creds, last_n=None):
+    """Get manually curated list of realscout URLs from Google sheets.
 
     Args:
-        google_creds: pickled (?) credentials
-        spreadsheet_dict (dict): The spreadsheet object as a dict (parameters, sheets,
-            named ranges, etc.).
-        last_n (int): Get only last n rows
+        google_creds: pickled credentials
+        last_n (int): Get only last n rows (optional, else returns all)
 
     Returns:
-        DataFrame: Two-column dataframe of URL and date added.
+        DataFrame: URL data
 
     """
+    google_sheets_rows = get_google_sheets_rows(google_creds)
+    google_df = pd.DataFrame.from_records(data=google_sheets_rows)
+    google_df = prepare_google_df(google_df)
 
-    def trim_url(url_str):
-        """Remove extra params from URL."""
-        q_mark = url_str.find('?')
-        if q_mark > -1:
-            return url_str[:q_mark]
-        else:
-            return url_str
+    if last_n:
+        return google_df[-last_n:]
+    return google_df
 
+
+def get_google_sheets_rows(google_creds):
     service = build('sheets', 'v4', credentials=google_creds)
-    spreadsheet_id = spreadsheet_dict['spreadsheetId']
 
     # Call the Sheets API
     print('Getting data from Google sheets...')
     sheet_obj = service.spreadsheets()
-    request = sheet_obj.values().get(spreadsheetId=spreadsheet_id, range=spreadsheet_dict['url_range'])
+    request = sheet_obj.values().get(spreadsheetId=SPREADSHEET_DICT['spreadsheetId'],
+                                     range=SPREADSHEET_DICT['url_range'])
     response = request.execute()
+    rows = response['values']
     print('\tdone')
+    return rows
 
-    df = pd.DataFrame.from_records(data=response['values'])
+
+def prepare_google_df(df):
     # Use first row of values as headers
     df = df.rename(columns=df.iloc[0]).drop(df.index[0])
+
     # Drop null rows
     df.dropna(subset=['url'], inplace=True)
 
     # Remove junk from URLs
     df['url'] = df['url'].apply(trim_url)
-
-    if last_n:
-        return df[-last_n:]
     return df
 
 
-def refresh_url_sheet(creds):
+def trim_url(url_str):
+    """Remove extra params from URL."""
+    q_mark = url_str.find('?')
+    if q_mark > -1:
+        return url_str[:q_mark]
+    else:
+        return url_str
+
+
+def refresh_url_sheet(google_creds):
     """Push document list from db back to URL sheet."""
 
     url_view = database.get_url_list()
@@ -113,10 +121,10 @@ def refresh_url_sheet(creds):
     )
     url_df['added_date'] = pd.to_datetime(url_df['added_date']).dt.strftime('%m/%d/%Y')
     url_df = url_df.set_index('added_date')
-    url_list = prep_dataframe(url_df)
+    url_list = prep_dataframe_to_update_google(url_df)
 
     # Send to google
-    service = build('sheets', 'v4', credentials=creds)
+    service = build('sheets', 'v4', credentials=google_creds)
     url_obj = dict(
         range=SPREADSHEET_DICT['url_range'],
         majorDimension='ROWS',
@@ -133,7 +141,7 @@ def refresh_url_sheet(creds):
     print(response)
 
 
-def prep_dataframe(df):
+def prep_dataframe_to_update_google(df):
     """Converts a dataframe to iterable values for Google batchUpdate.
 
     Returns

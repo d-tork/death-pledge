@@ -84,7 +84,7 @@ class Home(dict):
     def __str__(self):
         return json.dumps(self, indent=2)
 
-    def resolve_address_id(self):
+    def resolve_address_and_id(self):
         """Update address and ID as instance attributes.
 
         Checks if given address (at instance creation) matches what was
@@ -114,7 +114,7 @@ class Home(dict):
     def fetch(self):
         """Retrieve existing data from database."""
         if not self.docid:
-            self.resolve_address_id()
+            self.resolve_address_and_id()
         try:
             existing_doc = database.get_single_doc(deathpledge.RAW_DATABASE_NAME, self.docid)
         except KeyError:
@@ -143,7 +143,7 @@ class Home(dict):
             return
         listing_data = scrape2.scrape_soup(self, soup)
         self.update(listing_data)
-        self.resolve_address_id()
+        self.resolve_address_and_id()
 
     def clean(self):
         """Parse and clean all string values meant to be numeric.
@@ -181,7 +181,7 @@ class Home(dict):
     def upload(self, db_name):
         """Send JSON to database."""
         try:
-            self.resolve_address_id()
+            self.resolve_address_and_id()
         except KeyError:
             print("Could not resolve address and doc id.",
                   "Are you sure you've scraped the listing?",

@@ -86,13 +86,13 @@ def get_soup_for_url(url, driver=None, quiet=True):
         raise ValueError('URL did not return valid response code.')
 
     if not driver:
-        close_driver = True
+        close_driver_reminder = True
         options = Options()
         options.headless = quiet
         driver = webdriver.Firefox(options=options, executable_path=deathpledge.GECKODRIVER_PATH)
         sign_into_website(driver)
     else:
-        close_driver = False  # it's part of a context manager, no need to quit it
+        close_driver_reminder = False  # it's part of a context manager, no need to quit it
 
     try:
         driver.get(url)
@@ -110,7 +110,7 @@ def get_soup_for_url(url, driver=None, quiet=True):
         # to ensure manually created driver is quit
         raise
     finally:
-        if close_driver:
+        if close_driver_reminder:
             driver.quit()
 
 
@@ -308,6 +308,8 @@ def scrape_from_url_df(url_df, force_all=False, quiet=True):
 
     Args:
         url_df (DataFrame): Two-series dataframe of URL and date added.
+        force_all (bool): Whether to scrape all listings from the web, or
+            scrape only active ones and fetch the rest from the database
         quiet (bool): Whether to hide (True) or show (False) web browser as it
             scrapes.
 
@@ -315,7 +317,7 @@ def scrape_from_url_df(url_df, force_all=False, quiet=True):
         list: Array of house instances.
 
     """
-    home_list = []
+    home_list = []   # for passing on to caller
     docid_list = []  # for checking for duplicate house instances
 
     # Fetch existing raw data for no-scrape listings, if not forced

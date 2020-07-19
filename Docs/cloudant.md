@@ -175,3 +175,27 @@ content as the data:
 specify what data should be returned in the design document via `emit`, and those
 fields will be retrieved directly from the view index file, not the database.
 
+## Tutorial
+Make an index for the Person_dob field (from IMDB example)
+```json
+{
+  "index': {
+    "fields": ["Person_dob"]
+    },
+  "name": "age-index",
+  "type": "json"
+}
+```
+
+Automatically index all fields
+```json
+{
+  "index': {},
+  "type": "text"
+}
+```
+
+**Note**: a query must always have a "selector" in the JSON (as a dict, not an array). This is how
+the query is filtered, like for a specific actor or `"movie_year": {$gt": 0}`. However, the
+"fields" key (an array) in the JSON determines what is returned in the query. Otherwise I think
+all fields in the index are returned. (see [selector syntax](https://cloud.ibm.com/docs/Cloudant?topic=Cloudant-query#selector-syntax))

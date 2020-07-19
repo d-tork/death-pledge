@@ -1,4 +1,3 @@
-#!/Users/dtork/Documents/Python/death-pledge/env37/bin/python
 """Run actions on housing search spreadsheet."""
 
 import os

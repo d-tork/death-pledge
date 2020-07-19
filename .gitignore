@@ -2,9 +2,14 @@
 *.idea
 .ipynb_checkpoints/
 
+# Application data
+*.csv
+*.xlsx
+
 # Caches and compiled files
 __pycache__/
 *.pyc
+*.egg-info/
 
 #Temp files
 *.swp
@@ -16,13 +21,13 @@ token.pickle
 keys.py
 deathpledge/token.pickle
 deathpledge/api_calls/token.pickle
+deathpledge/api_calls/google_credentials.json
+*.log
 
 # Mac Desktop Services file (folder display options)
 .DS_Store
-/Data/Processed/saved_listings/
-/Data/Processed/
-/deathpledge/geckodriver.log
-/deathpledge/api_calls/google_credentials.json
+Data/Processed/saved_listings/
+Data/Processed/
 
 # virtual environment
 venv/

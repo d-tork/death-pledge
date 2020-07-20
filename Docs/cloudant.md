@@ -34,6 +34,8 @@ Cloudant best and worst practices - https://www.ibm.com/cloud/blog/cloudant-best
   - analytics: counts, sums, averages, etc.
   - uses map-reduce
   - stored in design documents
+  - the "key" is the first value emitted, and can be a single field or an array of fields. The key
+is what is used to sort and group the index for aggregations.
 3. Search index
   - ad-hoc queries on one or more fields
   - searches involving large blocks of text

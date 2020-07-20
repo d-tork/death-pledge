@@ -11,8 +11,11 @@ Cloudant best and worst practices - https://www.ibm.com/cloud/blog/cloudant-best
 
 ## Indices and Querying
 [IBM Docs - Cloudant Query](https://developer.ibm.com/clouddataservices/docs/compose/cloudant/cloudant-query/)
+
 [IBM Docs - Indexes](https://developer.ibm.com/clouddataservices/docs/compose/cloudant/indexes/)
-[IBM Docs - Using Views](https://cloud.ibm.com/docs/Cloudant?topic=Cloudant-using-views)
+
+[IBM Docs - Using Views](https://cloud.ibm.com/docs/Cloudant?topic=Cloudant-using-views)  
+- More good videos on the subject: [IBM Cloudant Views](https://developer.ibm.com/clouddataservices/docs/compose/cloudant/views/)
 
 ### Design Documents
 [IBM Docs - Design Document Management](https://cloud.ibm.com/docs/Cloudant?topic=Cloudant-design-document-management)
@@ -161,14 +164,14 @@ Recently added houses
 ## Multi-document fetching
 * use a `POST` request in the form of a query of a view, passing the following
 content as the data: 
-	```json
-	{
-		"keys": [
-			"key1",
-			"key2"
-		]
-	}
-	```
+```json
+{
+	"keys": [
+		"key1",
+		"key2"
+	]
+}
+```
 
 * This is more efficient than using multiple `GET` API requests.
 * However, don't just use `include_docs=true` to get the data back; instead, 
@@ -179,7 +182,7 @@ fields will be retrieved directly from the view index file, not the database.
 Make an index for the Person_dob field (from IMDB example)
 ```json
 {
-  "index': {
+  "index": {
     "fields": ["Person_dob"]
     },
   "name": "age-index",
@@ -190,7 +193,7 @@ Make an index for the Person_dob field (from IMDB example)
 Automatically index all fields
 ```json
 {
-  "index': {},
+  "index": {},
   "type": "text"
 }
 ```

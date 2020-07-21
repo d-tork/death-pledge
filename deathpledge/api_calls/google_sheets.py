@@ -9,10 +9,6 @@ from google.auth.transport.requests import Request
 import deathpledge
 from deathpledge import support, database
 
-GREEN = dict(red=.34, green=.73, blue=.54)
-WHITE = dict(red=1, green=1, blue=1)
-RED = dict(red=.90, green=.49, blue=.45)
-
 # Get this file's path
 DIRPATH = os.path.dirname(os.path.realpath(__file__))
 TOKENPATH = os.path.join(DIRPATH, 'token.pickle')
@@ -37,8 +33,7 @@ def get_creds(token_path=TOKENPATH):
     # created automatically when the authorization flow completes for the first
     # time.
     if os.path.exists(token_path):
-        with open(token_path, 'rb') as token:
-            creds = pickle.load(token)
+        creds = get_existing_token(token_path)
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
@@ -54,6 +49,12 @@ def get_creds(token_path=TOKENPATH):
         with open(token_path, 'wb') as token:
             pickle.dump(creds, token)
     return creds
+
+
+def get_existing_token(token_path):
+    with open(token_path, 'rb') as token_file:
+        token = pickle.load(token_file)
+    return token
 
 
 def get_url_dataframe(google_creds, last_n=None):
@@ -77,17 +78,24 @@ def get_url_dataframe(google_creds, last_n=None):
 
 
 def get_google_sheets_rows(google_creds):
-    service = build('sheets', 'v4', credentials=google_creds)
-
-    # Call the Sheets API
     print('Getting data from Google sheets...')
+    response = get_google_sheets_api_response(google_creds)
+    rows = get_values_from_google_sheets_response(response)
+    print('\tdone')
+    return rows
+
+
+def get_google_sheets_api_response(google_creds):
+    service = build('sheets', 'v4', credentials=google_creds)
     sheet_obj = service.spreadsheets()
     request = sheet_obj.values().get(spreadsheetId=SPREADSHEET_DICT['spreadsheetId'],
                                      range=SPREADSHEET_DICT['url_range'])
     response = request.execute()
-    rows = response['values']
-    print('\tdone')
-    return rows
+    return response
+
+
+def get_values_from_google_sheets_response(response):
+    return response['values']
 
 
 def prepare_google_df(df):

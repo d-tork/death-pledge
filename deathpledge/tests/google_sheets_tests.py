@@ -7,14 +7,6 @@ import pandas as pd
 from deathpledge.api_calls import google_sheets
 
 
-class UrlDataframeTestCase(unittest.TestCase):
-
-    def test_trim_url(self):
-        sample_long_url = 'https://daniellebiegner.realscout.com/homesearch/listings/matched/p-2418-foster-pl-temple-hills-20748-brightmls-84?auth_token=Whedxn8uPXU3M95a9u_q&utm_source=property_alert&utm_medium=email&utm_campaign=homebuyer'
-        sample_trimmed_url = 'https://daniellebiegner.realscout.com/homesearch/listings/matched/p-2418-foster-pl-temple-hills-20748-brightmls-84'
-        self.assertEqual(google_sheets.trim_url(sample_long_url), sample_trimmed_url)
-
-
 class ExistingGoogleCredentialsTestCase(unittest.TestCase):
     def setUp(self):
         sample_contents = {'valid': True}
@@ -31,7 +23,7 @@ class ExistingGoogleCredentialsTestCase(unittest.TestCase):
 
 
 @unittest.skip('Makes call to internet')
-class GoogleDataFrameTestCase(unittest.TestCase):
+class GoogleAPITestCase(unittest.TestCase):
     def setUp(self):
         self.sample_creds = google_sheets.get_creds()
 
@@ -41,6 +33,40 @@ class GoogleDataFrameTestCase(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+
+class URLDataFrameClassTestCase(unittest.TestCase):
+    def setUp(self):
+        self.header = ['added_date', 'status', 'url', 'ml_number', 'full_address', 'docid', 'comments']
+        self.data = ['5/3/2019', 'Closed', 'www.sample.com?query=hi', 'MDPG10001', '867 North maple', 'abc12def', None]
+        self.df = pd.DataFrame(data=[self.header, self.data])
+
+    def test_field_name_in_column_headers(self):
+        urls = google_sheets.URLDataFrame(self.df)
+        self.assertIn(self.header[2], urls.columns)
+
+    def test_no_null_urls(self):
+        urls = google_sheets.URLDataFrame(self.df)
+        null_url_count = urls.df['url'].isna().sum()
+        self.assertEqual(null_url_count, 0)
+
+    def test_no_params_in_urls(self):
+        urls = google_sheets.URLDataFrame(self.df)
+        url = urls.df['url'].iloc[0]
+        q_mark_location = url.find('?')
+        self.assertEqual(q_mark_location, -1)
+
+    def test_split_for_scrape(self):
+        urls_not_all_forced = google_sheets.URLDataFrame(self.df, force_all=False)
+        len_to_scrape_should_be_zero = len(urls_not_all_forced.rows_to_scrape)
+        len_not_to_scrape_should_be_one = len(urls_not_all_forced.rows_not_to_scrape)
+        self.assertEqual(len_to_scrape_should_be_zero, 0)
+        self.assertEqual(len_not_to_scrape_should_be_one, 1)
+
+    def test_force_all_rescrapes(self):
+        urls_all_forced = google_sheets.URLDataFrame(self.df, force_all=True)
+        len_to_scrape_should_be_one = len(urls_all_forced.rows_to_scrape)
+        self.assertEqual(len_to_scrape_should_be_one, 1)
 
 
 if __name__ == '__main__':

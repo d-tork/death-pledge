@@ -27,6 +27,68 @@ SPREADSHEET_DICT = {
 }
 
 
+class URLDataFrame(object):
+    """Stores the URLs from Google, acts mostly like a Pandas DataFrame.
+
+    Args:
+        df (pd.DataFrame): data being passed
+        force_all (bool): Whether to scrape all listings from the web, or
+            scrape only active ones and fetch the rest from the database
+        last_n (int): Get only last n rows (optional, else returns all)
+
+    """
+    def __init__(self, df, force_all=False, last_n=None):
+        self.df = df
+        self.force_all = force_all
+        self.last_n = last_n
+
+        self.rows_to_scrape = None
+        self.rows_not_to_scrape = None
+
+        self.prepare_dataframe()
+        self.trim_last_n()
+        self.split_scrape_from_noscrape()
+
+        if self.force_all:
+            self.rows_to_scrape = self.df
+        else:
+            self.split_scrape_from_noscrape()
+
+    def __getattr__(self, attr):
+        return getattr(self.df, attr)
+
+    def prepare_dataframe(self):
+        self.set_first_row_as_headers()
+        self.drop_null_rows()
+        self.remove_junk_from_urls()
+
+    def set_first_row_as_headers(self):
+        self.df = self.df.rename(columns=self.df.iloc[0]).drop(self.df.index[0])
+
+    def drop_null_rows(self):
+        self.df.dropna(subset=['url'], inplace=True)
+
+    def remove_junk_from_urls(self):
+        self.df['url'] = self.df['url'].apply(self.trim_url)
+
+    @staticmethod
+    def trim_url(url_str):
+        """Remove extra params from URL."""
+        q_mark_location = url_str.find('?')
+        if q_mark_location > -1:
+            return url_str[:q_mark_location]
+        else:
+            return url_str
+
+    def trim_last_n(self):
+        if self.last_n:
+            self.df = self.df[-self.last_n:]
+
+    def split_scrape_from_noscrape(self):
+        self.rows_to_scrape = self.df.loc[self.df['status'] != 'Closed'].copy()
+        self.rows_not_to_scrape = self.df.loc[self.df['status'] == 'Closed'].copy()
+
+
 def get_creds(token_path=TOKENPATH):
     creds = None
     # The file token.pickle stores the user's access and refresh tokens, and is
@@ -57,7 +119,7 @@ def get_existing_token(token_path):
     return token
 
 
-def get_url_dataframe(google_creds, last_n=None):
+def get_url_dataframe(google_creds, **kwargs):
     """Get manually curated list of realscout URLs from Google sheets.
 
     Args:
@@ -69,11 +131,11 @@ def get_url_dataframe(google_creds, last_n=None):
 
     """
     google_sheets_rows = get_google_sheets_rows(google_creds)
-    google_df = pd.DataFrame.from_records(data=google_sheets_rows)
-    google_df = prepare_google_df(google_df)
+    google_df = URLDataFrame(
+        pd.DataFrame.from_records(data=google_sheets_rows),
+        **kwargs
+    )
 
-    if last_n:
-        return google_df[-last_n:]
     return google_df
 
 
@@ -96,27 +158,6 @@ def get_google_sheets_api_response(google_creds):
 
 def get_values_from_google_sheets_response(response):
     return response['values']
-
-
-def prepare_google_df(df):
-    # Use first row of values as headers
-    df = df.rename(columns=df.iloc[0]).drop(df.index[0])
-
-    # Drop null rows
-    df.dropna(subset=['url'], inplace=True)
-
-    # Remove junk from URLs
-    df['url'] = df['url'].apply(trim_url)
-    return df
-
-
-def trim_url(url_str):
-    """Remove extra params from URL."""
-    q_mark = url_str.find('?')
-    if q_mark > -1:
-        return url_str[:q_mark]
-    else:
-        return url_str
 
 
 def refresh_url_sheet(google_creds):
@@ -163,7 +204,8 @@ def prep_dataframe_to_update_google(df):
 
 if __name__ == '__main__':
     sample_creds = get_creds()
-    print(get_url_dataframe(sample_creds))
+    sample_urls = get_url_dataframe(sample_creds)
+    print(sample_urls.head())
     refresh_url_sheet(sample_creds)
 
 

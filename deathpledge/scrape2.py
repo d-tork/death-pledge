@@ -34,6 +34,74 @@ class ListingNotAvailable(Exception):
     pass
 
 
+def scrape_from_url_df(urls, quiet=True):
+    """Given an array of URLs, create house instances and scrape web data.
+
+    Args:
+        urls (DataFrame): Two-series dataframe of URL and date added.
+        quiet (bool): Whether to hide (True) or show (False) web browser as it
+            scrapes.
+
+    Returns:
+        list: Array of house instances.
+
+    """
+    home_list = []   # for passing on to caller
+    docid_list = []  # for checking for duplicate house instances
+
+    # Fetch existing raw data for no-scrape listings, if not forced
+    if urls.force_all:
+        pass
+    else:
+        homes_fetched_from_raw = [home for home in bulk_fetch_from_raw_db(urls.rows_not_to_scrape)]
+        home_list.extend(homes_fetched_from_raw)
+
+    options = Options()
+    options.headless = quiet
+
+    get_geckodriver_version()
+    with webdriver.Firefox(options=options, executable_path=deathpledge.GECKODRIVER_PATH) as wd:
+        sign_into_website(wd)
+        print('Navigating to URLs...\n')
+        for row in urls.rows_to_scrape.itertuples(index=False):
+            random.seed()
+            wait_time = random.random() * 5
+
+            # Check if URL is valid
+            result_code = support.check_status_of_website(row.url)
+            if result_code != 200:
+                print('URL did not return valid response code.')
+                continue
+
+            # Create house instance
+            current_house = classes.Home(**row._asdict())  # unpacks the named tuple
+            current_house.scrape(driver=wd, force=True)    # if it made it this far, it should be scraped
+            if current_house.docid not in docid_list:
+                # Don't add instance if docid (based on address) already exists
+                docid_list.append(current_house.docid)
+                home_list.append(current_house)
+
+            if not current_house.skipped:
+                # wait some time to be a courteous web scraper
+                #print('Waiting {:.1f} seconds...'.format(wait_time))
+                #sleep(wait_time)
+                pass
+            gc.collect()
+    return home_list
+
+
+def get_geckodriver_version():
+    """SO 50359334"""
+    print(deathpledge.GECKODRIVER_PATH)
+    output = subprocess.run(
+        [deathpledge.GECKODRIVER_PATH, '-V'],
+        stdout=subprocess.PIPE,
+        encoding='utf-8'
+        )
+    version = output.stdout.splitlines()[0]
+    print(f'Geckodriver version: {version}\n')
+
+
 def sign_into_website(driver):
     """Open website and login to access restricted listings.
 
@@ -287,7 +355,7 @@ def scrape_soup(house, soup):
     return house
 
 
-def bulk_fetch(url_df):
+def bulk_fetch_from_raw_db(url_df):
     """Create Home instances from data already in raw."""
     responses = database.get_multiple_docs(doc_ids=list(url_df['docid']))
     for response in responses:
@@ -301,81 +369,6 @@ def bulk_fetch(url_df):
         home.update(raw_doc)
         home.skipped = True
         yield home
-
-
-def scrape_from_url_df(url_df, force_all=False, quiet=True):
-    """Given an array of URLs, create house instances and scrape web data.
-
-    Args:
-        url_df (DataFrame): Two-series dataframe of URL and date added.
-        force_all (bool): Whether to scrape all listings from the web, or
-            scrape only active ones and fetch the rest from the database
-        quiet (bool): Whether to hide (True) or show (False) web browser as it
-            scrapes.
-
-    Returns:
-        list: Array of house instances.
-
-    """
-    home_list = []   # for passing on to caller
-    docid_list = []  # for checking for duplicate house instances
-
-    # Fetch existing raw data for no-scrape listings, if not forced
-    if not force_all:
-        to_scrape, not_to_scrape = split_scrape_from_noscrape(url_df)
-        home_list.extend([home for home in bulk_fetch(not_to_scrape)])
-    else:
-        to_scrape = url_df
-
-    options = Options()
-    options.headless = quiet
-
-    with webdriver.Firefox(options=options, executable_path=deathpledge.GECKODRIVER_PATH) as wd:
-        # Check geckodriver version (SO 50359334)
-        print(deathpledge.GECKODRIVER_PATH)
-        output = subprocess.run([deathpledge.GECKODRIVER_PATH, '-V'], stdout=subprocess.PIPE, encoding='utf-8')
-        version = output.stdout.splitlines()[0]
-        print(f'Geckodriver version: {version}\n')
-
-        # On to the scraping
-        sign_into_website(wd)
-        print('Navigating to URLs...\n')
-        for row in to_scrape.itertuples(index=False):
-            random.seed()
-            wait_time = random.random() * 5
-
-            # Check if URL is valid
-            result_code = support.check_status_of_website(row.url)
-            if result_code != 200:
-                print('URL did not return valid response code.')
-                continue
-
-            # Create house instance
-            current_house = classes.Home(**row._asdict())  # unpacks the named tuple
-            current_house.scrape(driver=wd, force=True)    # if it made it this far, it should be scraped
-            if current_house.docid not in docid_list:
-                # Don't add instance if docid (based on address) already exists
-                docid_list.append(current_house.docid)
-                home_list.append(current_house)
-
-            if not current_house.skipped:
-                # wait some time to be a courteous web scraper
-                #print('Waiting {:.1f} seconds...'.format(wait_time))
-                #sleep(wait_time)
-                pass
-            gc.collect()
-    return home_list
-
-
-def split_scrape_from_noscrape(url_df):
-    """Split dataframe rows into those to be scraped and those to be fetched.
-
-    Returns: tuple of dataframes
-        scrape, and no_scrape
-    """
-    scrape = url_df.loc[url_df['status'] != 'Closed'].copy()
-    no_scrape = url_df.loc[url_df['status'] == 'Closed'].copy()
-    return scrape, no_scrape
 
 
 if __name__ == '__main__':

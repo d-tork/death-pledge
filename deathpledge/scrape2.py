@@ -12,7 +12,7 @@ from datetime import datetime
 from time import sleep
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, WebDriverException
-from selenium.webdriver.firefox.options import Options
+from selenium.webdriver import Firefox
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -34,6 +34,76 @@ class ListingNotAvailable(Exception):
     pass
 
 
+class HomesWithRawData(list):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def add_fetched_homes_to_list(self, rows):
+        homes_fetched_from_raw_db = [home for home in bulk_fetch_from_raw_db(rows)]
+        self.extend(homes_fetched_from_raw_db)
+
+
+class SeleniumDriver(object):
+    _options = Firefox.Options()
+    geckodriver_path = deathpledge.GECKODRIVER_PATH
+
+    def __init__(self, quiet=True, *args, **kwargs):
+        self._webdriver = webdriver.Firefox()
+        self._options.headless = quiet
+
+    def __enter__(self):
+        self._webdriver.__enter__(options=self._options, executable_path=self.geckodriver_path)
+
+    def __exit__(self, type, value, traceback):
+        try:
+            self._webdriver.__exit(self, type, value, traceback)
+        except:
+            pass
+
+    def get_geckodriver_version(self):
+        """SO 50359334"""
+        print(self.geckodriver_path)
+        output = subprocess.run(
+            [self.geckodriver_path, '-V'],
+            stdout=subprocess.PIPE,
+            encoding='utf-8'
+        )
+        version = output.stdout.splitlines()[0]
+        print(f'Geckodriver version: {version}\n')
+
+    def sign_into_website(self):
+        """Open website and login to access restricted listings.
+
+        Doesn't return anything; the browser is left open after signing in for
+        another function to take over driving.
+
+        Args:
+            driver: Selenium WebDriver for navigating on the internet.
+
+        """
+        print('Opening browser and signing in...')
+        self._webdriver.get(keys.website_url)
+        self.enter_website_credentials(keys.website_email, keys.website_pw)
+        try:
+            self.wait_for_successful_signin()
+        except TimeoutException as e:
+            raise Exception('Failed to sign in.').with_traceback(e.__traceback__)
+
+    def enter_website_credentials(self, email, password):
+        email_field = self._webdriver.find_element_by_id('email_field')
+        password_field = self._webdriver.find_element_by_id('user_password')
+
+        email_field.send_keys(email)
+        password_field.send_keys(password)
+        sleep(2)
+        self._webdriver.find_element_by_name('commit').click()
+
+    def wait_for_successful_signin(self):
+        element = WebDriverWait(self._webdriver, 60).until(
+            EC.title_contains('My Matches'))
+        print('\tsigned in.')
+
+
 def scrape_from_url_df(urls, quiet=True):
     """Given an array of URLs, create house instances and scrape web data.
 
@@ -46,22 +116,18 @@ def scrape_from_url_df(urls, quiet=True):
         list: Array of house instances.
 
     """
-    home_list = []   # for passing on to caller
-    docid_list = []  # for checking for duplicate house instances
+    home_list = HomesWithRawData()   # for passing on to caller
+    docid_list = []                  # for checking for duplicate house instances
 
     # Fetch existing raw data for no-scrape listings, if not forced
     if urls.force_all:
         pass
     else:
-        homes_fetched_from_raw = [home for home in bulk_fetch_from_raw_db(urls.rows_not_to_scrape)]
-        home_list.extend(homes_fetched_from_raw)
+        home_list.add_fetched_homes_to_list(urls.rows_not_to_scrape)
 
-    options = Options()
-    options.headless = quiet
+    with SeleniumDriver(quiet=quiet) as wd:
+        wd.sign_into_website()
 
-    get_geckodriver_version()
-    with webdriver.Firefox(options=options, executable_path=deathpledge.GECKODRIVER_PATH) as wd:
-        sign_into_website(wd)
         print('Navigating to URLs...\n')
         for row in urls.rows_to_scrape.itertuples(index=False):
             random.seed()
@@ -90,43 +156,6 @@ def scrape_from_url_df(urls, quiet=True):
     return home_list
 
 
-def get_geckodriver_version():
-    """SO 50359334"""
-    print(deathpledge.GECKODRIVER_PATH)
-    output = subprocess.run(
-        [deathpledge.GECKODRIVER_PATH, '-V'],
-        stdout=subprocess.PIPE,
-        encoding='utf-8'
-        )
-    version = output.stdout.splitlines()[0]
-    print(f'Geckodriver version: {version}\n')
-
-
-def sign_into_website(driver):
-    """Open website and login to access restricted listings.
-
-    Doesn't return anything; the browser is left open after signing in for
-    another function to take over driving.
-
-    Args:
-        driver: Selenium WebDriver for navigating on the internet.
-    
-    """
-    print('Opening browser and signing in...')
-    driver.get(keys.website_url)
-    username = driver.find_element_by_id('email_field')
-    password = driver.find_element_by_id('user_password')
-
-    username.send_keys(keys.website_email)
-    password.send_keys(keys.website_pw)
-    sleep(2)
-    driver.find_element_by_name('commit').click()
-    try:
-        element = WebDriverWait(driver, 60).until(
-            EC.title_contains('My Matches'))
-        print('\tsigned in.')
-    except TimeoutException:
-        print('\tfailed to sign in.')
 
 
 def get_soup_for_url(url, driver=None, quiet=True):

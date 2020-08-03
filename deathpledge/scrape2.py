@@ -6,13 +6,14 @@ details in a dictionary, then write that dictionary to a JSON file
 exists).
 
 """
+from os import path
 import random
 import gc
 from datetime import datetime
 from time import sleep
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, WebDriverException
-from selenium.webdriver import Firefox
+from selenium.webdriver import firefox
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -44,67 +45,122 @@ class HomesWithRawData(list):
 
 
 class SeleniumDriver(object):
-    _options = Firefox.Options()
-    geckodriver_path = deathpledge.GECKODRIVER_PATH
+    _options = firefox.options.Options()
+    _geckodriver_path = deathpledge.GECKODRIVER_PATH
 
     def __init__(self, quiet=True, *args, **kwargs):
-        self._webdriver = webdriver.Firefox()
+        """Context manager for Firefox.
+
+        Args:
+            quiet (bool): Whether to hide (True) or show (False) web browser as it scrapes.
+
+        """
+        self._geckodriver_version = None
         self._options.headless = quiet
+        self.webdriver = webdriver.Firefox(options=self._options, executable_path=self._geckodriver_path)
 
     def __enter__(self):
-        self._webdriver.__enter__(options=self._options, executable_path=self.geckodriver_path)
+        self.webdriver.__enter__()
+        return self
 
     def __exit__(self, type, value, traceback):
         try:
-            self._webdriver.__exit(self, type, value, traceback)
-        except:
-            pass
+            self.webdriver.__exit(self, type, value, traceback)
+        except Exception as e:
+            logger.exception('Webdriver failed to exit.')
 
-    def get_geckodriver_version(self):
+    @property
+    def geckodriver_version(self):
+        return self._geckodriver_version
+
+    @geckodriver_version.setter
+    def geckodriver_version(self):
         """SO 50359334"""
-        print(self.geckodriver_path)
         output = subprocess.run(
-            [self.geckodriver_path, '-V'],
+            [self._geckodriver_path, '-V'],
             stdout=subprocess.PIPE,
-            encoding='utf-8'
-        )
-        version = output.stdout.splitlines()[0]
-        print(f'Geckodriver version: {version}\n')
+            encoding='utf-8')
+        self._geckodriver_version = output.stdout.splitlines()[0]
+
+
+class WebDataSource(object):
+    """Website for scraping and related configuration.
+
+    Args:
+        config_file: location of YAML file for url(s) and credentials.
+        webdriver: Selenium WebDriver for navigating in a browser.
+
+    """
+    def __init__(self, config_file, webdriver):
+        self._config = support.read_yaml_into_dict(config_file)
+        self.webdriver = webdriver
+
+    def get_soup_for_url(self):
+        raise NotImplementedError('Subclass must implement abstract method')
+
+
+class RealScoutWebsite(WebDataSource):
+    config_file = path.join(deathpledge.PROJ_PATH, 'deathpledge', 'api_calls', 'realscout.yaml')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(self.config_file, *args, **kwargs)
 
     def sign_into_website(self):
-        """Open website and login to access restricted listings.
-
-        Doesn't return anything; the browser is left open after signing in for
-        another function to take over driving.
-
-        Args:
-            driver: Selenium WebDriver for navigating on the internet.
-
-        """
+        """Open website and login to access restricted listings."""
         print('Opening browser and signing in...')
-        self._webdriver.get(keys.website_url)
-        self.enter_website_credentials(keys.website_email, keys.website_pw)
+        self.webdriver.get(self._config['sign_in_url'])
+        self._enter_website_credentials()
         try:
-            self.wait_for_successful_signin()
+            self._wait_for_successful_signin()
         except TimeoutException as e:
             raise Exception('Failed to sign in.').with_traceback(e.__traceback__)
 
-    def enter_website_credentials(self, email, password):
-        email_field = self._webdriver.find_element_by_id('email_field')
-        password_field = self._webdriver.find_element_by_id('user_password')
+    def _enter_website_credentials(self):
+        email_field = self.webdriver.find_element_by_id('email_field')
+        password_field = self.webdriver.find_element_by_id('user_password')
 
-        email_field.send_keys(email)
-        password_field.send_keys(password)
+        email_field.send_keys(self._config['email'])
+        password_field.send_keys(self._config['password'])
         sleep(2)
-        self._webdriver.find_element_by_name('commit').click()
+        self.webdriver.find_element_by_name('commit').click()
 
-    def wait_for_successful_signin(self):
-        element = WebDriverWait(self._webdriver, 60).until(
+    def _wait_for_successful_signin(self):
+        element = WebDriverWait(self.webdriver, 60).until(
             EC.title_contains('My Matches'))
         print('\tsigned in.')
 
+    def get_soup_for_url(self, url):
+        """Get BeautifulSoup object for a URL.
 
-def scrape_from_url_df(urls, quiet=True):
+        Args:
+            url (str): URL for listing.
+
+        Returns:
+            bs4 soup object
+
+        Raises:
+            ValueError: If URL is invalid.
+            ListingNotAvailable
+            TimeoutException: If listing details don't appear within 10 sec after navigation.
+
+        """
+        print(f'URL: {url}')
+        check_if_url_is_valid(url)
+
+        self.webdriver.get(url)
+        if 'Listing unavailable.' in self.webdriver.page_source:
+            raise ListingNotAvailable("Bad URL or listing no longer exists.")
+
+        try:
+            WebDriverWait(self.webdriver, 10).until(
+                EC.presence_of_element_located((By.ID, 'listing-detail')))
+        except TimeoutException:
+            raise TimeoutException('Listing page did not load.')
+
+        return BeautifulSoup(self.webdriver.page_source, 'html.parser')
+
+
+def scrape_from_url_df(urls, *args, **kwargs):
     """Given an array of URLs, create house instances and scrape web data.
 
     Args:
@@ -113,11 +169,10 @@ def scrape_from_url_df(urls, quiet=True):
             scrapes.
 
     Returns:
-        list: Array of house instances.
+        list: Array of home instances.
 
     """
-    home_list = HomesWithRawData()   # for passing on to caller
-    docid_list = []                  # for checking for duplicate house instances
+    home_list = HomesWithRawData()
 
     # Fetch existing raw data for no-scrape listings, if not forced
     if urls.force_all:
@@ -125,90 +180,37 @@ def scrape_from_url_df(urls, quiet=True):
     else:
         home_list.add_fetched_homes_to_list(urls.rows_not_to_scrape)
 
-    with SeleniumDriver(quiet=quiet) as wd:
-        wd.sign_into_website()
+    with SeleniumDriver(*args, **kwargs) as wd:
+        realscout = RealScoutWebsite(webdriver=wd.webdriver)
+        realscout.sign_into_website()
 
         print('Navigating to URLs...\n')
         for row in urls.rows_to_scrape.itertuples(index=False):
-            random.seed()
-            wait_time = random.random() * 5
-
-            # Check if URL is valid
-            result_code = support.check_status_of_website(row.url)
-            if result_code != 200:
-                print('URL did not return valid response code.')
+            try:
+                check_if_url_is_valid(row.url)
+            except ValueError:
                 continue
 
-            # Create house instance
-            current_house = classes.Home(**row._asdict())  # unpacks the named tuple
-            current_house.scrape(driver=wd, force=True)    # if it made it this far, it should be scraped
-            if current_house.docid not in docid_list:
-                # Don't add instance if docid (based on address) already exists
-                docid_list.append(current_house.docid)
-                home_list.append(current_house)
-
-            if not current_house.skipped:
-                # wait some time to be a courteous web scraper
-                #print('Waiting {:.1f} seconds...'.format(wait_time))
-                #sleep(wait_time)
+            current_home = classes.Home(**row._asdict())
+            current_home.scrape(website_object=realscout, force=True)
+            if home_has_been_scraped(current_home, home_list):
                 pass
+            else:
+                home_list.append(current_home)
+
             gc.collect()
     return home_list
 
 
-
-
-def get_soup_for_url(url, driver=None, quiet=True):
-    """Get BeautifulSoup object for a URL.
-    
-    Args:
-        url (str): URL for listing.
-        driver (optional): Selenium WebDriver; if not provided, this scrape
-            is not part of bulk collection, thus a webdriver must be opened.
-        quiet (bool, optional): True to hide browser, False to show it.
-
-    Returns:
-        bs4 soup object
-
-    Raises:
-        ValueError: If URL is invalid.
-        ListingNotAvailable
-        TimeoutException: If listing details don't appear within 10 sec after navigation.
-    
-    """
-    print(f'URL: {url}')
-    # Check if URL is valid before signing in, potentially saving the trouble
+def check_if_url_is_valid(url):
     result_code = support.check_status_of_website(url)
     if result_code != 200:
         raise ValueError('URL did not return valid response code.')
 
-    if not driver:
-        close_driver_reminder = True
-        options = Options()
-        options.headless = quiet
-        driver = webdriver.Firefox(options=options, executable_path=deathpledge.GECKODRIVER_PATH)
-        sign_into_website(driver)
-    else:
-        close_driver_reminder = False  # it's part of a context manager, no need to quit it
 
-    try:
-        driver.get(url)
-        if 'Listing unavailable.' in driver.page_source:
-            raise ListingNotAvailable("Bad URL or listing no longer exists.")
-
-        try:
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.ID, 'listing-detail')))
-        except TimeoutException:
-            raise TimeoutException('Listing page did not load.')
-
-        return BeautifulSoup(driver.page_source, 'html.parser')
-    except Exception:
-        # to ensure manually created driver is quit
-        raise
-    finally:
-        if close_driver_reminder:
-            driver.quit()
+def home_has_been_scraped(home, home_list):
+    docids = [x.docid for x in home_list]
+    return home.docid in docids
 
 
 def get_main_box(soup):
@@ -396,7 +398,7 @@ def bulk_fetch_from_raw_db(url_df):
             docid=raw_doc.get('_id')
         )
         home.update(raw_doc)
-        home.skipped = True
+        home.skip_web_scrape = True
         yield home
 
 

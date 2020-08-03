@@ -69,7 +69,7 @@ class Home(dict):
         # Add type to dictionary
         self['type'] = self.doctype
         # Whether to skip the web scraping
-        self.skipped = False
+        self.skip_web_scrape = False
 
         # Format date properly; if not passed or fetched, set it to today
         if added_date:
@@ -122,24 +122,23 @@ class Home(dict):
             return
         self.update(existing_doc)
 
-    def scrape(self, force=False, **kwargs):
+    def scrape(self, website_object, force=False, **kwargs):
         """Fetch listing data from RealScout."""
         # If listing is already in db and is closed, don't re-scrape
         if not force:
-            if self.skipped:
-                print('Instance property "skipped" set to True, will not scrape.')
+            if self.skip_web_scrape:
+                print('Instance property "skip_web_scrape" set to True, will not scrape.')
                 return
             if self.docid:  # brand-new entries won't have a docid
                 if database.is_closed(deathpledge.DATABASE_NAME, self.docid):
                     logger.info('Listing is closed, skipping web scrape.')
                     self.fetch()
-                    self.skipped = True
+                    self.skip_web_scrape = True
                     return
         try:
-            soup = scrape2.get_soup_for_url(self.url, **kwargs)
+            soup = website_object.get_soup_for_url(self.url)
         except Exception as e:
-            print(f'Failed to scrape {self.url}, listing data not obtained. \n\t{e}')
-            logger.exception(f'Failed to scrape {self.url}, listing data not obtained.')
+            logger.exception(f'Failed to get soup for {self.url}')
             return
         listing_data = scrape2.scrape_soup(self, soup)
         self.update(listing_data)

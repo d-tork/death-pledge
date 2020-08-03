@@ -42,8 +42,8 @@ class URLDataFrame(object):
         self.force_all = force_all
         self.last_n = last_n
 
-        self.rows_to_scrape = None
-        self.rows_not_to_scrape = None
+        self.rows_to_scrape = pd.DataFrame()
+        self.rows_not_to_scrape = pd.DataFrame()
 
         self.prepare_dataframe()
         self.trim_last_n()

@@ -9,6 +9,7 @@ import time
 from fake_useragent import UserAgent
 from django.utils.text import slugify
 from hashlib import sha1
+import yaml
 
 
 class BadResponse(Exception):
@@ -149,6 +150,11 @@ def create_house_id(addr):
     """Get SHA-1 hash from address (slugified and space-separated)."""
     clean_addr = clean_address(addr)
     return sha1(clean_addr.encode()).hexdigest()
+
+
+def read_yaml_into_dict(filepath):
+    with open(filepath, 'r') as fp:
+        return yaml.load(fp, Loader=yaml.FullLoader)
 
 
 if __name__ == '__main__':

@@ -5,6 +5,7 @@ from os import path
 import json
 import warnings
 import logging
+import pytz
 
 import deathpledge
 from deathpledge import scrape2, database, support, cleaning, enrich
@@ -73,11 +74,7 @@ class Home(dict):
 
         # Format date properly; if not passed or fetched, set it to today
         if added_date:
-            try:
-                added_date = datetime.strptime(added_date, '%m/%d/%Y')
-            except ValueError:
-                pass
-            self.added_date = added_date
+            self.added_date = support.coerce_date_string_to_date(added_date)
         else:
             self.added_date = datetime.now()
 

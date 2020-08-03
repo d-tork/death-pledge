@@ -158,5 +158,19 @@ def read_yaml_into_dict(filepath):
         return yaml.load(fp, Loader=yaml.FullLoader)
 
 
+def coerce_date_string_to_date(date_str):
+    date_str_formats = ['%m/%d/%Y', '%Y-%m-%dT%H:%M:%S']
+    date_object = date_str
+    for date_format in date_str_formats:
+        try:
+            date_object = dt.strptime(date_str, date_format)
+            break
+        except TypeError:
+            break
+        except ValueError:
+            continue
+    return date_object
+
+
 if __name__ == '__main__':
     pass

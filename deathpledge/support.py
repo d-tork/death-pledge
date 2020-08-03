@@ -1,7 +1,6 @@
 """Generic functions to support other modules."""
 
 import requests
-import random
 from math import radians, cos, sin, asin, sqrt
 import datetime
 from datetime import datetime as dt
@@ -10,6 +9,8 @@ from fake_useragent import UserAgent
 from django.utils.text import slugify
 from hashlib import sha1
 import yaml
+
+import deathpledge
 
 
 class BadResponse(Exception):

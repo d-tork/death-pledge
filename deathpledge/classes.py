@@ -122,19 +122,8 @@ class Home(dict):
             return
         self.update(existing_doc)
 
-    def scrape(self, website_object, force=False, **kwargs):
+    def scrape(self, website_object):
         """Fetch listing data from RealScout."""
-        # If listing is already in db and is closed, don't re-scrape
-        if not force:
-            if self.skip_web_scrape:
-                print('Instance property "skip_web_scrape" set to True, will not scrape.')
-                return
-            if self.docid:  # brand-new entries won't have a docid
-                if database.is_closed(deathpledge.DATABASE_NAME, self.docid):
-                    logger.info('Listing is closed, skipping web scrape.')
-                    self.fetch()
-                    self.skip_web_scrape = True
-                    return
         try:
             soup = website_object.get_soup_for_url(self.url)
         except Exception as e:
@@ -196,3 +185,4 @@ class Home(dict):
             print(f'Upload failed, saving to disk.\n\t{e}')
             self.save_local()
         return
+

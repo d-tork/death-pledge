@@ -32,43 +32,30 @@ class URLDataFrame(object):
 
     Args:
         df (pd.DataFrame): data being passed
-        force_all (bool): Whether to scrape all listings from the web, or
-            scrape only active ones and fetch the rest from the database
         last_n (int): Get only last n rows (optional, else returns all)
 
     """
     def __init__(self, df, force_all=False, last_n=None):
         self.df = df
-        self.force_all = force_all
-        self.last_n = last_n
-
-        self.rows_to_scrape = pd.DataFrame()
-        self.rows_not_to_scrape = pd.DataFrame()
-
-        self.prepare_dataframe()
-        self.trim_last_n()
-        self.split_scrape_from_noscrape()
-
-        if self.force_all:
-            self.rows_to_scrape = self.df
-        else:
-            self.split_scrape_from_noscrape()
+        self._prepare_dataframe()
+        if last_n is not None:
+            self._trim_last_n(last_n)
 
     def __getattr__(self, attr):
         return getattr(self.df, attr)
 
-    def prepare_dataframe(self):
-        self.set_first_row_as_headers()
-        self.drop_null_rows()
-        self.remove_junk_from_urls()
+    def _prepare_dataframe(self):
+        self._set_first_row_as_headers()
+        self._drop_null_rows()
+        self._remove_junk_from_urls()
 
-    def set_first_row_as_headers(self):
+    def _set_first_row_as_headers(self):
         self.df = self.df.rename(columns=self.df.iloc[0]).drop(self.df.index[0])
 
-    def drop_null_rows(self):
+    def _drop_null_rows(self):
         self.df.dropna(subset=['url'], inplace=True)
 
-    def remove_junk_from_urls(self):
+    def _remove_junk_from_urls(self):
         self.df['url'] = self.df['url'].apply(self.trim_url)
 
     @staticmethod
@@ -80,13 +67,8 @@ class URLDataFrame(object):
         else:
             return url_str
 
-    def trim_last_n(self):
-        if self.last_n:
-            self.df = self.df[-self.last_n:]
-
-    def split_scrape_from_noscrape(self):
-        self.rows_to_scrape = self.df.loc[self.df['status'] != 'Closed'].copy()
-        self.rows_not_to_scrape = self.df.loc[self.df['status'] == 'Closed'].copy()
+    def _trim_last_n(self, n):
+        self.df = self.df[-n:]
 
 
 def get_creds(token_path=TOKENPATH):

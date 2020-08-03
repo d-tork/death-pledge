@@ -43,6 +43,24 @@ class HomesWithRawData(list):
         homes_fetched_from_raw_db = [home for home in bulk_fetch_from_raw_db(rows)]
         self.extend(homes_fetched_from_raw_db)
 
+    def add_empty_home_instances(self, rows):
+        for row in rows.itertuples(index=False):
+            if self._empty_home_should_be_created(row):
+                if not url_is_valid(row.url):
+                    continue
+                self.append(classes.Home(**row._asdict()))
+
+    def _empty_home_should_be_created(self, row):
+        if row.docid is None:
+            return True
+        elif row.docid not in [x.docid for x in self if x.docid is not None]:
+            return True
+        else:
+            return False
+
+
+
+
 
 class SeleniumDriver(object):
     _options = firefox.options.Options()
@@ -145,7 +163,8 @@ class RealScoutWebsite(WebDataSource):
 
         """
         print(f'URL: {url}')
-        check_if_url_is_valid(url)
+        if not url_is_valid(url):
+            raise ValueError()
 
         self.webdriver.get(url)
         if 'Listing unavailable.' in self.webdriver.page_source:
@@ -160,13 +179,12 @@ class RealScoutWebsite(WebDataSource):
         return BeautifulSoup(self.webdriver.page_source, 'html.parser')
 
 
-def scrape_from_url_df(urls, *args, **kwargs):
+def scrape_from_url_df(urls, force_all, *args, **kwargs):
     """Given an array of URLs, create house instances and scrape web data.
 
     Args:
-        urls (DataFrame): Two-series dataframe of URL and date added.
-        quiet (bool): Whether to hide (True) or show (False) web browser as it
-            scrapes.
+        urls (URLDataFrame): DataFrame-like object holding Google sheet rows
+        force_all (bool): Whether to scrape all listings from the web, even if listing is Closed
 
     Returns:
         list: Array of home instances.
@@ -174,38 +192,33 @@ def scrape_from_url_df(urls, *args, **kwargs):
     """
     home_list = HomesWithRawData()
 
-    # Fetch existing raw data for no-scrape listings, if not forced
-    if urls.force_all:
+    # Fetch existing raw data for listings already in the database
+    if force_all:
         pass
     else:
-        home_list.add_fetched_homes_to_list(urls.rows_not_to_scrape)
+        home_list.add_fetched_homes_to_list(urls.df)
+    home_list.add_empty_home_instances(urls.df)
 
     with SeleniumDriver(*args, **kwargs) as wd:
         realscout = RealScoutWebsite(webdriver=wd.webdriver)
         realscout.sign_into_website()
 
         print('Navigating to URLs...\n')
-        for row in urls.rows_to_scrape.itertuples(index=False):
-            try:
-                check_if_url_is_valid(row.url)
-            except ValueError:
+        for current_home in home_list:
+            if current_home.skip_web_scrape:
+                logger.info('Instance property "skip_web_scrape" set to True, will not scrape.')
                 continue
-
-            current_home = classes.Home(**row._asdict())
-            current_home.scrape(website_object=realscout, force=True)
-            if home_has_been_scraped(current_home, home_list):
-                pass
-            else:
-                home_list.append(current_home)
-
-            gc.collect()
+            current_home.scrape(website_object=realscout)
+            #gc.collect()
     return home_list
 
 
-def check_if_url_is_valid(url):
+def url_is_valid(url):
     result_code = support.check_status_of_website(url)
     if result_code != 200:
-        raise ValueError('URL did not return valid response code.')
+        logger.warning(f'URL {url} did not return valid response code.')
+        return False
+    return True
 
 
 def home_has_been_scraped(home, home_list):
@@ -389,7 +402,8 @@ def scrape_soup(house, soup):
 def bulk_fetch_from_raw_db(url_df):
     """Create Home instances from data already in raw."""
     responses = database.get_multiple_docs(doc_ids=list(url_df['docid']))
-    for response in responses:
+    valid_responses = [x for x in responses if 'error' not in x.keys()]
+    for response in valid_responses:
         raw_doc = response['doc']
         home = classes.Home(
             full_address=raw_doc['main'].get('full_address'),
@@ -398,8 +412,13 @@ def bulk_fetch_from_raw_db(url_df):
             docid=raw_doc.get('_id')
         )
         home.update(raw_doc)
-        home.skip_web_scrape = True
+        skip_web_scrape_if_closed(home)
         yield home
+
+
+def skip_web_scrape_if_closed(home):
+    if home['listing']['status'] == 'Closed':
+        home.skip_web_scrape = True
 
 
 if __name__ == '__main__':

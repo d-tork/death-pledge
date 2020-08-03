@@ -75,3 +75,6 @@ see [Cloudant docs](cloudant.md)
 * Google sheets API
   * https://developers.google.com/sheets/api/
 * [gspread: Write data back to Google sheets](https://github.com/burnash/gspread#authorization-using-oauth2)
+
+### Python
+* [The pythonic way to inherit a context manager](https://stackoverflow.com/questions/31189526/what-is-the-pythonic-way-to-inherit-context-manager)

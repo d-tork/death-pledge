@@ -68,7 +68,7 @@ class Home(dict):
         self.url = url
 
         # Add type to dictionary
-        self['type'] = self.doctype
+        self['doctype'] = self.doctype
         # Whether to skip the web scraping
         self.skip_web_scrape = False
 

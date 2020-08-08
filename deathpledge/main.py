@@ -24,7 +24,7 @@ def main(last_n=None):
     urls = gs.get_url_dataframe(google_creds, last_n=last_n)
     house_list = scrape2.scrape_from_url_df(urls, force_all=False, quiet=True)
     # TODO: split off listing card here
-    database.bulk_upload(house_list, 'deathpledge_raw')
+    database.bulk_upload(house_list, deathpledge.RAW_DATABASE_NAME)
     for house in house_list:
         house.clean()
         house.enrich()

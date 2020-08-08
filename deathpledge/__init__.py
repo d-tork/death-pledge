@@ -5,8 +5,8 @@ PROJ_PATH = path.normpath(path.join(path.dirname(path.realpath(__file__)), '..')
 LISTINGS_DIR = path.join(PROJ_PATH, 'Data', 'Processed', 'saved_listings')
 LISTINGS_GLOB = path.join(PROJ_PATH, 'Data', 'Processed', 'saved_listings', '*.json')
 SCORECARD_PATH = path.join(PROJ_PATH, 'Data', 'scorecard.json')
-DATABASE_NAME = 'deathpledge_clean'
-RAW_DATABASE_NAME = 'deathpledge_raw'
+DATABASE_NAME = 'deathpledge_clean_flat'
+RAW_DATABASE_NAME = 'deathpledge_raw_flat'
 TIMEFORMAT = '%Y-%m-%dT%H:%M:%S'
 
 if platform == 'linux':

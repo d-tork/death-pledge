@@ -29,7 +29,7 @@ def split_comma_delimited_fields(home):
     ]
     for subdict, key in field_list:
         try:
-            listlike_field = home[subdict][key]
+            listlike_field = home[key]
         except KeyError:  # field not in dict
             continue
         try:
@@ -39,7 +39,7 @@ def split_comma_delimited_fields(home):
         # Remove 'and' in final element
         value_list[-1] = value_list[-1].replace('and ', '')
         # Replace original value
-        home[subdict][key] = value_list
+        home[key] = value_list
 
 
 def convert_numbers(home):
@@ -73,27 +73,17 @@ def convert_numbers(home):
         if len(key_tuple) == 2:
             subdict, field = key_tuple
             try:
-                val = home[subdict][field]
+                val = home[field]
             except (KeyError, AttributeError) as e:
                 continue
-            home[subdict][field] = parse_number(val)
+            home[field] = parse_number(val)
         else:
             subdict1, subdict2, field = key_tuple
             try:
-                val = home[subdict1][subdict2][field]
+                val = home[field]
             except (KeyError, AttributeError) as e:
                 continue
-            home[subdict1][subdict2][field] = parse_number(val)
-    # All numbers in building_information
-
-    try:
-        for k, v in home['building_information'].items():
-            try:
-                home['building_information'][k] = int(v)
-            except (ValueError, TypeError):  # individual field not a number
-                continue
-    except KeyError:  # No building_information
-        pass
+            home[field] = parse_number(val)
 
 
 def convert_dates(home):
@@ -106,11 +96,11 @@ def convert_dates(home):
     for key_tuple in date_list:
         subdict, field = key_tuple
         try:
-            val = home[subdict][field]
+            val = home[field]
         except KeyError as e:
             continue
         try:
-            home[subdict][field] = parse_date(val)
+            home[field] = parse_date(val)
         except AttributeError:  # likely already a date object
             continue
 
@@ -129,18 +119,18 @@ def remove_dupe_fields(home):
     for key_tuple in dupe_fields:
         subdict, field = key_tuple
         try:
-            del home[subdict][field]
+            del home[field]
         except KeyError as e:
             continue
 
 
 def parse_address(home):
     """Split address into parsed fields."""
-    full_address = home['main']['full_address']
+    full_address = home['full_address']
     addr_tuples = usaddress.parse(full_address)
     parsed = defaultdict(list)  # format as proper dict
     for v, k in addr_tuples:
         v = v.replace(',', '')  # remove comma from city name
         parsed[k].append(v)  # for multi-word values belonging to same key
     parsed = {k: ' '.join(v) for k, v in parsed.items()}
-    home['main']['parsed_address'] = parsed
+    home['parsed_address'] = parsed

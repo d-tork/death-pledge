@@ -88,7 +88,7 @@ class Home(dict):
         scraped from the URL (if given). Also creates a unique ID for
         the address.
         """
-        scraped_address = support.clean_address(self['main']['full_address'])
+        scraped_address = support.clean_address(self['full_address'])
         scraped_addr_id = support.create_house_id(scraped_address)
         if self.docid:
             # address was provided to instance

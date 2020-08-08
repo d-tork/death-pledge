@@ -210,6 +210,8 @@ def scrape_from_url_df(urls, force_all, *args, **kwargs):
                 continue
             current_home.scrape(website_object=realscout)
             #gc.collect()
+            # The collection of a bunch of instances is really bogging this down
+            # TODO: garbage collect, but also find a different way to send them to the db as we go
     return home_list
 
 
@@ -251,11 +253,9 @@ def get_main_box(soup):
         'beds': vitals[0],
         'baths': vitals[1],
         'sqft': vitals[2],
-            }
-    listing = {
         'badge': badge,
     }
-    return main, listing
+    return main
 
 
 def get_price_info(soup):
@@ -328,7 +328,6 @@ def get_cards(soup, data):
     Returns: dict
 
     """
-    data['basic_info'] = data.setdefault('basic_info', {})
     # Get list of card tags
     cards = soup.find_all('div', attrs={'class': 'card'})
 
@@ -339,13 +338,13 @@ def get_cards(soup, data):
     for field in basic_info_list:
         attr_tup = tuple(field.text.split(u':\xa0 '))
         attr_tup = (slugify(attr_tup[0]).replace('-', '_'), attr_tup[1])
-        data['basic_info'].update([attr_tup])
+        data.update([attr_tup])
 
     # All good cards
     for i, card in enumerate(cards):
         card_head = card.find('div', class_='card-header')
         if i == 0:  # Description paragraph
-            data['listing']['description'] = card_head.text
+            data['description'] = card_head.text
         elif card_head:
             card_title = card_head.string
             if card_title:
@@ -355,14 +354,13 @@ def get_cards(soup, data):
                 card_title = slugify(card_title).replace('-', '_')
 
                 # Create the key, in case names change or it's new
-                data[card_title] = data.setdefault(card_title, {})
                 card_attrib_list = card.find_all('div', class_='col-12')
                 if card_attrib_list:
                     for field_attrib in scrape_normal_card(card_attrib_list):
-                        data[card_title].update([field_attrib])
+                        data.update([field_attrib])
                 else:  # the Listing History card
                     card_attrib_list = card.find_all('div', class_='col-4')
-                    data[card_title] = scrape_history_card(card_attrib_list)
+                    data['listing_history'] = scrape_history_card(card_attrib_list)
     return
 
 
@@ -372,30 +370,16 @@ def scrape_soup(house, soup):
     Returns: dict
     """
     # Initialize dict with metadata
-    scrape_data = house.setdefault('scrape_data', {})
-    scrape_data['url'] = house.url
-    scrape_data['scraped_time'] = datetime.now().strftime(deathpledge.TIMEFORMAT)
-    scrape_data['scraped_source'] = 'RealScout'
+    house['url'] = house.url
+    house['scraped_time'] = datetime.now().strftime(deathpledge.TIMEFORMAT)
+    house['scraped_source'] = 'RealScout'
     house['added_date'] = house.added_date.strftime(deathpledge.TIMEFORMAT)
 
     # Scrape three sections
-    house['main'], house['listing'] = get_main_box(soup)
-    house['listing'].update(get_price_info(soup))
+    house.update(get_main_box(soup))
+    house.update(get_price_info(soup))
     get_cards(soup, house)
 
-    # Reorganize sub-dicts
-    single_items = [
-        ('basic_info', 'tax_annual_amount'),
-        ('basic_info', 'price_per_sqft'),
-        ('basic_info', 'status'),
-        ('basic_info', 'mls_number'),
-    ]
-    for subdict, key in single_items:
-        house['listing'][key] = house[subdict].pop(key, None)
-    del house['basic_info']
-    # Whole sub-dicts
-    house['listing']['expenses_taxes'] = house.pop('expenses_taxes')
-    house['listing']['listing_history'] = house.pop('listing_history')
     return house
 
 
@@ -406,8 +390,8 @@ def bulk_fetch_from_raw_db(url_df):
     for response in valid_responses:
         raw_doc = response['doc']
         home = classes.Home(
-            full_address=raw_doc['main'].get('full_address'),
-            url=raw_doc['scrape_data'].get('url'),
+            full_address=raw_doc.get('full_address'),
+            url=raw_doc.get('url'),
             added_date=raw_doc.get('added_date'),
             docid=raw_doc.get('_id')
         )
@@ -417,7 +401,7 @@ def bulk_fetch_from_raw_db(url_df):
 
 
 def skip_web_scrape_if_closed(home):
-    if home['listing']['status'] == 'Closed':
+    if home['status'] == 'Closed':
         home.skip_web_scrape = True
 
 

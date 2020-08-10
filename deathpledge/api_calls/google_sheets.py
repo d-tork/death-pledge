@@ -48,6 +48,7 @@ class URLDataFrame(object):
         self._set_first_row_as_headers()
         self._drop_null_rows()
         self._remove_junk_from_urls()
+        self._remove_duplicate_listings()
 
     def _set_first_row_as_headers(self):
         self.df = self.df.rename(columns=self.df.iloc[0]).drop(self.df.index[0])
@@ -57,6 +58,9 @@ class URLDataFrame(object):
 
     def _remove_junk_from_urls(self):
         self.df['url'] = self.df['url'].apply(self.trim_url)
+
+    def _remove_duplicate_listings(self):
+        self.df.drop_duplicates(subset=['url'], keep='first', inplace=True)
 
     @staticmethod
     def trim_url(url_str):

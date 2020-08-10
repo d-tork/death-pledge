@@ -7,7 +7,6 @@ exists).
 
 """
 from os import path
-import random
 import gc
 from datetime import datetime
 from time import sleep
@@ -26,7 +25,7 @@ from itertools import zip_longest
 
 import deathpledge
 from deathpledge import support, classes, database
-from deathpledge.api_calls import keys, google_sheets
+from deathpledge.api_calls import keys
 
 logger = logging.getLogger(__name__)
 
@@ -59,14 +58,11 @@ class HomesWithRawData(list):
             return False
 
 
-
-
-
 class SeleniumDriver(object):
     _options = firefox.options.Options()
     _geckodriver_path = deathpledge.GECKODRIVER_PATH
 
-    def __init__(self, quiet=True, *args, **kwargs):
+    def __init__(self, quiet=True):
         """Context manager for Firefox.
 
         Args:

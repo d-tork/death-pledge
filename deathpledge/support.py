@@ -70,7 +70,7 @@ def str_coords(coords):
 
 def check_status_of_website(url):
     """Make sure get() returns a 200"""
-    ua = UserAgent()
+    ua = UserAgent(verify_ssl=False)
     header = {'User-Agent': str(ua.firefox)}
     result = requests.get(url, headers=header)
     return result.status_code

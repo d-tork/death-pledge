@@ -5,13 +5,10 @@ The majority of these functions are dedicated to adding the values
 and attributes that come from external data sources, or else are
 transformations of existing attributes, post-scraping.
 """
-import os
-import glob
 from time import sleep
 from datetime import datetime as dt
 import logging
 
-import deathpledge
 from deathpledge import support, cleaning
 from deathpledge.api_calls import bing, citymapper, keys
 from deathpledge.support import BadResponse
@@ -61,25 +58,26 @@ def add_citymapper_commute(dic, force=False):
 
 def add_bing_commute(home, force=False):
     """Add the bing transit time."""
-    # Checks for existing values
-    travel_dict = home.setdefault('travel', dict())
-    commute_items = {
-        'work_commute': travel_dict.setdefault('work_commute', None),
-        'first_walk_mins': travel_dict.setdefault('first_walk_mins', None)
+    bing_commute_items = {
+        'work_commute': None,
+        'first_walk_mins': None,
+        'first_leg_type': None
     }
-    if (not all([v for k, v in commute_items.items()])) | force:
+    bing_commute_items = {k: home.get(k) for k in bing_commute_items.keys()}
+
+    if (not all([v for k, v in bing_commute_items.items()])) | force:
         # At least one of them is empty or force=True, Bing API call is necessary
         # If not force, and if all values exist, then end function
-        house_coords = tuple(home['geocoords'].values())
+        house_coords = home.get_geocoords()
         try:
-            commute_time, first_walk_time, first_leg = bing.get_bing_commute_time(house_coords, keys.work_coords)
+            commute, walk_time, leg_type = bing.get_bing_commute_time(house_coords, keys.work_coords)
         except BadResponse as e:
-            logger.info(f'Could not retrieve commute time for {home.full_address}.\n{e}')
-            commute_time, first_walk_time, first_leg = None, None, None
+            logger.info(f'Could not retrieve Bing commute time for {home.full_address}.\n{e}')
         finally:
-            home['work_commute'] = commute_time
-            home['first_walk_mins'] = first_walk_time
-            home['first_leg_type'] = first_leg
+            bing_commute_items['work_commute'] = commute
+            bing_commute_items['first_walk_mins'] = walk_time
+            bing_commute_items['first_leg_type'] = leg_type
+            home.update(bing_commute_items)
 
 
 def add_nearest_metro(dic, force=False):

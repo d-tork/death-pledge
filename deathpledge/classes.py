@@ -156,6 +156,14 @@ class Home(dict):
         enrich.add_coords(self, force=True)
         enrich.add_bing_commute(self)
 
+    def get_geocoords(self):
+        try:
+            geocoords = self.get('geocoords')
+        except KeyError:
+            enrich.add_coords(self, force=True)
+            geocoords = self.get('geocoords')
+        return geocoords
+
     def save_local(self, filename=None):
         if not filename:
             filename = support.create_filename_from_addr(self.full_address)

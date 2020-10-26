@@ -13,6 +13,8 @@ Cloudant best and worst practices - https://www.ibm.com/cloud/blog/cloudant-best
 
 [IBM Cloudant Learning Center Youtube playlist](https://www.youtube.com/playlist?list=PLJa_sXrJUZb8FouDUo1KvZujd_icgaejg)
 
+[Tutorials by a real human](https://sharynr.github.io/ibm-cloudant-lab/index.html)
+
 ## Authentication
 * [Identity and Access Management](https://cloud.ibm.com/docs/Cloudant?topic=Cloudant-ibm-cloud-identity-and-access-management-iam-)
 * [Cloudant authentication](https://cloud.ibm.com/docs/Cloudant?topic=Cloudant-authentication)
@@ -215,13 +217,13 @@ First 10 IDs and house addresses with list price less than or equal to 485,000 (
 {
 	"selector": {
 		"_id": {"$gt": "0"},
-        "listing.list_price": {"$lte": 485000}
+        "list_price": {"$lte": 485000}
 	},
 		"fields": [
 			"_id",
 			"_rev",
-			"main.full_address",
-			"listing.list_price"
+			"full_address",
+			"list_price"
 		],
 		"sort": [
           {"_id": "asc"}
@@ -247,9 +249,9 @@ Recently added houses
    "fields": [
       "_id",
       "added_date",
-      "main.full_address",
-      "listing.list_price",
-      "listing.badge"
+      "full_address",
+      "list_price",
+      "badge"
    ],
    "sort": [
       {"added_date:string": "desc"}

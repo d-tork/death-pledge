@@ -101,7 +101,7 @@ def add_frequent_driving(dic, favorites_dic, force=False):
             try:
                 distance, duration = bing.get_driving_info(house_coords, place_coords, day, starttime)
             except BadResponse:
-                distance, duration = None
+                distance, duration = None, None
             finally:
                 return distance, duration
 

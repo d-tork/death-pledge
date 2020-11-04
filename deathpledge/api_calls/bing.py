@@ -186,15 +186,6 @@ def get_driving_info(startcoords, endcoords, dayofweek=None, hrmin=None):
     return distance, duration
 
 
-def add_bing_properties(home):
-    home_coords = get_coords(
-        home.full_address,
-        zip_code=home['main']['parsed_address'].get('ZipCode')
-    )
-    commute_time = get_bing_commute_time(home_coords, keys.work_coords)
-    nearby_metro = find_nearest_metro(home_coords)
-
-
 if __name__ == '__main__':
     SAMPLE_ADDR = '10217 ROLLING GREEN WAY FORT WASHINGTON, MD'
     sample_coords = tuple(get_coords(SAMPLE_ADDR).values())

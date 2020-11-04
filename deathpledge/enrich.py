@@ -4,13 +4,23 @@ Module for modifying the contents of a house listing dictionary.
 The majority of these functions are dedicated to adding the values
 and attributes that come from external data sources, or else are
 transformations of existing attributes, post-scraping.
+
+TODO: add these calculations
+- bing commute
+- nearest metro
+- frequent driving
+- travel quick stats
+- sale price diff
+- tether
+- days on market
+- change from initial
+- tax assessed difference
 """
-from time import sleep
 from datetime import datetime as dt
 import logging
 
 from deathpledge import support, cleaning
-from deathpledge.api_calls import bing, citymapper, keys
+from deathpledge.api_calls import bing, keys
 from deathpledge.support import BadResponse
 
 logger = logging.getLogger(__name__)
@@ -31,29 +41,6 @@ def add_coords(home, force=False):
             print(f'Could not retrieve geocoords for this address: \n{e}')
             coords = None
     home['geocoords'] = coords
-
-
-def add_citymapper_commute(dic, force=False):
-    """Add the citymapper transit time for work to the listing dict.
-
-    Raises a sleep reminder exception because of the API limits. When
-    using this function on a single listing, catch the exception but
-    let it pass. However, when running in a loop of multiple listings,
-    catch it and let the program sleep for 90 seconds.
-    """
-    key_name = 'Work commute (Citymapper)'
-    # Check for existing value
-    cmtime = dic.setdefault(key_name, None)
-    if (cmtime is None) or force:
-        house_coords = dic['geocoords']
-        try:
-            cmtime = citymapper.get_citymapper_commute_time(house_coords, keys.work_coords)
-        except BadResponse as e:
-            print(e)
-            cmtime = None
-        finally:
-            update_house_dict(dic, ('local travel', key_name), cmtime)
-            raise citymapper.Sleepytime
 
 
 def add_bing_commute(home, force=False):
@@ -96,8 +83,7 @@ def add_nearest_metro(dic, force=False):
             print(e)
             station_list = None
         finally:
-            update_house_dict(dic, ('local travel', 'Nearby Metro'), station_list)
-    update_house_dict(dic, ('basic info', 'Nearest Metro'), station_list[0][0])
+            return station_list
 
 
 def add_frequent_driving(dic, favorites_dic, force=False):
@@ -117,7 +103,7 @@ def add_frequent_driving(dic, favorites_dic, force=False):
             except BadResponse:
                 distance, duration = None
             finally:
-                update_house_dict(dic, ('local travel', place), (distance, duration))
+                return distance, duration
 
 
 def travel_quick_stats(dic):
@@ -130,9 +116,7 @@ def travel_quick_stats(dic):
     commute = dic['local travel'].get('Work commute (Bing)')
     commute_mins = support.str_time_to_min(commute)
 
-    # Add to new dict
-    update_house_dict(dic, ('quickstats', 'metro_walk_mins'), round(metro_mins, 1))
-    update_house_dict(dic, ('quickstats', 'commute_transit_mins'), round(commute_mins, 1))
+    return round(metro_mins, 1), round(commute_mins, 1)
 
 
 def add_tether(dic):
@@ -143,7 +127,7 @@ def add_tether(dic):
         dist = support.haversine(house_coords, center)
     except TypeError:
         print('\tDistance from center not added; missing house coords.')
-    update_house_dict(dic, ('quickstats', 'tether'), round(dist, 2))
+    return round(dist, 2)
 
 
 def update_days_on_market(dic):
@@ -157,10 +141,10 @@ def update_days_on_market(dic):
             start_date = dt.strptime(date, '%b %d, %Y')
     try:
         dom = (end_date - start_date).days
+        return dom
     except TypeError:
         print('\tListing date not found in history.')
         return
-    update_house_dict(dic, ('_metadata', 'days_on_market'), dom)
 
 
 def change_from_initial(dic):
@@ -177,8 +161,7 @@ def change_from_initial(dic):
     price_diff = current_price - initial_price
     if price_diff != 0:
         pct_change = '{:+.1%}'.format(price_diff / initial_price)
-        update_house_dict(dic, ('_info', 'change'), price_diff)
-        update_house_dict(dic, ('_info', 'pct_change'), pct_change)
+    return price_diff, pct_change
 
 
 def sale_price_diff(dic):
@@ -189,9 +172,7 @@ def sale_price_diff(dic):
         sale_price = info.get('sale_price')
         diff = sale_price - list_price
         diff_pct = '{:.1%}'.format(diff / list_price)
-
-        update_house_dict(dic, ('_info', 'sale_price_diff'), diff)
-        update_house_dict(dic, ('_info', 'sale_diff_pct'), diff_pct)
+    return diff, diff_pct
 
 
 def tax_assessed_diff(dic):
@@ -200,31 +181,7 @@ def tax_assessed_diff(dic):
     tax_assessed = dic['expenses / taxes'].get('Tax Assessed Value')
     diff = tax_assessed - list_price
     diff_pct = '{:.1%}'.format(diff / list_price)
-
-    update_house_dict(dic, ('expenses / taxes', 'tax_assessed_diff'), diff_pct)
-
-
-def modify_one(house, loop=False):
-    # Add modifying functions here:
-    add_coords(house)
-    try:
-        # add_citymapper_commute(house)
-        pass
-    except citymapper.Sleepytime:
-        if loop:
-            print('sleeping for 90 seconds.')
-            sleep(90)
-        else:
-            pass
-    add_bing_commute(house, force=True)
-    add_nearest_metro(house, force=True)
-    add_frequent_driving(house, keys.favorites_driving)
-    travel_quick_stats(house)
-    sale_price_diff(house)
-    add_tether(house)
-    update_days_on_market(house)
-    change_from_initial(house)
-    tax_assessed_diff(house)
+    return diff_pct
 
 
 if __name__ == '__main__':

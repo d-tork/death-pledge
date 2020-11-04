@@ -69,10 +69,12 @@ def add_bing_commute(home, force=False):
         # At least one of them is empty or force=True, Bing API call is necessary
         # If not force, and if all values exist, then end function
         house_coords = home.get_geocoords()
+        house_coords = (house_coords['lat'], house_coords['lon'])
         try:
             commute, walk_time, leg_type = bing.get_bing_commute_time(house_coords, keys.work_coords)
         except BadResponse as e:
             logger.info(f'Could not retrieve Bing commute time for {home.full_address}.\n{e}')
+            commute, walk_time, leg_type = '', '', ''
         finally:
             bing_commute_items['work_commute'] = commute
             bing_commute_items['first_walk_mins'] = walk_time

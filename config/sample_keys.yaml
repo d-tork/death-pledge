@@ -1,0 +1,45 @@
+Cloudant_creds:
+  apikey: apikey
+  host: host
+  iam_apikey_description: iam_apikey_description
+  iam_apikey_name: iam_apikey_name
+  iam_role_crn: iam_role_crn
+  iam_serviceid_crn: iam_serviceid_crn
+  password: password
+  port: port
+  url: url
+  username: username
+API_keys:
+  bingMapsKey: bingMapsKey
+  citymapperKey: citymapperKey
+Google_creds:
+  installed:
+    auth_provider_x509_cert_url: https://www.googleapis.com/oauth2/v1/certs
+    auth_uri: https://accounts.google.com/o/oauth2/auth
+    client_id: client_id
+    client_secret: client_secret
+    project_id: project_id
+    redirect_uris:
+    - urn:ietf:wg:oauth:2.0:oob
+    - http://localhost
+    token_uri: https://oauth2.googleapis.com/token
+Locations:
+  favorite_driving:
+    Weekday_evening_location:
+      addr: addr
+      day: 0
+      time: '18:00'
+    Saturday_midday_location:
+      addr: addr
+      day: 5
+      time: '12:00'
+  centerpoint:
+    lat: 38.00000
+    lon: -77.00000
+  work_coords: 
+    lat: 38.00000
+    lon: -77.00000
+Realscout:
+  email: email
+  password: password
+  sign_in_url: https://sign_in_url.domain

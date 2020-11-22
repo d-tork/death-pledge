@@ -56,9 +56,10 @@ def add_bing_commute(home, force=False):
         # At least one of them is empty or force=True, Bing API call is necessary
         # If not force, and if all values exist, then end function
         house_coords = tuple(home['geocoords'].values())
+        work_coords = tuple(keys['Locations']['work_coords'].values())
         try:
             commute, walk_time, leg_type = (
-                bing.get_bing_commute_time(house_coords, keys['Locations']['work_coords'])
+                bing.get_bing_commute_time(house_coords, work_coords)
             )
         except BadResponse as e:
             logger.info(f'Could not retrieve Bing commute time for {home.full_address}.\n{e}')
@@ -70,20 +71,16 @@ def add_bing_commute(home, force=False):
             home.update(bing_commute_items)
 
 
-def add_nearest_metro(home, force=False):
+def add_nearest_metro(home):
     """Add the three nearest metro stations in distance order.
     """
-    # Check for existing value
-    station_list = home.setdefault('Nearby Metro', None)
-    if (station_list is None) or force:
-        house_coords = tuple(home['geocoords'].values())
-        try:
-            station_list = bing.find_nearest_metro(house_coords)
-        except BadResponse as e:
-            print(e)
-            station_list = None
-        finally:
-            return station_list
+    house_coords = tuple(home['geocoords'].values())
+    try:
+        station_list = bing.find_nearest_metro(house_coords)
+    except BadResponse as e:
+        print(e)
+    else:
+        home['nearby_metro'] = station_list
 
 
 def add_frequent_driving(home, favorites_dic):

@@ -23,7 +23,7 @@ import logging
 from datetime import datetime
 
 import deathpledge
-from deathpledge.api_calls import keys
+from deathpledge import keys
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ def push_one_to_db(doc, db_name):
 
     """
     # Establish connection to service instance
-    with cloudant_iam(keys.db_creds['username'], keys.db_creds['apikey']) as client:
+    with cloudant_iam(keys['Cloudant_creds']['username'], keys['Cloudant_creds']['apikey']) as client:
         # Access the database
         try:
             db = client[db_name]
@@ -155,7 +155,7 @@ def bulk_upload(doclist, db_name):
         return
 
     # Retrieve the revision IDs for existing docs so they can be updated
-    with cloudant_iam(keys.db_creds['username'], keys.db_creds['apikey']) as client:
+    with cloudant_iam(keys['Cloudant_creds']['username'], keys['Cloudant_creds']['apikey']) as client:
         try:
             db = client[db_name]
             print(f"\nConnected to database '{db_name}'")
@@ -224,14 +224,14 @@ def replace_or_create(local_doc, db):
 
 def check_for_doc(db_name, doc_id):
     """Boolean check for existing doc."""
-    with cloudant_iam(keys.db_creds['username'], keys.db_creds['apikey']) as client:
+    with cloudant_iam(keys['Cloudant_creds']['username'], keys['Cloudant_creds']['apikey']) as client:
         doc_exists = doc_id in client[db_name]
     return doc_exists
 
 
 def is_closed(db_name, doc_id):
     """Boolean check for whether listing is already sold."""
-    with cloudant_iam(keys.db_creds['username'], keys.db_creds['apikey']) as client:
+    with cloudant_iam(keys['Cloudant_creds']['username'], keys['Cloudant_creds']['apikey']) as client:
         db = client[db_name]
         if doc_id in db:
             doc = db[doc_id]
@@ -242,7 +242,7 @@ def is_closed(db_name, doc_id):
 
 def get_single_doc(db_name, doc_id):
     """Fetch a doc from the database."""
-    with cloudant_iam(keys.db_creds['username'], keys.db_creds['apikey']) as client:
+    with cloudant_iam(keys['Cloudant_creds']['username'], keys['Cloudant_creds']['apikey']) as client:
         # Access the database
         try:
             db = client[db_name]
@@ -266,7 +266,7 @@ def get_multiple_docs(doc_ids, db_name=deathpledge.RAW_DATABASE_NAME):
 
     Returns: list
     """
-    with cloudant_iam(keys.db_creds['username'], keys.db_creds['apikey']) as client:
+    with cloudant_iam(keys['Cloudant_creds']['username'], keys['Cloudant_creds']['apikey']) as client:
         db = client[db_name]
         result = db.all_docs(keys=doc_ids, include_docs=True)
     return result['rows']
@@ -274,7 +274,7 @@ def get_multiple_docs(doc_ids, db_name=deathpledge.RAW_DATABASE_NAME):
 
 def get_url_list():
     """Get all docs from URL view, for filling in Google sheet."""
-    with cloudant_iam(keys.db_creds['username'], keys.db_creds['apikey']) as client:
+    with cloudant_iam(keys['Cloudant_creds']['username'], keys['Cloudant_creds']['apikey']) as client:
         db = client[deathpledge.DATABASE_NAME]
         ddoc_id = '_design/simpleViews'
         view_name = 'urlList'

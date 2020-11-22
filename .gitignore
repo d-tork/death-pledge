@@ -23,9 +23,8 @@ token.pickle
 keys.py
 deathpledge/token.pickle
 deathpledge/api_calls/token.pickle
-deathpledge/api_calls/google_credentials.json
 *.log
-deathpledge/api_calls/*.yaml
+**/keys*.yaml
 
 # Mac Desktop Services file (folder display options)
 .DS_Store

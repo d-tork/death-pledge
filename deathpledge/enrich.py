@@ -19,8 +19,8 @@ TODO: add these calculations
 from datetime import datetime as dt
 import logging
 
-from deathpledge import support, cleaning
-from deathpledge.api_calls import bing, keys
+from deathpledge import support, cleaning, keys
+from deathpledge.api_calls import bing
 from deathpledge.support import BadResponse
 
 logger = logging.getLogger(__name__)
@@ -57,7 +57,9 @@ def add_bing_commute(home, force=False):
         # If not force, and if all values exist, then end function
         house_coords = tuple(home['geocoords'].values())
         try:
-            commute, walk_time, leg_type = bing.get_bing_commute_time(house_coords, keys.work_coords)
+            commute, walk_time, leg_type = (
+                bing.get_bing_commute_time(house_coords, keys['Locations']['work_coords'])
+            )
         except BadResponse as e:
             logger.info(f'Could not retrieve Bing commute time for {home.full_address}.\n{e}')
             commute, walk_time, leg_type = '', '', ''
@@ -118,7 +120,7 @@ def travel_quick_stats(dic):
 def add_tether(home):
     """Add straight-line distance to centerpoint (Arlington Cememtery)."""
     house_coords = tuple(home['geocoords'].values())
-    center = keys.centerpoint
+    center = tuple(keys['Locations']['centerpoint'].values())
     try:
         dist = support.haversine(house_coords, center)
     except TypeError:

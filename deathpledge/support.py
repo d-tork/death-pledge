@@ -4,7 +4,6 @@ import requests
 from math import radians, cos, sin, asin, sqrt
 import datetime
 from datetime import datetime as dt
-import time
 from fake_useragent import UserAgent
 from django.utils.text import slugify
 from hashlib import sha1

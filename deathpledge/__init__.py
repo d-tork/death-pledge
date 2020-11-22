@@ -1,5 +1,6 @@
 from os import path, makedirs
 from sys import platform
+import yaml
 
 PROJ_PATH = path.normpath(path.join(path.dirname(path.realpath(__file__)), '..'))
 LISTINGS_DIR = path.join(PROJ_PATH, 'data', 'Processed', 'saved_listings')
@@ -16,3 +17,11 @@ else:
 
 makedirs(LISTINGS_DIR, exist_ok=True)
 
+
+def read_keys_file():
+    keys_path = path.join(PROJ_PATH, 'config', 'keys.yaml')
+    with open(keys_path, 'r') as f:
+        return yaml.safe_load(f)
+
+
+keys = read_keys_file()

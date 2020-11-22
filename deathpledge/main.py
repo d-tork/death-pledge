@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 def parse_commandline_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-n', '--number', default=None, type=int, dest='last_n')
+    parser.add_argument('last_n', default=None, type=int)
     return parser.parse_args()
 
 

@@ -143,7 +143,7 @@ def find_nearest_metro(startcoords):
         raise support.BadResponse('Response code for metro stations not 200.')
 
     r_dict = response.json()
-    metro_list = []
+    metro_stations = {}
     for result in r_dict['resourceSets'][0]['resources']:
         name = result['name']
         if (len(name) < 6) | (name == 'Metro Rail'):
@@ -153,11 +153,11 @@ def find_nearest_metro(startcoords):
             name = web[url_last_slash + 1:url_page_extension]
         coords = result['point']['coordinates']
         walk_info = get_walking_info(startcoords, coords)
-        metro_list.append(
+        metro_stations.update(
             {'{}'.format(name.upper()): walk_info}
         )
     sorted_metro_list = sorted(
-        metro_list.items(), key=lambda x: x[1].get('walk_dist')
+        metro_stations.items(), key=lambda x: x[1].get('walk_distance_miles')
     )
     return dict(sorted_metro_list)
 

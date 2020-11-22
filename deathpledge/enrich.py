@@ -70,20 +70,16 @@ def add_bing_commute(home, force=False):
             home.update(bing_commute_items)
 
 
-def add_nearest_metro(home, force=False):
+def add_nearest_metro(home):
     """Add the three nearest metro stations in distance order.
     """
-    # Check for existing value
-    station_list = home.setdefault('Nearby Metro', None)
-    if (station_list is None) or force:
-        house_coords = tuple(home['geocoords'].values())
-        try:
-            station_list = bing.find_nearest_metro(house_coords)
-        except BadResponse as e:
-            print(e)
-            station_list = None
-        finally:
-            return station_list
+    house_coords = tuple(home['geocoords'].values())
+    try:
+        station_list = bing.find_nearest_metro(house_coords)
+    except BadResponse as e:
+        print(e)
+    else:
+        home['nearby_metro'] = station_list
 
 
 def add_frequent_driving(home, favorites_dic):

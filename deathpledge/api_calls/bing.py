@@ -153,8 +153,13 @@ def find_nearest_metro(startcoords):
             name = web[url_last_slash + 1:url_page_extension]
         coords = result['point']['coordinates']
         walk_info = get_walking_info(startcoords, coords)
-        metro_list.append((name.upper(),  walk_info))
-    return sorted(metro_list, key=lambda x: x[1][0])
+        metro_list.append(
+            {'{}'.format(name.upper()): walk_info}
+        )
+    sorted_metro_list = sorted(
+        metro_list.items(), key=lambda x: x[1].get('walk_dist')
+    )
+    return dict(sorted_metro_list)
 
 
 def get_driving_info(startcoords, endcoords, dayofweek=None, hrmin=None):

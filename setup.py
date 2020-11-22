@@ -7,8 +7,7 @@ setup(
     packages=find_packages(include=['deathpledge', 'deathpledge.*']),
     entry_points={
         'console_scripts': [
-            'main=deathpledge.main:main',
-            'single=deathpledge.sample:main'
+            'deathpledge=deathpledge.main:main'
         ]
     },
     install_requires=[

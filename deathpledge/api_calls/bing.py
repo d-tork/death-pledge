@@ -110,10 +110,12 @@ def get_walking_info(startcoords, endcoords):
 
     distance = r_dict['resourceSets'][0]['resources'][0]['travelDistance']
     duration = r_dict['resourceSets'][0]['resources'][0]['travelDuration']
-    # pretty print
-    distance = '{:.2} miles'.format(distance)
-    duration = '{} walking'.format(str(dt.timedelta(seconds=duration)))
-    return distance, duration
+
+    walk_info = {
+        'walk_distance_miles': round(distance, 2),
+        'walk_time': '{}'.format(str(dt.timedelta(seconds=duration)))
+    }
+    return walk_info
 
 
 def find_nearest_metro(startcoords):

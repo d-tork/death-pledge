@@ -1,8 +1,6 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='deathpledge',
-    version='20.1',
     name='death-pledge',
     version='2020.11.22',
     author='Daniel Torkelson',

@@ -24,6 +24,7 @@ setup(
         'PyYAML',
         'scipy',
         'selenium',
-        'usaddress'
+        'usaddress',
+        'wheel'
         ]
 )

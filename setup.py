@@ -21,6 +21,7 @@ setup(
         'google-auth-oauthlib',
         'pandas',
         'PyYAML',
+        'scipy',
         'selenium',
         'usaddress'
         ]

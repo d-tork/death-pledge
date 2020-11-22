@@ -9,6 +9,7 @@ import pytz
 
 import deathpledge
 from deathpledge import scrape2, database, support, cleaning, enrich
+from deathpledge.api_calls import keys
 
 logger = logging.getLogger(__name__)
 
@@ -155,6 +156,9 @@ class Home(dict):
         """Add additional values from external sources."""
         enrich.add_coords(self, force=True)
         enrich.add_bing_commute(self)
+        enrich.add_nearest_metro(self)
+        enrich.add_frequent_driving(self, keys.favorites_driving)
+        enrich.add_tether(self)
 
     def get_geocoords(self):
         try:

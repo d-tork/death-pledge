@@ -55,8 +55,7 @@ def add_bing_commute(home, force=False):
     if (not all([v for k, v in bing_commute_items.items()])) | force:
         # At least one of them is empty or force=True, Bing API call is necessary
         # If not force, and if all values exist, then end function
-        house_coords = home.get_geocoords()
-        house_coords = (house_coords['lat'], house_coords['lon'])
+        house_coords = tuple(home['geocoords'].values())
         try:
             commute, walk_time, leg_type = bing.get_bing_commute_time(house_coords, keys.work_coords)
         except BadResponse as e:
@@ -69,14 +68,13 @@ def add_bing_commute(home, force=False):
             home.update(bing_commute_items)
 
 
-def add_nearest_metro(dic, force=False):
+def add_nearest_metro(home, force=False):
     """Add the three nearest metro stations in distance order.
-    TODO: refactor
     """
     # Check for existing value
-    station_list = dic['local travel'].setdefault('Nearby Metro', None)
+    station_list = home.setdefault('Nearby Metro', None)
     if (station_list is None) or force:
-        house_coords = tuple(dic['main']['geocoords'].values())
+        house_coords = tuple(home['geocoords'].values())
         try:
             station_list = bing.find_nearest_metro(house_coords)
         except BadResponse as e:
@@ -86,24 +84,22 @@ def add_nearest_metro(dic, force=False):
             return station_list
 
 
-def add_frequent_driving(dic, favorites_dic, force=False):
+def add_frequent_driving(home, favorites_dic):
     """Add the road distance and drive time to frequented places by car.
     TODO: refactor
     """
-    house_coords = tuple(dic['main']['geocoords'].values())
+    house_coords = tuple(home['geocoords'].values())
     for place, attribs in favorites_dic.items():
-        # Check for existing value
-        place_coords = dic['local travel'].setdefault(place, None)
-        if (place_coords is None) or force:
-            place_coords = bing.get_coords(attribs['addr'])
-            day = attribs.get('day', None)
-            starttime = attribs.get('time', None)
-            try:
-                distance, duration = bing.get_driving_info(house_coords, place_coords, day, starttime)
-            except BadResponse:
-                distance, duration = None, None
-            finally:
-                return distance, duration
+        place_coords = tuple(bing.get_coords(attribs['addr']).values())
+        day = attribs.get('day', None)
+        starttime = attribs.get('time', None)
+        try:
+            distance, duration = bing.get_driving_info(house_coords, place_coords, day, starttime)
+        except BadResponse:
+            continue
+        else:
+            home[f'{place}_dist'] = distance
+            home[f'{place}_time'] = duration
 
 
 def travel_quick_stats(dic):
@@ -119,15 +115,15 @@ def travel_quick_stats(dic):
     return round(metro_mins, 1), round(commute_mins, 1)
 
 
-def add_tether(dic):
+def add_tether(home):
     """Add straight-line distance to centerpoint (Arlington Cememtery)."""
-    house_coords = dic['_metadata'].get('geocoords')
+    house_coords = tuple(home['geocoords'].values())
     center = keys.centerpoint
     try:
         dist = support.haversine(house_coords, center)
     except TypeError:
         print('\tDistance from center not added; missing house coords.')
-    return round(dist, 2)
+    home['tether'] = round(dist, 2)
 
 
 def update_days_on_market(dic):

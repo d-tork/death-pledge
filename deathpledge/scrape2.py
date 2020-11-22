@@ -6,12 +6,10 @@ details in a dictionary, then write that dictionary to a JSON file
 exists).
 
 """
-from os import path
-import gc
 from datetime import datetime
 from time import sleep
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException, WebDriverException
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver import firefox
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -24,8 +22,7 @@ import subprocess
 from itertools import zip_longest
 
 import deathpledge
-from deathpledge import support, classes, database
-from deathpledge.api_calls import keys
+from deathpledge import support, classes, database, keys
 
 logger = logging.getLogger(__name__)
 
@@ -101,12 +98,11 @@ class WebDataSource(object):
     """Website for scraping and related configuration.
 
     Args:
-        config_file: location of YAML file for url(s) and credentials.
         webdriver: Selenium WebDriver for navigating in a browser.
 
     """
-    def __init__(self, config_file, webdriver):
-        self._config = support.read_yaml_into_dict(config_file)
+    def __init__(self, webdriver):
+        self._config = keys['Realscout']
         self.webdriver = webdriver
 
     def get_soup_for_url(self):
@@ -114,10 +110,9 @@ class WebDataSource(object):
 
 
 class RealScoutWebsite(WebDataSource):
-    config_file = path.join(deathpledge.PROJ_PATH, 'deathpledge', 'api_calls', 'realscout.yaml')
 
     def __init__(self, *args, **kwargs):
-        super().__init__(self.config_file, *args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def sign_into_website(self):
         """Open website and login to access restricted listings."""

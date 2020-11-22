@@ -5,11 +5,10 @@ from os import path
 import json
 import warnings
 import logging
-import pytz
 
 import deathpledge
 from deathpledge import scrape2, database, support, cleaning, enrich
-from deathpledge.api_calls import keys
+from deathpledge import keys
 
 logger = logging.getLogger(__name__)
 
@@ -157,7 +156,7 @@ class Home(dict):
         enrich.add_coords(self, force=True)
         enrich.add_bing_commute(self)
         enrich.add_nearest_metro(self)
-        enrich.add_frequent_driving(self, keys.favorites_driving)
+        enrich.add_frequent_driving(self, keys['Locations']['favorite_driving'])
         enrich.add_tether(self)
 
     def get_geocoords(self):

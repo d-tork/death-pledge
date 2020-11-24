@@ -78,3 +78,6 @@ see [Cloudant docs](cloudant.md)
 
 ### Python
 * [The pythonic way to inherit a context manager](https://stackoverflow.com/questions/31189526/what-is-the-pythonic-way-to-inherit-context-manager)
+
+### Selenium
+* [WebDriver API](https://selenium-python.readthedocs.io/api.html)

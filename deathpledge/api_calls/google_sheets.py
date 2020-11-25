@@ -6,8 +6,7 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
-import deathpledge
-from deathpledge import support, database
+from deathpledge import database
 
 # Get this file's path
 DIRPATH = os.path.dirname(os.path.realpath(__file__))
@@ -134,7 +133,7 @@ def get_google_sheets_rows(google_creds):
 
 
 def get_google_sheets_api_response(google_creds):
-    service = build('sheets', 'v4', credentials=google_creds)
+    service = build('sheets', 'v4', credentials=google_creds, cache_discovery=False)
     sheet_obj = service.spreadsheets()
     request = sheet_obj.values().get(spreadsheetId=SPREADSHEET_DICT['spreadsheetId'],
                                      range=SPREADSHEET_DICT['url_range'])
@@ -160,7 +159,7 @@ def refresh_url_sheet(google_creds):
     url_list = prep_dataframe_to_update_google(url_df)
 
     # Send to google
-    service = build('sheets', 'v4', credentials=google_creds)
+    service = build('sheets', 'v4', credentials=google_creds, cache_discovery=False)
     url_obj = dict(
         range=SPREADSHEET_DICT['url_range'],
         majorDimension='ROWS',

@@ -1,0 +1,36 @@
+---
+version: 1
+disable_existing_loggers: False
+
+formatters:
+  simple:
+    format: '%(name)s - %(levelname)-8s - %(message)s'
+  extended:
+    format: '%(asctime)s %(levelname)-8s %(name)s(%(funcName)s:%(lineno)d) - %(message)s'
+    datefmt: '%Y-%m-%d %H:%M:%S'
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: WARNING
+    formatter: simple
+    stream: ext://sys.stdout
+
+  dp_info_file:
+    () : __main__.dp_infologger
+    level: INFO
+    formatter: extended
+
+  dp_debug_file:
+    () : __main__.dp_debugger
+    level: DEBUG
+    formatter: extended
+
+loggers:
+  deathpledge:
+    level: DEBUG
+    handlers: [dp_info_file, dp_debug_file]
+
+root:
+  level: NOTSET
+  handlers: [console]

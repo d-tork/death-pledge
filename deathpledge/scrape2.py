@@ -47,9 +47,11 @@ class HomesWithRawData(list):
                 self.append(classes.Home(**row._asdict()))
 
     def _empty_home_should_be_created(self, row):
-        if row.docid is None:
-            return True
-        elif row.docid not in [x.docid for x in self if x.docid is not None]:
+        home_has_no_docid = row.docid is None
+        home_is_not_duplicate = (
+                row.docid not in [x.docid for x in self if x.docid is not None]
+        )
+        if home_has_no_docid and home_is_not_duplicate:
             return True
         else:
             return False

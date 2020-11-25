@@ -76,7 +76,7 @@ class SeleniumDriver(object):
 
     def __exit__(self, type, value, traceback):
         try:
-            self.webdriver.__exit(self, type, value, traceback)
+            self.webdriver.__exit__(self, type, value, traceback)
         except Exception as e:
             logger.exception('Webdriver failed to exit.')
 

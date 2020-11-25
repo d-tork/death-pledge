@@ -10,8 +10,6 @@ import deathpledge
 from deathpledge import scrape2, database, support, cleaning, enrich
 from deathpledge import keys
 
-logger = logging.getLogger(__name__)
-
 
 class Home(dict):
     """Container for a property's attributes.
@@ -54,6 +52,7 @@ class Home(dict):
     doctype = 'home'
 
     def __init__(self, full_address=None, url=None, added_date=None, docid=None, **kwargs):
+        self.logger = logging.getLogger(f'{__name__}.{type(self).__name__}')
         super().__init__()
         self.docid = docid
         # If address is given to instance, make sure it's cleaned
@@ -115,7 +114,7 @@ class Home(dict):
         try:
             existing_doc = database.get_single_doc(deathpledge.RAW_DATABASE_NAME, self.docid)
         except KeyError:
-            logger.info('Document was not fetched.')
+            self.logger.info('Document was not fetched.')
             return
         self.update(existing_doc)
 
@@ -124,7 +123,7 @@ class Home(dict):
         try:
             soup = website_object.get_soup_for_url(self.url)
         except Exception as e:
-            logger.exception(f'Failed to get soup for {self.url}')
+            self.logger.exception(f'Failed to get soup for {self.url}')
             return
         listing_data = scrape2.scrape_soup(self, soup)
         self.update(listing_data)
@@ -148,7 +147,7 @@ class Home(dict):
             try:
                 fn(self)
             except (AttributeError, ValueError) as e:
-                logger.exception(f'Cleaning step failed: {e}')
+                self.logger.exception(f'Cleaning step failed: {e}')
                 continue
 
     def enrich(self):
@@ -180,8 +179,8 @@ class Home(dict):
             self.resolve_address_and_id()
         except KeyError:
             print("Could not resolve address and doc id.",
-                  "Are you sure you've scraped the listing?",
-                  "\n\tSaving to disk.")
+                  "Are you sure you've scraped the listing?"
+                  )
             self.update(vars(self))
             outfilename = f'Unknown_home-{datetime.now().strftime("%Y_%m_%d-%H_%M_%S")}.json'
             self.save_local(filename=outfilename)
@@ -190,7 +189,7 @@ class Home(dict):
         try:
             database.push_one_to_db(self, db_name=db_name)
         except Exception as e:
-            print(f'Upload failed, saving to disk.\n\t{e}')
+            self.logger.error('Upload failed, saving to disk.', exc_info=True)
             self.save_local()
         return
 

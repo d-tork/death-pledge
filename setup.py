@@ -5,11 +5,6 @@ setup(
     version='2020.11.22',
     author='Daniel Torkelson',
     packages=find_packages(include=['deathpledge', 'deathpledge.*']),
-    entry_points={
-        'console_scripts': [
-            'deathpledge=deathpledge.main:main'
-        ]
-    },
     install_requires=[
         'beautifulsoup4',
         'cloudant',

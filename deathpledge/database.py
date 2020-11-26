@@ -23,21 +23,11 @@ from deathpledge import keys
 logger = logging.getLogger(__name__)
 
 
-class FailedUpload(Exception):
-    """For a bad HTTP response code, but nothing wrong with the module."""
-    pass
-
-
 def push_one_to_db(doc, db_name):
     """Upload single doc to database.
 
-    If doc id is already in database, compares the contents of the home
-    dictionary to the remote copy (excluding the scrape_data sub-dict,
-    since the scraped date is guaranteed to be different).
-
-    If there are no differences, it skips the upload. If there are any
-    differences, the _rev gets added so that the database will accept the
-    updated document and increment the revision.
+    If doc id is already in database, get current _rev and add to doc so that the
+    database will accept the updated document and increment the revision.
 
     Args:
         doc (Home): Home instance to be uploaded.
@@ -46,35 +36,34 @@ def push_one_to_db(doc, db_name):
     Returns: HTTP response
 
     """
-    # Establish connection to service instance
     with cloudant_iam(keys['Cloudant_creds']['username'], keys['Cloudant_creds']['apikey']) as client:
         try:
             db = client[db_name]
-            print(f"\nConnected to database '{db_name}'")
+            logger.info(f"Connected to database '{db_name}'")
         except KeyError:
-            db = client.create_database(db_name, partitioned=False)
-            if db.exists():
-                print(f"'{db_name}' successfully created.\n")
+            logger.error(f"Database '{db_name}' does not exist!")
+            raise
 
         # Create or update the document
-        end_point = f'{client.server_url}/{db_name}/{doc.docid}'
+        get_rev_id_for_doc(local_doc=doc, db=db)
+
+        end_point = f'{client.server_url}/{db_name}/{doc.docid}'  # TODO: why this API?
         r = client.r_session.put(url=end_point, json=doc)
         if r.status_code not in [200, 201]:
             logger.error(f'Document creation failed. Response: {r}: {r.text}')
-            raise FailedUpload(f'Document creation failed with code {r.status_code}')
     sleep(1)
     return
 
 
 def get_rev_id_for_doc(local_doc, db):
-    """Checks if doc is in db and gets rev id if it is."""
+    """Checks if doc is in db and gets rev id."""
     try:
         remote_doc = db[local_doc.docid]
-        local_doc['_rev'] = remote_doc['_rev']
     except KeyError:
         logger.info(f'No document in database for {local_doc.full_address}')
     else:
         logger.info(f'Document for {local_doc.full_address} exists, updating with new revision')
+        local_doc['_rev'] = remote_doc['_rev']
     finally:
         return local_doc
 
@@ -108,9 +97,9 @@ def get_single_doc(db_name, doc_id):
 
         try:
             doc = db[doc_id]
-            logger.info(f'Fetched document {doc_id}')
+            logger.info(f'Fetched document {doc_id} from {db_name}')
         except KeyError:
-            logger.exception(f'Could not find doc_id {doc_id}')
+            logger.exception(f'Could not find doc_id {doc_id} in {db_name}')
     return doc
 
 

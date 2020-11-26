@@ -47,7 +47,7 @@ def push_one_to_db(doc, db_name):
         # Create or update the document
         get_rev_id_for_doc(local_doc=doc, db=db)
 
-        end_point = f'{client.server_url}/{db_name}/{doc.docid}'  # TODO: why this API?
+        end_point = f'{client.server_url}/{db_name}/{doc.docid}'
         r = client.r_session.put(url=end_point, json=doc)
         if r.status_code not in [200, 201]:
             logger.error(f'Document creation failed. Response: {r}: {r.text}')

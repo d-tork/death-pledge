@@ -118,8 +118,6 @@ class Home(dict):
         cleaning_funcs = [
             cleaning.split_comma_delimited_fields,
             cleaning.convert_numbers,
-            # cleaning.convert_dates,
-            cleaning.remove_dupe_fields,
             cleaning.parse_address,
         ]
         for fn in cleaning_funcs:

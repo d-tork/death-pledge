@@ -1,6 +1,5 @@
 """Clean a dictionary of listing details."""
 
-from datetime import datetime
 import logging
 import usaddress
 from collections import defaultdict
@@ -84,25 +83,6 @@ def convert_numbers(home):
             except (KeyError, AttributeError) as e:
                 continue
             home[field] = parse_number(val)
-
-
-def convert_dates(home):
-    def parse_date(s):
-        return str(datetime.strptime(s, '%m/%d/%Y'))
-
-    date_list = [
-        ('listing', 'sold')
-    ]
-    for key_tuple in date_list:
-        subdict, field = key_tuple
-        try:
-            val = home[field]
-        except KeyError as e:
-            continue
-        try:
-            home[field] = parse_date(val)
-        except AttributeError:  # likely already a date object
-            continue
 
 
 def remove_dupe_fields(home):

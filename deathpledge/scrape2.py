@@ -344,6 +344,6 @@ def scrape_soup(house, soup):
 
 
 def skip_web_scrape_if_closed(home):
-    if home['status'] == 'Closed':
+    if home.get('status') == 'Closed':
         home.skip_web_scrape = True
 

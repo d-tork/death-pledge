@@ -1,12 +1,15 @@
 import pickle
 import os.path
 import os
+import logging
 import pandas as pd
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
 from deathpledge import database
+
+logger = logging.getLogger(__name__)
 
 # Get this file's path
 DIRPATH = os.path.dirname(os.path.realpath(__file__))
@@ -120,12 +123,11 @@ def get_url_dataframe(google_creds, **kwargs):
         pd.DataFrame.from_records(data=google_sheets_rows),
         **kwargs
     )
-
     return google_df
 
 
 def get_google_sheets_rows(google_creds):
-    print('Getting data from Google sheets...')
+    logger.info('Getting data from Google sheets')
     response = get_google_sheets_api_response(google_creds)
     rows = get_values_from_google_sheets_response(response)
     print('\tdone')

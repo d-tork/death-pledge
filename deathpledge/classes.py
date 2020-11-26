@@ -3,14 +3,11 @@
 from datetime import datetime
 from os import path
 import json
-import warnings
 import logging
 
 import deathpledge
 from deathpledge import scrape2, database, support, cleaning, enrich
 from deathpledge import keys
-
-logger = logging.getLogger(__name__)
 
 
 class Home(dict):
@@ -53,82 +50,63 @@ class Home(dict):
     """
     doctype = 'home'
 
-    def __init__(self, full_address=None, url=None, added_date=None, docid=None, **kwargs):
+    def __init__(self, url=None, added_date=None, docid=None, **kwargs):
+        self.logger = logging.getLogger(f'{__name__}.{type(self).__name__}')
         super().__init__()
         self.docid = docid
-        # If address is given to instance, make sure it's cleaned
-        if full_address:
-            self.full_address = support.clean_address(full_address)
-            if not self.docid:
-                # If docid not given, generate it now
-                self.docid = support.create_house_id(self.full_address)
-        else:
-            self.full_address = None
-
         self.url = url
+        self.added_date = self._set_added_date(added_date)
 
-        # Add type to dictionary
-        self['doctype'] = self.doctype
-        # Whether to skip the web scraping
-        self.skip_web_scrape = False
-
-        # Format date properly; if not passed or fetched, set it to today
-        if added_date:
-            self.added_date = support.coerce_date_string_to_date(added_date)
+        if self.docid is None:
+            self.skip_web_scrape = False
+            # Add type to dictionary for database record
+            self['doctype'] = self.doctype
         else:
-            self.added_date = datetime.now()
+            self.skip_web_scrape = True
 
     def __str__(self):
         return json.dumps(self, indent=2)
 
-    def resolve_address_and_id(self):
-        """Update address and ID as instance attributes.
+    @staticmethod
+    def _set_added_date(passed_date):
+        """Format date properly; if not passed or fetched, set it to today"""
+        if passed_date:
+            added_date = support.coerce_date_string_to_date(passed_date)
+        else:
+            added_date = datetime.now()
+        return added_date
 
-        Checks if given address (at instance creation) matches what was
-        scraped from the URL (if given). Also creates a unique ID for
-        the address.
-        """
+    def create_docid_from_address(self):
+        """Generate docid from hash of address"""
         scraped_address = support.clean_address(self['full_address'])
         scraped_addr_id = support.create_house_id(scraped_address)
-        if self.docid:
-            # address was provided to instance
-            addr_ids_match = self.docid == scraped_addr_id
-            if addr_ids_match:
-                pass  # great!
-            else:
-                warnings.warn('address of Home instance does not match \
-                address from scraped URL. Keeping docid from instantiation.')
-        else:
-            # instance does not have addr or ID, fill them from scraped data
-            self.full_address = scraped_address
-            self.docid = scraped_addr_id
-        self['_id'] = self.docid
+        self.docid = self['_id'] = scraped_addr_id
 
     def in_db(self):
         """Check if home in database."""
         return database.check_for_doc(deathpledge.DATABASE_NAME, self.docid)
 
-    def fetch(self):
+    def fetch(self, db_name):
         """Retrieve existing data from database."""
-        if not self.docid:
-            self.resolve_address_and_id()
-        try:
-            existing_doc = database.get_single_doc(deathpledge.RAW_DATABASE_NAME, self.docid)
-        except KeyError:
-            logger.info('Document was not fetched.')
-            return
-        self.update(existing_doc)
+        if self.docid:
+            try:
+                existing_doc = database.get_single_doc(db_name=db_name, doc_id=self.docid)
+            except KeyError:
+                self.logger.info('Document was not fetched.')
+            else:
+                self.update(existing_doc)
+        return
 
     def scrape(self, website_object):
         """Fetch listing data from RealScout."""
         try:
             soup = website_object.get_soup_for_url(self.url)
         except Exception as e:
-            logger.exception(f'Failed to get soup for {self.url}')
+            self.logger.exception(f'Failed to get soup for {self.url}: {e}')
             return
         listing_data = scrape2.scrape_soup(self, soup)
         self.update(listing_data)
-        self.resolve_address_and_id()
+        self.create_docid_from_address()
 
     def clean(self):
         """Parse and clean all string values meant to be numeric.
@@ -140,15 +118,13 @@ class Home(dict):
         cleaning_funcs = [
             cleaning.split_comma_delimited_fields,
             cleaning.convert_numbers,
-            # cleaning.convert_dates,
-            cleaning.remove_dupe_fields,
             cleaning.parse_address,
         ]
         for fn in cleaning_funcs:
             try:
                 fn(self)
             except (AttributeError, ValueError) as e:
-                logger.exception(f'Cleaning step failed: {e}')
+                self.logger.exception(f'Cleaning step failed: {e}')
                 continue
 
     def enrich(self):
@@ -169,7 +145,7 @@ class Home(dict):
 
     def save_local(self, filename=None):
         if not filename:
-            filename = support.create_filename_from_addr(self.full_address)
+            filename = support.create_filename_from_addr(self['full_address'])
         outfilepath = path.join(deathpledge.LISTINGS_DIR, filename)
         with open(outfilepath, 'w') as f:
             f.write(json.dumps(self, indent=4))
@@ -177,20 +153,9 @@ class Home(dict):
     def upload(self, db_name):
         """Send JSON to database."""
         try:
-            self.resolve_address_and_id()
-        except KeyError:
-            print("Could not resolve address and doc id.",
-                  "Are you sure you've scraped the listing?",
-                  "\n\tSaving to disk.")
-            self.update(vars(self))
-            outfilename = f'Unknown_home-{datetime.now().strftime("%Y_%m_%d-%H_%M_%S")}.json'
-            self.save_local(filename=outfilename)
-            return
-        self['_id'] = self.docid
-        try:
             database.push_one_to_db(self, db_name=db_name)
         except Exception as e:
-            print(f'Upload failed, saving to disk.\n\t{e}')
+            self.logger.error('Upload failed, saving to disk.', exc_info=True)
             self.save_local()
         return
 

@@ -12,7 +12,7 @@ formatters:
 handlers:
   console:
     class: logging.StreamHandler
-    level: WARNING
+    level: INFO
     formatter: simple
     stream: ext://sys.stdout
 
@@ -29,7 +29,10 @@ handlers:
 loggers:
   deathpledge:
     level: DEBUG
-    handlers: [dp_info_file, dp_debug_file]
+    handlers: [dp_info_file, dp_debug_file, console]
+  deathpledge.database:
+    level: INFO
+    handlers: [console]
 
 root:
   level: NOTSET

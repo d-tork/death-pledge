@@ -6,7 +6,7 @@ import deathpledge
 from deathpledge.logs.log_setup import setup_logging
 from deathpledge.logs import *
 from deathpledge.api_calls import google_sheets as gs
-from deathpledge import scrape2, support, database
+from deathpledge import classes, scrape2, support, database
 
 
 def parse_commandline_arguments():
@@ -20,16 +20,19 @@ def main():
     logging_config = path.join(deathpledge.PROJ_PATH, 'config', 'logging.yaml')
     setup_logging(config_path=logging_config)
 
-    google_creds = gs.get_creds()
     args = parse_commandline_arguments()
+    google_creds = gs.get_creds()
     urls = gs.get_url_dataframe(google_creds, last_n=args.last_n)
-    house_list = scrape2.scrape_from_url_df(urls, force_all=False, quiet=True)
-    database.bulk_upload(house_list, deathpledge.RAW_DATABASE_NAME)
-    for house in house_list:
-        house.clean()
-        house.enrich()
-    database.bulk_upload(house_list, deathpledge.DATABASE_NAME)
+    scrape2.scrape_from_url_df(urls, force_all=False, quiet=True)
     gs.refresh_url_sheet(google_creds)
+
+    new_urls = gs.get_url_dataframe(google_creds, last_n=args.last_n)
+    for row in new_urls.itertuples():
+        home = classes.Home(**row._asdict())
+        home.fetch(db_name=deathpledge.RAW_DATABASE_NAME)
+        home.clean()
+        home.enrich()
+        home.upload(db_name=deathpledge.DATABASE_NAME)
 
 
 if __name__ == '__main__':

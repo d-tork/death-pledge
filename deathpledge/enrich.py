@@ -34,7 +34,7 @@ def add_coords(home, force=False):
         # Grab coordinates from Bing
         try:
             coords = bing.get_coords(
-                home.full_address,
+                home['full_address'],
                 zip_code=home['parsed_address'].get('ZipCode')
             )
         except BadResponse as e:

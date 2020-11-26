@@ -79,28 +79,11 @@ class Home(dict):
             added_date = datetime.now()
         return added_date
 
-    def resolve_address_and_id(self):
-        """Update address and ID as instance attributes.
-
-        Checks if given address (at instance creation) matches what was
-        scraped from the URL (if given). Also creates a unique ID for
-        the address.
-        """
+    def create_docid_from_address(self):
+        """Generate docid from hash of address"""
         scraped_address = support.clean_address(self['full_address'])
         scraped_addr_id = support.create_house_id(scraped_address)
-        if self.docid:
-            # address was provided to instance
-            addr_ids_match = self.docid == scraped_addr_id
-            if addr_ids_match:
-                pass  # great!
-            else:
-                warnings.warn('address of Home instance does not match \
-                address from scraped URL. Keeping docid from instantiation.')
-        else:
-            # instance does not have addr or ID, fill them from scraped data
-            self.full_address = scraped_address
-            self.docid = scraped_addr_id
-        self['_id'] = self.docid
+        self.docid = self['_id'] = scraped_addr_id
 
     def in_db(self):
         """Check if home in database."""
@@ -126,7 +109,7 @@ class Home(dict):
             return
         listing_data = scrape2.scrape_soup(self, soup)
         self.update(listing_data)
-        self.resolve_address_and_id()
+        self.create_docid_from_address()
 
     def clean(self):
         """Parse and clean all string values meant to be numeric.
@@ -174,17 +157,6 @@ class Home(dict):
 
     def upload(self, db_name):
         """Send JSON to database."""
-        try:
-            self.resolve_address_and_id()
-        except KeyError:
-            print("Could not resolve address and doc id.",
-                  "Are you sure you've scraped the listing?"
-                  )
-            self.update(vars(self))
-            outfilename = f'Unknown_home-{datetime.now().strftime("%Y_%m_%d-%H_%M_%S")}.json'
-            self.save_local(filename=outfilename)
-            return
-        self['_id'] = self.docid
         try:
             database.push_one_to_db(self, db_name=db_name)
         except Exception as e:

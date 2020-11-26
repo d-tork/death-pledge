@@ -91,7 +91,7 @@ def recalculate_scores():
     # Run the scraper
     # Recalculate using functions from some other module
     # Store the results in a table, but without overwriting. I.e., timestamp
-    #   that row and save it all to show changes
+    #   that home and save it all to show changes
     # Write to google sheets
 
 

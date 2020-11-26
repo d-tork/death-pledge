@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 def main():
     google_creds = gs.get_creds()
     df_urls = gs.get_url_dataframe(google_creds, last_n=1)
-    house1 = Home(**df_urls.squeeze())  # ONLY works if df_urls is a single row
+    house1 = Home(**df_urls.squeeze())  # ONLY works if df_urls is a single home
     #house1 = Home(full_address='1777 WESTWIND WAY MCLEAN, VA 22102')
 
     # Actions

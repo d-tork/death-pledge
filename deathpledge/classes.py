@@ -51,34 +51,33 @@ class Home(dict):
     """
     doctype = 'home'
 
-    def __init__(self, full_address=None, url=None, added_date=None, docid=None, **kwargs):
+    def __init__(self, url=None, added_date=None, docid=None, **kwargs):
         self.logger = logging.getLogger(f'{__name__}.{type(self).__name__}')
         super().__init__()
         self.docid = docid
-        # If address is given to instance, make sure it's cleaned
-        if full_address:
-            self.full_address = support.clean_address(full_address)
-            if not self.docid:
-                # If docid not given, generate it now
-                self.docid = support.create_house_id(self.full_address)
-        else:
-            self.full_address = None
-
         self.url = url
+        self.added_date = self._set_added_date(added_date)
 
-        # Add type to dictionary
-        self['doctype'] = self.doctype
-        # Whether to skip the web scraping
-        self.skip_web_scrape = False
-
-        # Format date properly; if not passed or fetched, set it to today
-        if added_date:
-            self.added_date = support.coerce_date_string_to_date(added_date)
+        if self.docid is None:
+            self.skip_web_scrape = False
         else:
-            self.added_date = datetime.now()
+            self.skip_web_scrape = True
+            self.fetch()
+
+        # Add type to dictionary for database record
+        self['doctype'] = self.doctype
 
     def __str__(self):
         return json.dumps(self, indent=2)
+
+    @staticmethod
+    def _set_added_date(passed_date):
+        """Format date properly; if not passed or fetched, set it to today"""
+        if passed_date:
+            added_date = support.coerce_date_string_to_date(passed_date)
+        else:
+            added_date = datetime.now()
+        return added_date
 
     def resolve_address_and_id(self):
         """Update address and ID as instance attributes.
@@ -168,7 +167,7 @@ class Home(dict):
 
     def save_local(self, filename=None):
         if not filename:
-            filename = support.create_filename_from_addr(self.full_address)
+            filename = support.create_filename_from_addr(self['full_address'])
         outfilepath = path.join(deathpledge.LISTINGS_DIR, filename)
         with open(outfilepath, 'w') as f:
             f.write(json.dumps(self, indent=4))

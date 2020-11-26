@@ -31,32 +31,6 @@ class ListingNotAvailable(Exception):
     pass
 
 
-class HomesWithRawData(list):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def add_fetched_homes_to_list(self, rows):
-        homes_fetched_from_raw_db = [home for home in bulk_fetch_from_raw_db(rows)]
-        self.extend(homes_fetched_from_raw_db)
-
-    def add_empty_home_instances(self, rows):
-        for row in rows.itertuples(index=False):
-            if self._empty_home_should_be_created(row):
-                if not url_is_valid(row.url):
-                    continue
-                self.append(classes.Home(**row._asdict()))
-
-    def _empty_home_should_be_created(self, row):
-        home_has_no_docid = row.docid is None
-        home_is_not_duplicate = (
-                row.docid not in [x.docid for x in self if x.docid is not None]
-        )
-        if home_has_no_docid and home_is_not_duplicate:
-            return True
-        else:
-            return False
-
-
 class SeleniumDriver(object):
     _options = firefox.options.Options()
     _geckodriver_path = deathpledge.GECKODRIVER_PATH
@@ -114,11 +88,12 @@ class WebDataSource(object):
 class RealScoutWebsite(WebDataSource):
 
     def __init__(self, *args, **kwargs):
+        self.logger = logging.getLogger(f'{__name__}.{type(self).__name__}')
         super().__init__(*args, **kwargs)
 
     def sign_into_website(self):
         """Open website and login to access restricted listings."""
-        print('Opening browser and signing in...')
+        self.logger.info('Opening browser and signing in')
         self.webdriver.get(self._config['sign_in_url'])
         self._enter_website_credentials()
         try:
@@ -138,7 +113,7 @@ class RealScoutWebsite(WebDataSource):
     def _wait_for_successful_signin(self):
         element = WebDriverWait(self.webdriver, 60).until(
             EC.title_contains('My Matches'))
-        print('\tsigned in.')
+        self.logger.info('signed in.')
 
     def get_soup_for_url(self, url):
         """Get BeautifulSoup object for a URL.
@@ -183,35 +158,27 @@ def scrape_from_url_df(urls, force_all, *args, **kwargs):
         list: Array of home instances.
 
     """
-    home_list = HomesWithRawData()
-
-    # Fetch existing raw data for listings already in the database
-    if force_all:
-        pass
-    else:
-        home_list.add_fetched_homes_to_list(urls.df)
-    home_list.add_empty_home_instances(urls.df)
-
     with SeleniumDriver(*args, **kwargs) as wd:
         realscout = RealScoutWebsite(webdriver=wd.webdriver)
         realscout.sign_into_website()
 
-        print('Navigating to URLs...\n')
-        for current_home in home_list:
-            if current_home.skip_web_scrape:
+        logger.info('Navigating to URLs')
+        for row in urls.df.itertuples(index=False):
+            if not url_is_valid(row.url):
+                continue
+            current_home = classes.Home(**row._asdict())
+            skip_web_scrape_if_closed(current_home)
+            if current_home.skip_web_scrape and not force_all:
                 logger.info('Instance property "skip_web_scrape" set to True, will not scrape.')
                 continue
             current_home.scrape(website_object=realscout)
-            #gc.collect()
-            # The collection of a bunch of instances is really bogging this down
-            # TODO: garbage collect, but also find a different way to send them to the db as we go
-    return home_list
+            current_home.upload(db_name=deathpledge.RAW_DATABASE_NAME)
 
 
 def url_is_valid(url):
     result_code = support.check_status_of_website(url)
     if result_code != 200:
-        logger.warning(f'URL {url} did not return valid response code.')
+        logger.error(f'URL {url} did not return valid response code.')
         return False
     return True
 
@@ -372,37 +339,10 @@ def scrape_soup(house, soup):
     house.update(get_main_box(soup))
     house.update(get_price_info(soup))
     get_cards(soup, house)
-
     return house
-
-
-def bulk_fetch_from_raw_db(url_df):
-    """Create Home instances from data already in raw."""
-    responses = database.get_multiple_docs(doc_ids=list(url_df['docid']))
-    valid_responses = [x for x in responses if 'error' not in x.keys()]
-    for response in valid_responses:
-        raw_doc = response['doc']
-        home = classes.Home(
-            full_address=raw_doc.get('full_address'),
-            url=raw_doc.get('url'),
-            added_date=raw_doc.get('added_date'),
-            docid=raw_doc.get('_id')
-        )
-        home.update(raw_doc)
-        skip_web_scrape_if_closed(home)
-        yield home
 
 
 def skip_web_scrape_if_closed(home):
     if home['status'] == 'Closed':
         home.skip_web_scrape = True
 
-
-if __name__ == '__main__':
-    sample_url_list = [keys.sample_url, keys.sample_url2, keys.sample_url3]
-    #sample_house = classes.Home(url=sample_url_list[0])
-    sample_house = classes.Home(url='https://daniellebiegner.realscout.com/homesearch/listings/p-5825-piedmont-dr-alexandria-22310-brightmls-33')
-    sample_house.scrape(quiet=False, force=True)
-    sample_house.clean()
-    print(json.dumps(sample_house['main'], indent=2))
-    sample_house.upload('deathpledge_test')

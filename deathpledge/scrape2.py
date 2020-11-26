@@ -170,7 +170,7 @@ def scrape_from_url_df(urls, force_all, *args, **kwargs):
             current_home.fetch(db_name=deathpledge.RAW_DATABASE_NAME)
             skip_web_scrape_if_closed(current_home)
             if current_home.skip_web_scrape and not force_all:
-                logger.info('Instance property "skip_web_scrape" set to True, will not scrape.')
+                logger.debug('Instance property "skip_web_scrape" set to True, will not scrape.')
                 continue
             current_home.scrape(website_object=realscout)
             current_home.upload(db_name=deathpledge.RAW_DATABASE_NAME)

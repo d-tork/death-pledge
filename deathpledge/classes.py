@@ -3,7 +3,6 @@
 from datetime import datetime
 from os import path
 import json
-import warnings
 import logging
 
 import deathpledge
@@ -60,12 +59,10 @@ class Home(dict):
 
         if self.docid is None:
             self.skip_web_scrape = False
+            # Add type to dictionary for database record
+            self['doctype'] = self.doctype
         else:
             self.skip_web_scrape = True
-            self.fetch()
-
-        # Add type to dictionary for database record
-        self['doctype'] = self.doctype
 
     def __str__(self):
         return json.dumps(self, indent=2)
@@ -105,7 +102,7 @@ class Home(dict):
         try:
             soup = website_object.get_soup_for_url(self.url)
         except Exception as e:
-            self.logger.exception(f'Failed to get soup for {self.url}')
+            self.logger.exception(f'Failed to get soup for {self.url}: {e}')
             return
         listing_data = scrape2.scrape_soup(self, soup)
         self.update(listing_data)

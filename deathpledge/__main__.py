@@ -26,8 +26,8 @@ def main():
     scrape2.scrape_from_url_df(urls, force_all=False, quiet=True)
     gs.refresh_url_sheet(google_creds)
     for row in urls.df.itertuples():
-        # TODO: loop through urls dataframe, not house list
         home = classes.Home(**row._asdict())
+        home.fetch(db_name=deathpledge.RAW_DATABASE_NAME)
         home.clean()
         home.enrich()
         home.upload(db_name=deathpledge.DATABASE_NAME)

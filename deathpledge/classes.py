@@ -106,16 +106,16 @@ class Home(dict):
         """Check if home in database."""
         return database.check_for_doc(deathpledge.DATABASE_NAME, self.docid)
 
-    def fetch(self):
+    def fetch(self, db_name):
         """Retrieve existing data from database."""
-        if not self.docid:
-            self.resolve_address_and_id()
-        try:
-            existing_doc = database.get_single_doc(deathpledge.RAW_DATABASE_NAME, self.docid)
-        except KeyError:
-            self.logger.info('Document was not fetched.')
-            return
-        self.update(existing_doc)
+        if self.docid:
+            try:
+                existing_doc = database.get_single_doc(db_name=db_name, doc_id=self.docid)
+            except KeyError:
+                self.logger.info('Document was not fetched.')
+            else:
+                self.update(existing_doc)
+        return
 
     def scrape(self, website_object):
         """Fetch listing data from RealScout."""

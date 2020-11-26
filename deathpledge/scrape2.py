@@ -167,6 +167,7 @@ def scrape_from_url_df(urls, force_all, *args, **kwargs):
             if not url_is_valid(row.url):
                 continue
             current_home = classes.Home(**row._asdict())
+            current_home.fetch(db_name=deathpledge.RAW_DATABASE_NAME)
             skip_web_scrape_if_closed(current_home)
             if current_home.skip_web_scrape and not force_all:
                 logger.info('Instance property "skip_web_scrape" set to True, will not scrape.')

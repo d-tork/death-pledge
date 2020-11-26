@@ -130,7 +130,6 @@ def get_google_sheets_rows(google_creds):
     logger.info('Getting data from Google sheets')
     response = get_google_sheets_api_response(google_creds)
     rows = get_values_from_google_sheets_response(response)
-    print('\tdone')
     return rows
 
 

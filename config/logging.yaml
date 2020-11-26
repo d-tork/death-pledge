@@ -30,6 +30,9 @@ loggers:
   deathpledge:
     level: DEBUG
     handlers: [dp_info_file, dp_debug_file]
+  deathpledge.database:
+    level: INFO
+    handlers: [console]
 
 root:
   level: NOTSET

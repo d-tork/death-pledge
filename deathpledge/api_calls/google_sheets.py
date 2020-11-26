@@ -174,7 +174,7 @@ def refresh_url_sheet(google_creds):
                 url_obj
             ])
     ).execute()
-    print(response)
+    logger.info(response)
 
 
 def prep_dataframe_to_update_google(df):

@@ -61,7 +61,10 @@ def get_rev_id_for_doc(local_doc, db):
         remote_doc = db[local_doc.docid]
     except KeyError:
         logger.info(f"No document in database for {local_doc['full_address']}")
-        del local_doc['_rev']
+        try:
+            del local_doc['_rev']
+        except KeyError:
+            pass
     else:
         logger.info(f"Document for {local_doc['full_address']} exists, updating with new revision")
         local_doc['_rev'] = remote_doc['_rev']

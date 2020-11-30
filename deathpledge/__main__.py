@@ -20,12 +20,14 @@ def main():
     logging_config = path.join(deathpledge.PROJ_PATH, 'config', 'logging.yaml')
     setup_logging(config_path=logging_config)
 
+    # Raw versions
     args = parse_commandline_arguments()
     google_creds = gs.get_creds()
     urls = gs.get_url_dataframe(google_creds, last_n=args.last_n)
     scrape2.scrape_from_url_df(urls, force_all=False, quiet=True)
     gs.refresh_url_sheet(google_creds)
 
+    # Clean versions
     new_urls = gs.get_url_dataframe(google_creds, last_n=args.last_n)
     for row in new_urls.itertuples():
         home = classes.Home(**row._asdict())

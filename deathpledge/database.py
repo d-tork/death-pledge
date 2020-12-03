@@ -91,7 +91,6 @@ def is_closed(db_name, doc_id):
 def get_single_doc(db_name, doc_id):
     """Fetch a doc from the database."""
     with cloudant_iam(keys['Cloudant_creds']['username'], keys['Cloudant_creds']['apikey']) as client:
-        # Access the database
         try:
             db = client[db_name]
         except KeyError:
@@ -103,6 +102,14 @@ def get_single_doc(db_name, doc_id):
         except KeyError:
             logger.exception(f'Could not find doc_id {doc_id} in {db_name}')
     return doc
+
+
+def get_bulk_docs(db_name: str, doc_ids: list) -> list:
+    """Fetch multiple docs from the database."""
+    with cloudant_iam(keys['Cloudant_creds']['username'], keys['Cloudant_creds']['apikey']) as client:
+        db = client[db_name]
+        result = db.all_docs(keys=doc_ids, include_docs=True)
+    return result['rows']
 
 
 def get_url_list():

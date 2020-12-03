@@ -25,6 +25,13 @@ deathpledge/token.pickle
 deathpledge/api_calls/token.pickle
 *.log
 **/keys*.yaml
+**/realscout.yaml
+*.pdf
+**/db/*
+**/notebook/
+
+# Database practice scripts
+**/db/*.sh
 
 # Mac Desktop Services file (folder display options)
 .DS_Store

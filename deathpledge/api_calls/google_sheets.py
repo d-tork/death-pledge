@@ -112,7 +112,7 @@ def get_url_dataframe(google_creds, **kwargs):
 
     Args:
         google_creds: pickled credentials
-        last_n (int): Get only last n rows (optional, else returns all)
+        **kwargs: passed to URLDataFrame instance
 
     Returns:
         DataFrame: URL data

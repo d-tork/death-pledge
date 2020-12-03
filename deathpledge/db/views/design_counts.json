@@ -1,0 +1,14 @@
+{
+	"_id": "_design/counts",
+	"views": {
+		"by_badge": {
+			"map": "function(doc) {
+				if (doc.listing.badge) {
+					emit( doc.listing.badge, null);
+					}
+				}"
+			}
+		},
+	"language": "javascript"
+}
+

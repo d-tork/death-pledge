@@ -20,5 +20,8 @@ setup(
         'selenium',
         'usaddress',
         'wheel'
-        ]
+        ],
+    extras_require={
+        'dev': ['pytest']
+    }
 )

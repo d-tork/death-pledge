@@ -9,13 +9,19 @@ Based on [this article](https://godatadriven.com/blog/a-practical-guide-to-using
 Clone this repo, then create the environment
 ```
 cd death-pledge
-python3 -m venv env37 && source env37/bin/activate
+python3 -m venv venv && source venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
 Then install the `deathpledge` module as editable
 ```
 python -m pip install -e .
+```
+
+If you're using zsh and want to install extras for the dev environment, the bracket `[` has a 
+special meaning and needs to be escaped:
+```
+python -m pip install -e '.[dev]'
 ```
 
 **Note:** if you edit anything in `setup.py`, you will need to reinstall.

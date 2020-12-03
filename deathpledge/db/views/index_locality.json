@@ -1,0 +1,13 @@
+{
+  "_id": "_design/byLocality",
+  "views": {
+    "byState": {
+      "map": "function(doc) {
+        if (doc.parsed_address) {
+          emit(doc.parsed_address.StateName, null);
+        }
+      }"
+    }
+  },
+  "language": "javascript"
+}

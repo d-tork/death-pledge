@@ -88,8 +88,6 @@ class GoogleCreds(object):
     created automatically when the authorization flow completes for the first
     time.
 
-    TODO: consider inheriting from google.oauth2.credentials.Credentials
-
     Attributes:
         creds: OAuth2 credentials.
 

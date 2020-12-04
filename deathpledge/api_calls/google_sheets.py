@@ -7,7 +7,7 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
-from deathpledge import database
+import deathpledge
 
 logger = logging.getLogger(__name__)
 
@@ -89,9 +89,7 @@ def get_creds(token_path=TOKENPATH):
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            print(f'DIRPATH IS: {DIRPATH}')
-            cred_file = os.path.join(DIRPATH, 'google_credentials.json')
-            print(f'cred_file IS: {cred_file}')
+            cred_file = os.path.join(deathpledge.CONFIG_PATH, 'oauth_client_id.json')
             flow = InstalledAppFlow.from_client_secrets_file(
                 cred_file, SCOPES)
             creds = flow.run_local_server()
@@ -149,7 +147,7 @@ def get_values_from_google_sheets_response(response):
 def refresh_url_sheet(google_creds):
     """Push document list from db back to URL sheet."""
 
-    url_view = database.get_url_list()
+    url_view = deathpledge.database.get_url_list()
     url_df = pd.DataFrame.from_dict(
         url_view, orient='index',
         columns=['added_date', 'status', 'url', 'mls_number', 'full_address', 'docid']

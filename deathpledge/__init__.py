@@ -3,6 +3,7 @@ from sys import platform
 import yaml
 
 PROJ_PATH = path.normpath(path.join(path.dirname(path.realpath(__file__)), '..'))
+CONFIG_PATH = path.join(PROJ_PATH, 'config')
 LISTINGS_DIR = path.join(PROJ_PATH, 'data', 'Processed', 'saved_listings')
 LISTINGS_GLOB = path.join(PROJ_PATH, 'data', 'Processed', 'saved_listings', '*.json')
 SCORECARD_PATH = path.join(PROJ_PATH, 'data', 'scorecard.json')
@@ -19,7 +20,7 @@ makedirs(LISTINGS_DIR, exist_ok=True)
 
 
 def read_keys_file():
-    keys_path = path.join(PROJ_PATH, 'config', 'keys.yaml')
+    keys_path = path.join(CONFIG_PATH, 'keys.yaml')
     with open(keys_path, 'r') as f:
         return yaml.safe_load(f)
 

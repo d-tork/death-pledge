@@ -15,7 +15,10 @@ def main():
     setup_logging(config_path=logging_config)
 
     args = parse_commandline_arguments()
-    google_creds = gs.get_creds()
+    google_creds = gs.GoogleCreds(
+        token_path=path.join(deathpledge.CONFIG_PATH, 'token.pickle'),
+        creds_path=path.join(deathpledge.CONFIG_PATH, 'oauth_client_id.json')
+    ).creds
 
     get_raw_data(args, google_creds)
     process_data(args, google_creds)

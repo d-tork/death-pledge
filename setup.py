@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='death-pledge',
-    version='2020.12.2',
+    version='2020.12.4',
     author='Daniel Torkelson',
     packages=find_packages(include=['deathpledge', 'deathpledge.*']),
     install_requires=[
@@ -11,17 +11,16 @@ setup(
         'Django',
         'fake-useragent',
         'google-api-python-client',
-        'google-auth-httplib2',
-        'google-auth-oauthlib',
+        'oauthlib',
+        'google-auth',
         'numpy',
         'pandas',
         'PyYAML',
         'scipy',
         'selenium',
         'usaddress',
-        'wheel'
         ],
     extras_require={
-        'dev': ['pytest']
+        'dev': ['pytest', 'wheel']
     }
 )

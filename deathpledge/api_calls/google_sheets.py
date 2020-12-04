@@ -3,7 +3,7 @@ import os
 import logging
 import pandas as pd
 from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
+from google.oauth2 import service_account
 from google.auth.transport.requests import Request
 from google.auth.exceptions import TransportError
 
@@ -102,7 +102,7 @@ class GoogleCreds(object):
 
         """
         self.token_path = token_path
-        self.cred_path = creds_path
+        self.creds_path = creds_path
         self.creds = self._get_valid_creds()
 
     def _get_valid_creds(self):
@@ -123,13 +123,15 @@ class GoogleCreds(object):
 
     def _get_new_creds(self):
         """Request new token with creds supplied."""
-        flow = InstalledAppFlow.from_client_secrets_file(self.cred_path, SCOPES)
-        return flow.run_local_server()
+        creds = service_account.Credentials.from_service_account_file(
+            filename=self.creds_path
+        )
+        return creds
 
     def _store_new_token_locally(self, creds):
         """Save token for re-use."""
-        with open(self.token_path, 'wb') as token:
-            pickle.dump(creds, token)
+        with open(self.token_path, 'wb') as token_file:
+            pickle.dump(creds, token_file)
 
 
 def get_url_dataframe(google_creds, **kwargs):

@@ -10,18 +10,16 @@ setup(
         'cloudant',
         'Django',
         'fake-useragent',
-        'google-api-python-client',
-        'google-auth-httplib2',
-        'google-auth-oauthlib',
+        'gspread',
+        'oauth2client',
         'numpy',
         'pandas',
         'PyYAML',
         'scipy',
         'selenium',
         'usaddress',
-        'wheel'
         ],
     extras_require={
-        'dev': ['pytest']
+        'dev': ['pytest', 'wheel']
     }
 )

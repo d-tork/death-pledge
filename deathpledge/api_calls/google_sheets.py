@@ -1,5 +1,4 @@
 import pickle
-import os.path
 import os
 import logging
 import pandas as pd
@@ -14,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 # Get this file's path
 DIRPATH = os.path.dirname(os.path.realpath(__file__))
-TOKEN_PATH = os.path.join(deathpledge.CONFIG_PATH, 'token.pickle')
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
@@ -216,12 +214,3 @@ def prep_dataframe_to_update_google(df):
     df = df.fillna('').astype('str')
     df = df.reset_index().T.reset_index().T.values.tolist()
     return df
-
-
-if __name__ == '__main__':
-    sample_creds = get_creds()
-    sample_urls = get_url_dataframe(sample_creds)
-    print(sample_urls.head())
-    refresh_url_sheet(sample_creds)
-
-

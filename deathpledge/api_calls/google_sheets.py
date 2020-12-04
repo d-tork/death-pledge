@@ -6,6 +6,7 @@ import pandas as pd
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+from google.auth.exceptions import TransportError
 
 import deathpledge
 
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 # Get this file's path
 DIRPATH = os.path.dirname(os.path.realpath(__file__))
-TOKENPATH = os.path.join(DIRPATH, 'token.pickle')
+TOKEN_PATH = os.path.join(deathpledge.CONFIG_PATH, 'token.pickle')
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
@@ -27,6 +28,11 @@ SPREADSHEET_DICT = {
     'scores': 'Scores!A1',
     'raw_data': 'raw_data!A1'
 }
+
+
+class CredsNotValidError(Exception):
+    """Credentials are invalid or expired."""
+    pass
 
 
 class URLDataFrame(object):
@@ -77,32 +83,57 @@ class URLDataFrame(object):
         self.df = self.df[-n:]
 
 
-def get_creds(token_path=TOKENPATH):
-    creds = None
-    # The file token.pickle stores the user's access and refresh tokens, and is
-    # created automatically when the authorization flow completes for the first
-    # time.
-    if os.path.exists(token_path):
-        creds = get_existing_token(token_path)
-    # If there are no (valid) credentials available, let the user log in.
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
+class GoogleCreds(object):
+    """Credentials for OAuth2.
+
+    The file token.pickle stores the user's access and refresh tokens, and is
+    created automatically when the authorization flow completes for the first
+    time.
+
+    TODO: consider inheriting from google.oauth2.credentials.Credentials
+
+    Attributes:
+        creds: OAuth2 credentials.
+
+    """
+
+    def __init__(self, token_path, creds_path=None):
+        """Load credentials or generate them if they don't exist.
+
+        Args:
+            token_path (str): Path to existing pickled token.
+            creds_path (str, Optional): Path to credentials if token is invalid.
+
+        """
+        self.token_path = token_path
+        self.cred_path = creds_path
+        self.creds = self._get_valid_creds()
+
+    def _get_valid_creds(self):
+        """Load, refresh, or get new creds as needed."""
+        try:
+            creds = self._get_creds_from_existing_token()
             creds.refresh(Request())
-        else:
-            cred_file = os.path.join(deathpledge.CONFIG_PATH, 'oauth_client_id.json')
-            flow = InstalledAppFlow.from_client_secrets_file(
-                cred_file, SCOPES)
-            creds = flow.run_local_server()
-        # Save the credentials for the next run
-        with open(token_path, 'wb') as token:
+        except (FileNotFoundError, TransportError):
+            creds = self._get_new_creds()
+            self._store_new_token_locally(creds)
+        return creds
+
+    def _get_creds_from_existing_token(self):
+        """Reads credentials from pickled token file."""
+        with open(self.token_path, 'rb') as token_file:
+            token = pickle.load(token_file)
+        return token
+
+    def _get_new_creds(self):
+        """Request new token with creds supplied."""
+        flow = InstalledAppFlow.from_client_secrets_file(self.cred_path, SCOPES)
+        return flow.run_local_server()
+
+    def _store_new_token_locally(self, creds):
+        """Save token for re-use."""
+        with open(self.token_path, 'wb') as token:
             pickle.dump(creds, token)
-    return creds
-
-
-def get_existing_token(token_path):
-    with open(token_path, 'rb') as token_file:
-        token = pickle.load(token_file)
-    return token
 
 
 def get_url_dataframe(google_creds, **kwargs):

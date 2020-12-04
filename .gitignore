@@ -19,19 +19,14 @@ dist/
 
 # Personal files
 geckodriver.log
-token.pickle
-keys.py
-deathpledge/token.pickle
-deathpledge/api_calls/token.pickle
 *.log
 **/keys*.yaml
-**/realscout.yaml
+config/oauth_client_id.json
+**/token.pickle
 *.pdf
 **/db/*
 **/notebook/
-
-# Database practice scripts
-**/db/*.sh
+docs/*.txt
 
 # Mac Desktop Services file (folder display options)
 .DS_Store

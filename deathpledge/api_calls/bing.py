@@ -4,18 +4,28 @@ Update properties retrieved with Bing Maps.
 
 import requests
 import datetime as dt
+import logging
+from collections import namedtuple
+
 from deathpledge import keys
 from deathpledge import support
 
+logger = logging.getLogger(__name__)
 bingMapsKey = keys['API_keys']['bingMapsKey']
+
 
 def get_coords(address, zip_code=None):
     """Geocode a mailing address into lat/lon.
 
     Args:
-        zip_code (int): helps with accuracy of results, optional
+        address (str): Mailing address.
+        zip_code (int, optional): Helps with accuracy of results. Defaults to None
 
-    Returns: dict of keys lat, lon
+    Returns:
+        dict of keys lat, lon
+
+    Raises:
+        BadResponse: If Bing response is not 200.
     """
     baseurl = r"http://dev.virtualearth.net/REST/v1/Locations"
 
@@ -43,16 +53,20 @@ def get_coords(address, zip_code=None):
 def get_bing_commute_time(startcoords, endcoords):
     """Get commute travel time between two lat/lon tuples from Bing API.
 
-    Parameters
-    ----------
-    startcoords : iterable
-        a list or tuple of geographic coordinates (lat/lon) as integers
-    endcoords: iterable
-        same as startcoords
+    Args:
+        startcoords (iterable): a list or tuple of geographic coordinates (lat/lon) as integers
+        endcoords (iterable): same as startcoords
 
-    Returns
-    -------
-    str: (commute_time, first_walk_time), in HH:MM:SS
+    Returns:
+        namedtuple:
+            commute_time: Total commute time in minutes
+            first_leg (str): Mode of transit for first major leg
+            first_walk (float): Walk time in minutes to first transit or destination
+
+    Raises:
+        BadResponse: If Bing response is not 200.
+        KeyError: If JSON from Bing does not match expected structure.
+
     """
     baseurl = r"http://dev.virtualearth.net/REST/V1/Routes/Transit"
 
@@ -69,24 +83,60 @@ def get_bing_commute_time(startcoords, endcoords):
     if response.status_code != 200:
         raise support.BadResponse('Response code from bing not 200.')
     r_dict = response.json()
-
     try:
-        travel_time = r_dict['resourceSets'][0]['resources'][0]['travelDuration']
+        trip = r_dict['resourceSets'][0]['resources'][0]
     except KeyError:
-        raise support.BadResponse('JSON response does not have travel_time_minutes key.')
-    commute_time = round(travel_time/60, 0)
+        raise KeyError('JSON response from Bing does not have expected structure.')
 
-    # Function detour to get walk time of first leg of trip
-    itin = r_dict['resourceSets'][0]['resources'][0]['routeLegs'][0]['itineraryItems']
-    first_walk_time = 0
-    for ix, leg in enumerate(itin):
-        if leg.get('iconType') in ['Bus', 'Train']:
-            first_walk_time = itin[ix-1]['travelDuration']  # get previous leg, in sec
-            first_leg = leg.get('iconType')
+    travel_time_in_sec: int = trip.get('travelDuration')
+    travel_time_in_min: float = round(travel_time_in_sec/60, 0)
+    try:
+        first_leg = get_first_leg_from_trip(trip=trip)
+    except ValueError:
+        logger.exception('Failed to get first transit leg info.')
+        first_leg = {}
+
+    Commute = namedtuple('Commute', ['commute_time', 'first_leg', 'first_walk'])
+    commute = Commute(
+        commute_time=travel_time_in_min,
+        first_leg=first_leg.get('mode'),
+        first_walk=first_leg.get('walktime')
+    )
+    return commute
+
+
+def get_first_leg_from_trip(trip: dict) -> dict:
+    """Get transit mode for first transit leg of journey, and the walk time to it.
+
+    Assume that the first step in trip is always a walk, set that to
+    be the first leg mode and walktime. If a bus or train follows in step
+    2, update the mode but keep the walk time from original walk.
+
+    Args:
+        trip: Commute JSON response from bing.
+
+    Returns:
+        mode (str), walktime (float)
+
+    Raises:
+        ValueError: If Bing gives a transit type other than walk, bus, or train.
+
+    """
+    itinerary = trip['routeLegs'][0]['itineraryItems']
+    first_leg = {
+        'mode': itinerary[0].get('iconType'),
+        'walktime': round(itinerary[0].get('travelDuration') / 60, 1)
+    }
+    for i, leg in enumerate(itinerary):
+        leg_mode = leg.get('iconType')
+        if leg_mode == 'Walk':
+            continue
+        elif leg_mode in ['Bus', 'Train']:
+            first_leg.update(dict(mode=leg_mode))
             break
-    first_walk_time = round(first_walk_time/60, 1)
-
-    return commute_time, first_walk_time, first_leg
+        else:
+            raise ValueError(f"Unknown transit mode from Bing:'{leg_mode}'")
+    return first_leg
 
 
 def get_walking_info(startcoords, endcoords):
@@ -126,7 +176,12 @@ def find_nearest_metro(startcoords):
     these cases, they usually have a good URL so I'm taking the
     name from the WMATA page that references them.
 
-    Returns a list of (name, geocoords) tuples"""
+    Returns:
+        list: (name, geocoords) tuples
+
+    Raises:
+        BadResponse: If Bing doesn't return response code 200.
+    """
     BASEURL = r"http://dev.virtualearth.net/REST/V1/LocalSearch/"
 
     url_dict = {
@@ -192,17 +247,3 @@ def get_driving_info(startcoords, endcoords, dayofweek=None, hrmin=None):
     distance = '{:.2f} miles'.format(distance)
     duration = str(dt.timedelta(seconds=duration))
     return distance, duration
-
-
-if __name__ == '__main__':
-    SAMPLE_ADDR = '10217 ROLLING GREEN WAY FORT WASHINGTON, MD'
-    sample_coords = tuple(get_coords(SAMPLE_ADDR).values())
-    sample_commute_time = get_bing_commute_time(sample_coords, keys.work_coords)
-    sample_metro = find_nearest_metro(sample_coords)
-    sample_drive = get_driving_info(sample_coords, keys.work_coords, 0, '07:00')
-
-    print('Coords: {}'.format(sample_coords))
-    print('Commute to work: {}'.format(sample_commute_time))
-    print('Nearest metro stations:')
-    for i in sample_metro:
-        print(i[0], i[1])

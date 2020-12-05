@@ -6,7 +6,7 @@ import json
 import logging
 
 import deathpledge
-from deathpledge import scrape2, database, support, cleaning, enrich
+from deathpledge import realscout, database, support, cleaning, enrich
 from deathpledge import keys
 
 
@@ -50,19 +50,17 @@ class Home(dict):
     """
     doctype = 'home'
 
-    def __init__(self, url=None, added_date=None, docid=None, **kwargs):
+    def __init__(self, url=None, added_date=None, docid=None, **throwaway):
         self.logger = logging.getLogger(f'{__name__}.{type(self).__name__}')
         super().__init__()
         self.docid = docid
         self.url = url
         self.added_date = self._set_added_date(added_date)
 
-        if self.docid is None:
-            self.skip_web_scrape = False
-            # Add type to dictionary for database record
-            self['doctype'] = self.doctype
-        else:
-            self.skip_web_scrape = True
+        # Leave this switch to be flipped elsewhere
+        self.skip_web_scrape = False
+        # Add type to dictionary for database record
+        self['doctype'] = self.doctype
 
     def __str__(self):
         return json.dumps(self, indent=2)
@@ -82,15 +80,13 @@ class Home(dict):
         scraped_addr_id = support.create_house_id(scraped_address)
         self.docid = self['_id'] = scraped_addr_id
 
-    def in_db(self):
-        """Check if home in database."""
-        return database.check_for_doc(deathpledge.DATABASE_NAME, self.docid)
-
-    def fetch(self, db_name):
+    def fetch(self, db_name, db_client):
         """Retrieve existing data from database."""
         if self.docid:
             try:
-                existing_doc = database.get_single_doc(db_name=db_name, doc_id=self.docid)
+                existing_doc = database.get_single_doc(
+                    doc_id=self.docid, db_name=db_name, client=db_client
+                )
             except KeyError:
                 self.logger.info('Document was not fetched.')
             else:
@@ -104,7 +100,7 @@ class Home(dict):
         except Exception as e:
             self.logger.exception(f'Failed to get soup for {self.url}: {e}')
             return
-        listing_data = scrape2.scrape_soup(self, soup)
+        listing_data = realscout.scrape_soup(self, soup)
         self.update(listing_data)
         self.create_docid_from_address()
 
@@ -150,12 +146,11 @@ class Home(dict):
         with open(outfilepath, 'w') as f:
             f.write(json.dumps(self, indent=4))
 
-    def upload(self, db_name):
+    def upload(self, db_name, db_client):
         """Send JSON to database."""
         try:
-            database.push_one_to_db(self, db_name=db_name)
-        except Exception as e:
+            database.push_one_to_db(self, db_name=db_name, client=db_client)
+        except Exception:
             self.logger.error('Upload failed, saving to disk.', exc_info=True)
             self.save_local()
         return
-

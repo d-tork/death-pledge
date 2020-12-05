@@ -39,6 +39,7 @@ def split_comma_delimited_fields(home):
         value_list[-1] = value_list[-1].replace('and ', '')
         # Replace original value
         home[key] = value_list
+        logger.debug(f'Field {key} split into list items')
 
 
 def parse_number(s):
@@ -74,6 +75,7 @@ def convert_numbers(home):
             continue
         else:
             home[key] = parse_number(val)
+        logger.debug(f'Field {key} converted to number')
 
 
 def parse_address(home):

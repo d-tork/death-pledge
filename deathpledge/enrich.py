@@ -26,25 +26,37 @@ from deathpledge.support import BadResponse
 logger = logging.getLogger(__name__)
 
 
+class EnrichError(Exception):
+    """Anything gone wrong with an enrichment step, log and continue."""
+    pass
+
+
 def add_coords(home, force=False):
     """Convert address to geocoords."""
     # Check for existing value
     coords = home.setdefault('geocoords', None)
     if (coords is None) or force:
-        # Grab coordinates from Bing
         try:
             coords = bing.get_coords(
                 home['full_address'],
                 zip_code=home['parsed_address'].get('ZipCode')
             )
-        except BadResponse as e:
-            print(f'Could not retrieve geocoords for this address: \n{e}')
+        except BadResponse:
+            logger.exception(f"Failed to retrieve geocoords for {home.get('address')}")
             coords = None
+        else:
+            logger.debug('Geocoords updated from Bing')
     home['geocoords'] = coords
 
 
 def add_bing_commute(home, force=False):
-    """Add the bing transit time."""
+    """Add the bing transit time.
+
+    Existing values are obtained from the home dict. If at least one of them
+    is empty or if forced, the Bing API call is made. If not, the values are
+    not updated.
+
+    """
     bing_commute_items = {
         'work_commute': None,
         'first_walk_mins': None,
@@ -54,21 +66,21 @@ def add_bing_commute(home, force=False):
 
     if (not all([v for k, v in bing_commute_items.items()])) | force:
         # At least one of them is empty or force=True, Bing API call is necessary
-        # If not force, and if all values exist, then end function
+        # If not force, and if all values already exist, do not update
         house_coords = tuple(home['geocoords'].values())
         work_coords = tuple(keys['Locations']['work_coords'].values())
         try:
-            commute, walk_time, leg_type = (
-                bing.get_bing_commute_time(house_coords, work_coords)
-            )
-        except BadResponse as e:
-            logger.info(f'Could not retrieve Bing commute time for {home.full_address}.\n{e}')
-            commute, walk_time, leg_type = '', '', ''
-        finally:
-            bing_commute_items['work_commute'] = commute
-            bing_commute_items['first_walk_mins'] = walk_time
-            bing_commute_items['first_leg_type'] = leg_type
+            commute = bing.get_bing_commute_time(
+                startcoords=house_coords,
+                endcoords=work_coords)
+        except (BadResponse, KeyError):
+            logger.exception(f"Failed to retrieve Bing commute time for {home.get('address')}")
+        else:
+            bing_commute_items['work_commute'] = commute.commute_time
+            bing_commute_items['first_leg_type'] = commute.first_leg
+            bing_commute_items['first_walk_mins'] = commute.first_walk
             home.update(bing_commute_items)
+            logger.debug('Commute updated from Bing')
 
 
 def add_nearest_metro(home):
@@ -77,8 +89,8 @@ def add_nearest_metro(home):
     house_coords = tuple(home['geocoords'].values())
     try:
         station_list = bing.find_nearest_metro(house_coords)
-    except BadResponse as e:
-        print(e)
+    except BadResponse:
+        logger.exception(f"Failed to add nearest metro stations for {home.get('address')}")
     else:
         home['nearby_metro'] = station_list
 
@@ -99,85 +111,16 @@ def add_frequent_driving(home, favorites_dic):
         else:
             home[f'{place}_dist'] = distance
             home[f'{place}_time'] = duration
-
-
-def travel_quick_stats(dic):
-    """Convert some Local Travel numbers for easier scoring."""
-    # Grab top metro station's time
-    metro = dic['local travel'].get('Nearby Metro')  # returns list of multiple [station, (dist, time)]
-    metro_mins = support.str_time_to_min(metro[0][1][1])  # subscripting: first station > values tuple > time
-
-    # Grab bing commute time
-    commute = dic['local travel'].get('Work commute (Bing)')
-    commute_mins = support.str_time_to_min(commute)
-
-    return round(metro_mins, 1), round(commute_mins, 1)
+            logger.debug('Frequent driving added')
 
 
 def add_tether(home):
-    """Add straight-line distance to centerpoint (Arlington Cememtery)."""
+    """Add straight-line distance to centerpoint."""
     house_coords = tuple(home['geocoords'].values())
     center = tuple(keys['Locations']['centerpoint'].values())
     try:
         dist = support.haversine(house_coords, center)
-    except TypeError:
-        print('\tDistance from center not added; missing house coords.')
-    home['tether'] = round(dist, 2)
-
-
-def update_days_on_market(dic):
-    """Calculate days from initial listing to last modification date of dict."""
-    start_date, end_date = None, dt.today()
-    # Find day of initial listing
-    for date, text in dic['listing history'].items():
-        if 'Sold' in text:
-            end_date = dt.strptime(date, '%b %d, %Y')
-        elif 'Initial' in text:
-            start_date = dt.strptime(date, '%b %d, %Y')
-    try:
-        dom = (end_date - start_date).days
-        return dom
-    except TypeError:
-        print('\tListing date not found in history.')
-        return
-
-
-def change_from_initial(dic):
-    """Calculate the change from the initial price."""
-    # Get current price
-    current_price = dic['_info'].get('list_price')
-
-    # Find initial listing
-    for date, text in dic['listing history'].items():
-        if 'Initial' in text:
-            initial_price = text.split()[3]
-            initial_price = cleaning.currency_to_int(initial_price)
-
-    price_diff = current_price - initial_price
-    if price_diff != 0:
-        pct_change = '{:+.1%}'.format(price_diff / initial_price)
-    return price_diff, pct_change
-
-
-def sale_price_diff(dic):
-    """Get the difference between listing price and sale price."""
-    info = dic['_info']
-    if info.get('badge') == 'Sold':
-        list_price = info.get('list_price')
-        sale_price = info.get('sale_price')
-        diff = sale_price - list_price
-        diff_pct = '{:.1%}'.format(diff / list_price)
-    return diff, diff_pct
-
-
-def tax_assessed_diff(dic):
-    """Get the difference between listing price and the tax assessed value."""
-    list_price = dic['_info'].get('list_price')
-    tax_assessed = dic['expenses / taxes'].get('Tax Assessed Value')
-    diff = tax_assessed - list_price
-    diff_pct = '{:.1%}'.format(diff / list_price)
-    return diff_pct
-
-
-if __name__ == '__main__':
-    pass
+    except:
+        logger.exception('Failed to add tether')
+    else:
+        home['tether'] = round(dist, 2)

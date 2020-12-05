@@ -37,10 +37,10 @@ class SeleniumDriver(object):
         self.webdriver.__enter__()
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, exc_type, exc_value, traceback):
         try:
-            self.webdriver.__exit__(self, type, value, traceback)
-        except Exception as e:
+            self.webdriver.__exit__(self, exc_type, exc_value, traceback)
+        except Exception:
             logger.exception('Webdriver failed to exit.')
 
     @property
@@ -57,12 +57,13 @@ class SeleniumDriver(object):
         self._geckodriver_version = output.stdout.splitlines()[0]
 
 
-def scrape_from_url_df(urls, force_all, *args, **kwargs):
+def scrape_from_url_df(urls, db_client, *args, **kwargs):
     """Given an array of URLs, create house instances and scrape web data.
 
     Args:
-        urls (URLDataFrame): DataFrame-like object holding Google sheet rows
-        force_all (bool): Whether to scrape all listings from the web, even if listing is Closed
+        urls (DataFrame): DataFrame-like object holding Google sheet rows
+        db_client (Cloudant.iam): Cloudant session client.
+        *args, **kwargs: passed to SeleniumDriver
 
     Returns:
         list: Array of home instances.
@@ -72,18 +73,15 @@ def scrape_from_url_df(urls, force_all, *args, **kwargs):
         realscout = rs.RealScoutWebsite(webdriver=wd.webdriver)
         realscout.sign_into_website()
 
-        logger.info('Navigating to URLs')
-        for row in urls.df.itertuples(index=False):
+        for row in urls.itertuples(index=False):
             if not url_is_valid(row.url):
                 continue
             current_home = classes.Home(**row._asdict())
-            current_home.fetch(db_name=deathpledge.RAW_DATABASE_NAME)
-            skip_web_scrape_if_closed(current_home)
-            if current_home.skip_web_scrape and not force_all:
+            if current_home.skip_web_scrape:
                 logger.debug('Instance property "skip_web_scrape" set to True, will not scrape.')
                 continue
             current_home.scrape(website_object=realscout)
-            current_home.upload(db_name=deathpledge.RAW_DATABASE_NAME)
+            current_home.upload(db_name=deathpledge.RAW_DATABASE_NAME, db_client=db_client)
 
 
 def url_is_valid(url):
@@ -92,9 +90,3 @@ def url_is_valid(url):
         logger.error(f'URL {url} did not return valid response code.')
         return False
     return True
-
-
-def skip_web_scrape_if_closed(home):
-    if home.get('status') == 'Closed':
-        home.skip_web_scrape = True
-

@@ -2,12 +2,13 @@ import pickle
 import os
 import logging
 import pandas as pd
+from urllib.parse import urlparse, urlunparse
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from google.auth.transport.requests import Request
 from google.auth.exceptions import TransportError
 
-import deathpledge
+from deathpledge import database
 
 logger = logging.getLogger(__name__)
 
@@ -38,10 +39,10 @@ class URLDataFrame(object):
 
     Args:
         df (pd.DataFrame): data being passed
-        last_n (int): Get only last n rows (optional, else returns all)
+        last_n (int, Optional): Get only last n rows. Defaults to None.
 
     """
-    def __init__(self, df, force_all=False, last_n=None):
+    def __init__(self, df, last_n=None):
         self.df = df
         self._prepare_dataframe()
         if last_n is not None:
@@ -69,13 +70,22 @@ class URLDataFrame(object):
         self.df.drop_duplicates(subset=['url'], keep='first', inplace=True)
 
     @staticmethod
-    def trim_url(url_str):
-        """Remove extra params from URL."""
-        q_mark_location = url_str.find('?')
-        if q_mark_location > -1:
-            return url_str[:q_mark_location]
-        else:
-            return url_str
+    def trim_url(url_str: str) -> str:
+        """Remove extra params from URL.
+
+        Args:
+            url_str: Original URL.
+
+        Returns:
+            Modified URL.
+
+        """
+        parts = urlparse(url_str)
+        path_without_matched = parts.path.replace('/matched', '')
+        new_url = urlunparse(
+            (parts.scheme, parts.netloc, path_without_matched, '', '', '')
+        )
+        return new_url
 
     def _trim_last_n(self, n):
         self.df = self.df[-n:]
@@ -173,10 +183,10 @@ def get_values_from_google_sheets_response(response):
     return response['values']
 
 
-def refresh_url_sheet(google_creds):
+def refresh_url_sheet(google_creds, db_client):
     """Push document list from db back to URL sheet."""
-
-    url_view = deathpledge.database.get_url_list()
+    logger.info('Refreshing Google sheet with view from raw database')
+    url_view = database.get_url_list(client=db_client)
     url_df = pd.DataFrame.from_dict(
         url_view, orient='index',
         columns=['added_date', 'status', 'url', 'mls_number', 'full_address', 'docid']

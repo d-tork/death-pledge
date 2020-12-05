@@ -66,7 +66,7 @@ class RealScoutWebsite(WebDataSource):
     def _wait_for_successful_signin(self):
         element = WebDriverWait(self.webdriver, 60).until(
             EC.title_contains('My Matches'))
-        self.logger.info('signed in.')
+        self.logger.info('signed in')
 
     def get_soup_for_url(self, url):
         """Get BeautifulSoup object for a URL.
@@ -83,7 +83,7 @@ class RealScoutWebsite(WebDataSource):
             TimeoutException: If listing details don't appear within 10 sec after navigation.
 
         """
-        print(f'URL: {url}')
+        logger.info(f'scraping URL: {url}')
         if not scrape.url_is_valid(url):
             raise ValueError()
 
@@ -151,7 +151,7 @@ def get_price_info(soup):
                 'list_price': list_price,
             })
     except AttributeError as e:
-        logger.info(f'Error while getting price info: {e}, probably Off Market.')
+        logger.debug(f'Error while getting price info: {e}, probably Off Market or In Contract.')
     return info
 
 

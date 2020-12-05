@@ -311,3 +311,20 @@ content as the data:
 * However, don't just use `include_docs=true` to get the data back; instead, 
 specify what data should be returned in the design document via `emit`, and those
 fields will be retrieved directly from the view index file, not the database.
+
+
+## Searching by URL
+```
+https://b0872728-906f-4b36-8ec6-83e7eb5ae492-bluemix.cloudant.com/deathpledge_clean_flat/_design/addrSearch/_search/addressSearch?q=address:3505*
+```
+
+Composed of these parts: 
+| item                         | value                                                             |
+| ----                         | -----                                                             |
+| Cloudant account url         | https://b0872728-906f-4b36-8ec6-83e7eb5ae492-bluemix.cloudant.com |
+| database                     | /deathpledge_clean_flat                                           |
+| _design docs_                | /_design                                                          |
+| **addrSearch** app / group   | /addrSearch                                                       |
+| _search_ function I guess?   | /_search                                                          |
+| **addressSearch** design doc | /addressSearch                                                    |
+| query params (with wildcard) | ?q=address:3505*                                                  |

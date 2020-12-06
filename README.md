@@ -56,3 +56,8 @@ the module would
 # [re]process the last URL, even if it's Closed
 docker run deathpledge -n 1 -f
 ```
+
+### Entering the container interactively (for debugging)
+```
+docker run -it --entrypoint sh deathpledge
+```

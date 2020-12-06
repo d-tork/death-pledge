@@ -97,9 +97,9 @@ class Home(dict):
         """Fetch listing data from RealScout."""
         try:
             soup = website_object.get_soup_for_url(self.url)
-        except Exception as e:
-            self.logger.exception(f'Failed to get soup for {self.url}: {e}')
-            return
+        except:
+            self.logger.exception(f'Failed to get soup for {self.url}')
+            raise
         listing_data = realscout.scrape_soup(self, soup)
         self.update(listing_data)
         self.create_docid_from_address()
@@ -139,13 +139,6 @@ class Home(dict):
             geocoords = self.get('geocoords')
         return geocoords
 
-    def save_local(self, filename=None):
-        if not filename:
-            filename = support.create_filename_from_addr(self['full_address'])
-        outfilepath = path.join(deathpledge.LISTINGS_DIR, filename)
-        with open(outfilepath, 'w') as f:
-            f.write(json.dumps(self, indent=4))
-
     def upload(self, db_name, db_client):
         """Send JSON to database."""
         try:
@@ -154,3 +147,10 @@ class Home(dict):
             self.logger.error('Upload failed, saving to disk.', exc_info=True)
             self.save_local()
         return
+
+    def save_local(self, filename=None):
+        if not filename:
+            filename = support.create_filename_from_addr(self.get('full_address'))
+        outfilepath = path.join(deathpledge.LISTINGS_DIR, filename)
+        with open(outfilepath, 'w') as f:
+            f.write(json.dumps(self, indent=4))

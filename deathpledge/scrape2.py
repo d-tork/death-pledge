@@ -82,7 +82,10 @@ def scrape_from_url_df(urls, db_client, *args, **kwargs):
             if current_home.skip_web_scrape:
                 logger.debug('Instance property "skip_web_scrape" set to True, will not scrape.')
                 continue
-            current_home.scrape(website_object=realscout)
+            try:
+                current_home.scrape(website_object=realscout)
+            except:
+                continue
             current_home.upload(db_name=deathpledge.RAW_DATABASE_NAME, db_client=db_client)
 
 

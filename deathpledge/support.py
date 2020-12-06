@@ -7,9 +7,6 @@ from datetime import datetime as dt
 from fake_useragent import UserAgent
 from django.utils.text import slugify
 from hashlib import sha1
-import yaml
-
-import deathpledge
 
 
 class BadResponse(Exception):
@@ -17,49 +14,14 @@ class BadResponse(Exception):
 
 
 def timing(f):
-
     def timed(*args, **kw):
-
         start = dt.now()
         print(f'Start: {start}')
         result = f(*args, **kw)
         finish = dt.now()
         print(f'Finish: {finish} ({finish-start})')
         return result
-
     return timed
-
-
-def initialize_listing_dict():
-    """Create an empty listing dict to provide the backbone to the house file.
-
-    The structure needed is the outer dicts (categories) comprised
-    of empty dictionaries to be filled with field: value pairs.
-
-    Here you can specify the precise order of the dict keys, because
-    as of Python 3.7, insertion order in dicts is preserved.
-
-    Returns: dict
-    """
-    cat_list = [
-        '_metadata',
-        '_info',
-        'basic info',
-        'property / unit information',
-        'building information',
-        'exterior information',
-        'association / location / schools',
-        'expenses / taxes',
-        'utilities',
-        'listing history',
-        'local travel',
-        'comments',
-        'quickstats'
-    ]
-    dic = {}
-    for category in cat_list:
-        dic.setdefault(category, {})
-    return dic
 
 
 def str_coords(coords):
@@ -152,11 +114,6 @@ def create_house_id(addr):
     return sha1(clean_addr.encode()).hexdigest()
 
 
-def read_yaml_into_dict(filepath):
-    with open(filepath, 'r') as fp:
-        return yaml.load(fp, Loader=yaml.FullLoader)
-
-
 def coerce_date_string_to_date(date_str):
     date_str_formats = ['%m/%d/%Y', '%Y-%m-%dT%H:%M:%S']
     date_object = date_str
@@ -169,7 +126,3 @@ def coerce_date_string_to_date(date_str):
         except ValueError:
             continue
     return date_object
-
-
-if __name__ == '__main__':
-    pass

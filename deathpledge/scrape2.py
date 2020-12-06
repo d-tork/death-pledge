@@ -33,7 +33,6 @@ class SeleniumDriver(object):
         self._geckodriver_version = None
         self._options.headless = quiet
         self.webdriver = webdriver.Firefox(options=self._options, executable_path=self._geckodriver_path)
-        self.logger.debug(f'Using webdriver version {self.geckodriver_version}')
 
     def __enter__(self):
         self.webdriver.__enter__()

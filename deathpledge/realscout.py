@@ -150,8 +150,8 @@ def get_price_info(soup):
                 'sale_price': price,
                 'list_price': list_price,
             })
-    except AttributeError as e:
-        logger.debug(f'Error while getting price info: {e}, probably Off Market or In Contract.')
+    except AttributeError:
+        logger.debug(f'Error while getting price info, probably Off Market or In Contract.')
     return info
 
 
@@ -223,7 +223,6 @@ def get_cards(soup, data):
                 discard = ['which', 'open houses', 'questions']
                 if any(x in card_title.lower() for x in discard):
                     continue
-                card_title = slugify(card_title).replace('-', '_')
 
                 # Create the key, in case names change or it's new
                 card_attrib_list = card.find_all('div', class_='col-12')

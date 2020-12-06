@@ -29,9 +29,11 @@ class SeleniumDriver(object):
             quiet (bool): Whether to hide (True) or show (False) web browser as it scrapes.
 
         """
+        self.logger = logging.getLogger(f'{__name__}.{type(self).__name__}')
         self._geckodriver_version = None
         self._options.headless = quiet
         self.webdriver = webdriver.Firefox(options=self._options, executable_path=self._geckodriver_path)
+        self.logger.debug(f'Using webdriver version {self.geckodriver_version}')
 
     def __enter__(self):
         self.webdriver.__enter__()
@@ -41,7 +43,7 @@ class SeleniumDriver(object):
         try:
             self.webdriver.__exit__(self, exc_type, exc_value, traceback)
         except Exception:
-            logger.exception('Webdriver failed to exit.')
+            self.logger.exception('Webdriver failed to exit.')
 
     @property
     def geckodriver_version(self):

@@ -100,9 +100,15 @@ class Home(dict):
         except:
             self.logger.exception(f'Failed to get soup for {self.url}')
             raise
-        listing_data = realscout.scrape_soup(self, soup)
-        self.update(listing_data)
+        soup.scrape_soup()
+        self.update(soup.data)
+        self._add_class_attributes_as_dict_keys()
         self.create_docid_from_address()
+
+    def _add_class_attributes_as_dict_keys(self):
+        """Add attributes to the data dictionary for this instance."""
+        self['url'] = self.url
+        self['added_date'] = self.added_date.strftime(deathpledge.TIMEFORMAT)
 
     def clean(self):
         """Parse and clean all string values meant to be numeric.

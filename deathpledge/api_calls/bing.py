@@ -304,3 +304,11 @@ def get_driving_info(startcoords, endcoords, dayofweek=None, hrmin=None):
     distance = '{:.2f} miles'.format(distance)
     duration = str(dt.timedelta(seconds=duration))
     return distance, duration
+
+
+if __name__ == '__main__':
+    full_address = '1600 Pennsylvania Ave NW, Washington, DC 20500'
+    zip = 20500
+    bing_api = BingMapsAPI()
+    gc = BingGeocoderAPICall(address=full_address, zip_code=zip)
+    coords = bing_api.get_geocoords(gc)

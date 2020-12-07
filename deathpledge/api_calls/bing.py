@@ -6,6 +6,7 @@ import requests
 import datetime as dt
 import logging
 from collections import namedtuple
+from functools import lru_cache
 
 from deathpledge import keys
 from deathpledge import support
@@ -20,6 +21,7 @@ class BingMapsAPI(object):
         self.logger = logging.getLogger(f'{__name__}.{type(self).__name__}')
         self.bingMapsKey = keys['API_keys']['bingMapsKey']
 
+    @lru_cache()
     def get_geocoords(self, geocoder):
         """Geocode a location with the route coordinates of a street address.
         

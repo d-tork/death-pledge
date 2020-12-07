@@ -47,6 +47,7 @@ class URLDataFrame(object):
         self._prepare_dataframe()
         if last_n is not None:
             self._trim_last_n(last_n)
+        self._set_order_newest_to_oldest()
 
     def __getattr__(self, attr):
         return getattr(self.df, attr)
@@ -68,6 +69,9 @@ class URLDataFrame(object):
 
     def _remove_duplicate_listings(self):
         self.df.drop_duplicates(subset=['url'], keep='first', inplace=True)
+
+    def _set_order_newest_to_oldest(self):
+        self.df.sort_index(ascending=False, inplace=True)
 
     @staticmethod
     def trim_url(url_str: str) -> str:

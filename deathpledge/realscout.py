@@ -83,7 +83,7 @@ class RealScoutWebsite(WebDataSource):
             TimeoutException: If listing details don't appear within 10 sec after navigation.
 
         """
-        logger.info(f'scraping URL: {url}')
+        self.logger.info(f'scraping URL: {url}')
         if not scrape.url_is_valid(url):
             raise ValueError()
 

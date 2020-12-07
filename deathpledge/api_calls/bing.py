@@ -109,6 +109,19 @@ class BingGeocoderAPICall(BingAPICall):
         self.url_args = {k: v for k, v in url_args.items() if v is not None}
 
 
+def get_bing_maps_data(home):
+    """Return all data from Bing maps for a given home."""
+    data = {}
+    bing_api = BingMapsAPI()
+
+    geocoder = BingGeocoderAPICall(
+        address=home.get('full_address'),
+        zip_code=home.get('parsed_address').get('ZipCode')
+    )
+    data['geocoords'] = bing_api.get_geocoords(geocoder=geocoder)
+    # TODO: add steps for each of the Bing items: commute, nearby metro, etc.
+
+
 def get_bing_commute_time(startcoords, endcoords):
     """Get commute travel time between two lat/lon tuples from Bing API.
 

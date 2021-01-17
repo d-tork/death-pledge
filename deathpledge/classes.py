@@ -6,7 +6,7 @@ import json
 import logging
 
 import deathpledge
-from deathpledge import realscout, database, support, cleaning, enrich
+from deathpledge import database, support, cleaning, enrich
 from deathpledge import keys
 
 
@@ -175,7 +175,6 @@ class WebDataSource(object):
     """
 
     def __init__(self, webdriver):
-        self._config = deathpledge.keys['Realscout']
         self.webdriver = webdriver
 
     def get_soup_for_url(self):

@@ -25,6 +25,7 @@ class RealScoutWebsite(classes.WebDataSource):
 
     def __init__(self, *args, **kwargs):
         self.logger = logging.getLogger(f'{__name__}.{type(self).__name__}')
+        self._config = deathpledge.keys['Realscout']
         super().__init__(*args, **kwargs)
         self.signed_in = False
 

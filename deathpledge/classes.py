@@ -160,3 +160,23 @@ class Home(dict):
         outfilepath = path.join(deathpledge.LISTINGS_DIR, filename)
         with open(outfilepath, 'w') as f:
             f.write(json.dumps(self, indent=4))
+
+
+class ListingNotAvailable(Exception):
+    pass
+
+
+class WebDataSource(object):
+    """Website for scraping and related configuration.
+
+    Args:
+        webdriver: Selenium WebDriver for navigating in a browser.
+
+    """
+
+    def __init__(self, webdriver):
+        self._config = deathpledge.keys['Realscout']
+        self.webdriver = webdriver
+
+    def get_soup_for_url(self):
+        raise NotImplementedError('Subclass must implement abstract method')

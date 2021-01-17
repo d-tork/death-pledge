@@ -15,30 +15,12 @@ from itertools import zip_longest
 
 import deathpledge
 from deathpledge import scrape2 as scrape
+from deathpledge import classes
 
 logger = logging.getLogger(__name__)
 
 
-class ListingNotAvailable(Exception):
-    pass
-
-
-class WebDataSource(object):
-    """Website for scraping and related configuration.
-
-    Args:
-        webdriver: Selenium WebDriver for navigating in a browser.
-
-    """
-    def __init__(self, webdriver):
-        self._config = deathpledge.keys['Realscout']
-        self.webdriver = webdriver
-
-    def get_soup_for_url(self):
-        raise NotImplementedError('Subclass must implement abstract method')
-
-
-class RealScoutWebsite(WebDataSource):
+class RealScoutWebsite(classes.WebDataSource):
     """Container for Realscout website and access methods for scraping the self."""
 
     def __init__(self, *args, **kwargs):
@@ -93,7 +75,7 @@ class RealScoutWebsite(WebDataSource):
 
         self.webdriver.get(url)
         if 'Listing unavailable.' in self.webdriver.page_source:
-            raise ListingNotAvailable("Bad URL or listing no longer exists.")
+            raise classes.ListingNotAvailable("Bad URL or listing no longer exists.")
 
         try:
             WebDriverWait(self.webdriver, 10).until(

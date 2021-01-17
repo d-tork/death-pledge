@@ -60,16 +60,24 @@ class HomeScoutWebsite(classes.WebDataSource):
         WebDriverWait(self.webdriver, 15).until(EC.visibility_of(mystuff))
         self.logger.info('signed in')
 
-    def collect_listings(self, max_pages):
+    def collect_listings(self, max_pages: int) -> list:
         self.webdriver.get(self._config['results_url'])
+        sleep(2)
         listing_pages = []
         for page in range(1, max_pages):
             results_page_soup = HomeScoutList(self.webdriver.page_source, 'html.parser')
             listing_pages.append(results_page_soup)
-            next_button = self.webdriver.find_elements_by_class_name('mcl-paging-next')[1]
+            WebDriverWait(self.webdriver, 10).until(
+                EC.presence_of_element_located((By.CLASS_NAME, 'mcl-paging-next'))
+            )
+            paging_buttons = self._get_paging_buttons()
+            next_button = paging_buttons[1]
             next_button.click()
             sleep(2)
         return listing_pages
+
+    def _get_paging_buttons(self):
+        return self.webdriver.find_elements_by_class_name('mcl-paging-next')
 
     def get_soup_for_url(self, url):
         """Get BeautifulSoup object for a URL.

@@ -6,7 +6,7 @@ import logging
 import deathpledge
 from deathpledge.logs.log_setup import setup_logging
 from deathpledge.logs import *
-from deathpledge.api_calls import google_sheets as gs
+from deathpledge.api_calls import google_sheets as gs, check
 from deathpledge import classes, scrape2, support, database
 
 logger = logging.getLogger(__name__)

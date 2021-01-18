@@ -24,8 +24,8 @@ def main():
     ).creds
 
     with database.DatabaseClient() as cloudant:
-        # run_homescout(db_client=cloudant)
-        # gs.refresh_url_sheet(google_creds, db_client=cloudant)
+        run_homescout(db_client=cloudant)
+        gs.refresh_url_sheet(google_creds, db_client=cloudant)
         process_data(args, google_creds, db_client=cloudant)
     return
 
@@ -47,7 +47,7 @@ def parse_commandline_arguments():
 
 
 def run_homescout(db_client):
-    scrape2.scrape_from_homescout_gallery(db_client=db_client, quiet=True, max_pages=1)
+    scrape2.scrape_from_homescout_gallery(db_client=db_client, quiet=True, max_pages=5)
 
 
 def get_urls_to_scrape(urls):
@@ -61,6 +61,8 @@ def process_data(args, google_creds, db_client):
     new_urls = gs.get_url_dataframe(google_creds, last_n=args.last_n)
     fetched_raw_docs = bulk_fetch_raw_docs(new_urls, db_client)
     for row in new_urls.itertuples():
+        if row.docid in db_client['deathpledge_clean_flat']:
+            continue
         doc = next((d for d in fetched_raw_docs if d['id'] == row.docid))['doc']
         home = classes.Home(
             url=doc['url'],

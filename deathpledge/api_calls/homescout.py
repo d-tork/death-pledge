@@ -176,13 +176,8 @@ class HomeScoutSoup(BeautifulSoup):
         super().__init__(*args, **kwargs)
         self.data = {}
 
-    def scrape_soup(self):
-        """Scrape all for a single BS4 self object.
-
-        TODO: refactor for homescout listing page
-
-        Returns: dict
-        """
+    def scrape_soup(self) -> dict:
+        """Scrape all for a single BS4 self object."""
         # Initialize dict with metadata
         self.data['scraped_time'] = datetime.now().strftime(deathpledge.TIMEFORMAT)
         self.data['scraped_source'] = 'Homescout'
@@ -190,138 +185,85 @@ class HomeScoutSoup(BeautifulSoup):
 
         # Process three sections
         self.data.update(self._get_main_box())
-        self.data.update(self._get_price_info())
-        self.data.update(self._get_cards())
+        self.data.update(self._get_quick_look())
+        self.data.update(self._get_estimated_value())
+        self.data.update(self._get_advanced())
+
+    def _get_div_string(self, classname):
+        return str(self.find('div', attrs={'class': classname}))
+
+    def _get_address(self):
+        address = self._get_div_string('detail-addr')
+        city_state_zip = self._get_div_string('detail-addr2')
+        return address, city_state_zip
+
+    def _get_price_and_status(self):
+        details_tag = self.find('div', attrs={'class': 'detail-listing-price'})
+        price = details_tag.contents[5]
+        status = details_tag.contents[11]
+        return price, status
+
+    def _get_vitals(self):
+        vitals_tag = self.find_all('div', attrs={'class': 'detail-info1'})
+        Vitals = namedtuple('Vitals', 'beds baths sqft')
+        vitals = Vitals(
+            beds=self._parse_vitals_text(vitals_tag[0].text),
+            baths=self._parse_vitals_text(vitals_tag[1].text),
+            sqft=self._parse_vitals_text(vitals_tag[2].text)
+        )
+        return vitals
+
+    @staticmethod
+    def _parse_vitals_text(s):
+        return int(s.strip().split()[0])
 
     def _get_main_box(self) -> dict:
         """Add box details to home instance."""
         self.logger.debug('Getting main box details')
-        result = self.find_all('div', attrs={'class': 'col-8 col-sm-8 col-md-7'})
-        main_box = result[0]
-
-        # Extract strings from tags
-        badge = str(main_box.a.string)
-        address = str(main_box.h1.string)
-        citystate = str(main_box.h2.string)
-        vitals = main_box.h5.text.split(' |\xa0')
+        price, status = self.get_price_and_status()
+        address, citystate = self._get_address()
+        vitals = self._get_vitals()
 
         main_data = {
             'address': address,
             'city_state': citystate,
             'full_address': ' '.join([address, citystate]),
-            'beds': vitals[0],
-            'baths': vitals[1],
-            'sqft': vitals[2],
-            'badge': badge,
+            'beds': vitals.beds,
+            'baths': vitals.baths,
+            'sqft': vitals.sqft,
+            'badge': status,
+            'list_price': price
         }
         return main_data
 
-    def _get_price_info(self) -> dict:
+    def _get_quick_look(self) -> dict:
         """Add price info details to home instance."""
-        self.logger.debug('Getting price and status info')
-        info_data = {}
-        result = self.find_all('div', attrs={'class': 'col-4 col-sm-4 col-md-5 text-right'})
-        box = result[0]
-        price = box.h2.text
-        info_data['list_price'] = price
+        self.logger.debug('Getting quick look')
+        quick_data = {}
+        quicklook = self.find('div', attrs={'class': 'detail-left quick-look'})
+        attributes = quicklook.find_all('div', attrs={'class': 'attribute'})
+        for attrib in attributes:
+            attrib_name, attrib_value = attrib.text.split(':  ')
+            attrib_name = self._slugify(attrib_name)
+            quick_data[attrib_name] = attrib_value
+        return quick_data
 
-        try:
-            badge = box.p
-            if 'sold' in badge.text.lower():
-                date_sold = badge.text.split(': ')[-1]
-                date_sold = str(datetime.strptime(date_sold, '%m/%d/%Y'))
-                list_price = box.small.text.split()[-1]
-                info_data.update({
-                    'sold': date_sold,
-                    'sale_price': price,
-                    'list_price': list_price,
-                })
-        except AttributeError:
-            logger.debug(f'Error while getting price info, probably Off Market or In Contract.')
-        return info_data
-
-    def _get_cards(self) -> dict:
-        """Parse all cards."""
-        self.logger.debug('Processing cards')
-        card_data = {}
-        cards = self.find_all('div', attrs={'class': 'card'})
-
-        # First card, no title (basic info)
-        # except for MLS Number and Status, these are duplicates from further down the page
-        basic_info_card = cards[0]
-        basic_info_data = self._get_fields_in_basic_info_card(basic_info_card)
-        card_data.update(basic_info_data)
-
-        # All good cards
-        self.logger.debug('Processing all cards')
-        for i, card in enumerate(cards):
-            card_head = card.find('div', class_='card-header')
-            if i == 0:
-                self.logger.debug('Adding description pargraph')
-                card_data['description'] = card_head.text
-            elif card_head:
-                card_title = card_head.string
-                if card_title:
-                    discard = ['which', 'open houses', 'questions']
-                    if any(x in card_title.lower() for x in discard):
-                        continue
-
-                    # Create the key, in case names change or it's new
-                    card_attrib_list = card.find_all('div', class_='col-12')
-                    if card_attrib_list:
-                        normal_card_data = get_normal_card_data(card_attrib_list)
-                        card_data.update(normal_card_data)
-                    else:
-                        self.logger.debug('Processing the listing history card')
-                        card_attrib_list = card.find_all('div', class_='col-4')
-                        card_data['listing_history'] = self._scrape_history_card(card_attrib_list)
-        return card_data
+    def _get_estimated_value(self) -> dict:
+        price_box = self.find_all('div', attrs={'class': 'price-box'})[0].text
+        return dict(estimated_value=str(price_box))
 
     @staticmethod
-    def _get_fields_in_basic_info_card(card) -> dict:
-        """Extract fields and values from basic info card."""
-        basic_info_list = card.find_all('div', class_='col-12')
-        basic_info_data = {}
-        for field in basic_info_list:
-            name, value = tuple(field.text.split(u':\xa0 '))
-            name = (slugify(name).replace('-', '_'))
-            basic_info_data[name] = value
-        return basic_info_data
+    def _slugify(s):
+        return slugify(s).replace('-', '_')
 
-    @staticmethod
-    def _scrape_history_card(attrib_list: list) -> list:
-        """Create array of listing history objects."""
-        history_array = []
-        for row in grouper(attrib_list, 3):
-            key_list = ['date', 'from', 'to']
-            val_list = [tag.text.strip() for tag in row]
-
-            obj = dict(zip(key_list, val_list))
-            obj['date'] = str(datetime.strptime(obj.get('date'), '%b %d, %Y').date())
-
-            # Parse currencies
-            for k, v in obj.items():
-                try:
-                    obj[k] = float(v.replace(',', '').replace('$', ''))
-                except ValueError:
-                    continue
-            history_array.append(obj)
-        return history_array
-
-
-def get_normal_card_data(attrib_list: list) -> dict:
-    """Extract fields and values from a normal card."""
-    card_data = {}
-    for tag in attrib_list:
-        attribute_pair = tuple(tag.text.split(u':'))
-        attribute_pair = [x.strip() for x in attribute_pair]  # Strip whitespace from both
-        name, value = attribute_pair
-        name = slugify(attribute_pair[0]).replace('-', '_')
-        card_data[name] = value
-    return card_data
-
-
-def grouper(iterable, n, fillvalue=None):
-    """For iterating over a list in chunks of n size"""
-    args = [iter(iterable)] * n
-    return zip_longest(*args, fillvalue=fillvalue)
+    def _get_advanced(self) -> dict:
+        """Parse advanced details."""
+        self.logger.debug('Scraping details')
+        advanced_data = {}
+        feature_groups = self.find('div', attrs={'class': 'detail-feature-groups'})
+        features = feature_groups.find_all('div', attrs={'class': 'feature-display'})
+        for feature in features:
+            feature_name = self._slugify(feature.find('span', attrs={'class': 'feature-name'}).text)
+            feature_val = feature.find('span', attrs={'class': 'feature-value'}).text
+            advanced_data[feature_name] = feature_val
+        return advanced_data

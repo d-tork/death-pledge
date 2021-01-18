@@ -125,7 +125,7 @@ class Home(dict):
 
     def enrich(self):
         """Add additional values from external sources."""
-        enrich.add_coords(self, force=True)
+        enrich.bing.get_bing_maps_data(self)
         enrich.add_bing_commute(self)
         enrich.add_nearest_metro(self)
         enrich.add_frequent_driving(self, keys['Locations']['favorite_driving'])

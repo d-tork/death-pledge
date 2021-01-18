@@ -31,24 +31,6 @@ class EnrichError(Exception):
     pass
 
 
-def add_coords(home, force=False):
-    """Convert address to geocoords."""
-    # Check for existing value
-    coords = home.setdefault('geocoords', None)
-    if (coords is None) or force:
-        try:
-            coords = bing.get_coords(
-                home['full_address'],
-                zip_code=home['parsed_address'].get('ZipCode')
-            )
-        except BadResponse:
-            logger.exception(f"Failed to retrieve geocoords for {home.get('address')}")
-            coords = None
-        else:
-            logger.debug('Geocoords updated from Bing')
-    home['geocoords'] = coords
-
-
 def add_bing_commute(home, force=False):
     """Add the bing transit time.
 

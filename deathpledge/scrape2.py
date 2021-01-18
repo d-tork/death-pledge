@@ -13,7 +13,7 @@ import subprocess
 
 import deathpledge
 from deathpledge import support, classes
-from deathpledge.api_calls import homescout as hs
+from deathpledge.api_calls import homescout as hs, check
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +86,20 @@ def scrape_from_url_df(urls, db_client, *args, **kwargs):
             except:
                 continue
             current_home.upload(db_name=deathpledge.RAW_DATABASE_NAME, db_client=db_client)
+
+
+def scrape_from_homescout_gallery(db_client, *args, **kwargs):
+    cards = check.main()
+    with SeleniumDriver(*args, **kwargs) as wd:
+        homescout = hs.HomeScoutWebsite(webdriver=wd.webdriver)
+        for card in cards:
+            if not card.exists:
+                current_home = classes.Home(url=card.url, docid=card.docid)
+                try:
+                    current_home.scrape(website_object=homescout)
+                except:
+                    raise
+                current_home.upload(db_name=deathpledge.RAW_DATABASE_NAME, db_client=db_client)
 
 
 def url_is_valid(url):

@@ -24,8 +24,9 @@ def main():
     ).creds
 
     with database.DatabaseClient() as cloudant:
-        get_raw_data(args, google_creds, db_client=cloudant)
-        process_data(args, google_creds, db_client=cloudant)
+        run_homescout(db_client=cloudant)
+        # get_raw_data(args, google_creds, db_client=cloudant)
+        # process_data(args, google_creds, db_client=cloudant)
     return
 
 
@@ -43,6 +44,10 @@ def parse_commandline_arguments():
     parser.add_argument('--new', action='store_true', dest='only_new',
                         help='Only scrape URLs that are not already in the database.')
     return parser.parse_args()
+
+
+def run_homescout(db_client):
+    scrape2.scrape_from_homescout_gallery(db_client=db_client, quiet=True)
 
 
 def get_raw_data(args, google_creds, db_client):

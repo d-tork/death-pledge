@@ -78,7 +78,7 @@ def check_cards_for_changes(cards: dict) -> list:
     return checked_cards
 
 
-def main():
+def main() -> list:
     cards = get_gallery_cards()
     cards_by_docid = get_docids_for_gallery_cards(cards=cards)
     checked_cards = check_cards_for_changes(cards_by_docid)

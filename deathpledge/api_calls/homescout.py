@@ -90,7 +90,6 @@ class HomeScoutWebsite(classes.WebDataSource):
 
         Raises:
             ValueError: If URL is invalid.
-            ListingNotAvailable
             TimeoutException: If listing details don't appear within 10 sec after navigation.
 
         """
@@ -99,14 +98,11 @@ class HomeScoutWebsite(classes.WebDataSource):
             raise ValueError()
 
         self.webdriver.get(url)
-        if 'Listing unavailable.' in self.webdriver.page_source:  # TODO: remove or replace with homescout version
-            raise classes.ListingNotAvailable("Bad URL or listing no longer exists.")
-
         try:
             WebDriverWait(self.webdriver, 10).until(
-                EC.presence_of_element_located((By.ID, 'listing-detail')))  # TODO: modify for homescout
+                EC.presence_of_element_located((By.CLASS_NAME, 'agent-header')))
         except TimeoutException:
-            raise TimeoutException('Listing page did not load.')
+            raise TimeoutException('Listing did not load.')
 
         return HomeScoutSoup(self.webdriver.page_source, 'html.parser')
 

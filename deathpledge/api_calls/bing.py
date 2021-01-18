@@ -120,6 +120,7 @@ def get_bing_maps_data(home):
     )
     data['geocoords'] = bing_api.get_geocoords(geocoder=geocoder)
     # TODO: add steps for each of the Bing items: commute, nearby metro, etc.
+    home.update(data)
 
 
 def get_bing_commute_time(startcoords, endcoords):

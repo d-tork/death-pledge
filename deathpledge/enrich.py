@@ -49,7 +49,7 @@ def add_bing_commute(home, force=False):
     if (not all([v for k, v in bing_commute_items.items()])) | force:
         # At least one of them is empty or force=True, Bing API call is necessary
         # If not force, and if all values already exist, do not update
-        house_coords = tuple(home['geocoords'].values())
+        house_coords = tuple(home['geocoords'])
         work_coords = tuple(keys['Locations']['work_coords'].values())
         try:
             commute = bing.get_bing_commute_time(
@@ -68,7 +68,7 @@ def add_bing_commute(home, force=False):
 def add_nearest_metro(home):
     """Add the three nearest metro stations in distance order.
     """
-    house_coords = tuple(home['geocoords'].values())
+    house_coords = tuple(home['geocoords'])
     try:
         station_list = bing.find_nearest_metro(house_coords)
     except BadResponse:
@@ -81,9 +81,10 @@ def add_frequent_driving(home, favorites_dic):
     """Add the road distance and drive time to frequented places by car.
     TODO: refactor
     """
-    house_coords = tuple(home['geocoords'].values())
+    house_coords = tuple(home['geocoords'])
     for place, attribs in favorites_dic.items():
-        place_coords = tuple(bing.get_coords(attribs['addr']).values())
+        place_geocoder = bing.BingGeocoderAPICall(address=attribs['addr'])
+        place_coords = tuple(bing.BingMapsAPI.get_geocoords(geocoder=place_geocoder))
         day = attribs.get('day', None)
         starttime = attribs.get('time', None)
         try:
@@ -98,7 +99,7 @@ def add_frequent_driving(home, favorites_dic):
 
 def add_tether(home):
     """Add straight-line distance to centerpoint."""
-    house_coords = tuple(home['geocoords'].values())
+    house_coords = tuple(home['geocoords'])
     center = tuple(keys['Locations']['centerpoint'].values())
     try:
         dist = support.haversine(house_coords, center)

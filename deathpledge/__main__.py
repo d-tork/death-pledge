@@ -24,8 +24,8 @@ def main():
     ).creds
 
     with database.DatabaseClient() as cloudant:
-        run_homescout(db_client=cloudant)
-        gs.refresh_url_sheet(google_creds, db_client=cloudant)
+        # run_homescout(db_client=cloudant)
+        # gs.refresh_url_sheet(google_creds, db_client=cloudant)
         process_data(args, google_creds, db_client=cloudant)
     return
 

@@ -74,12 +74,6 @@ class Home(dict):
             added_date = datetime.now()
         return added_date
 
-    def create_docid_from_address(self):
-        """Generate docid from hash of address"""
-        scraped_address = support.clean_address(self['full_address'])
-        scraped_addr_id = support.create_house_id(scraped_address)
-        self.docid = self['_id'] = scraped_addr_id
-
     def fetch(self, db_name, db_client):
         """Retrieve existing data from database."""
         if self.docid:
@@ -103,7 +97,6 @@ class Home(dict):
         soup.scrape_soup()
         self.update(soup.data)
         self._add_class_attributes_as_dict_keys()
-        self.create_docid_from_address()
 
     def _add_class_attributes_as_dict_keys(self):
         """Add attributes to the data dictionary for this instance."""

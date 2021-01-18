@@ -200,7 +200,15 @@ class HomeScoutSoup(BeautifulSoup):
         return str(self.find('div', attrs={'class': classname}).text)
 
     def _correct_key_names(self):
-        self.data['mls_number'] = self.data.pop('mls_id')
+        corrections = {
+            'mls_id': 'mls_number',
+            '12_bathrooms': 'half_baths',
+        }
+        for old_name, new_name in corrections.items():
+            try:
+                self.data[new_name] = self.data.pop(old_name)
+            except KeyError:
+                continue
 
     def _get_address(self):
         address = self._get_div_string('detail-addr')

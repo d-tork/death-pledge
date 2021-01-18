@@ -40,13 +40,51 @@ class BingMapsAPI(object):
                              .get('coordinates'))
         return Geocoords._make(coordinates_value)
 
-    def get_commute(self):
+    def get_commute(self, commute_request):
+        """Get commute travel time between two lat/lon tuples from Bing API.
+
+        Args:
+            commute_request (BingCommuteAPICall): URL constructor for this API call, containing
+                the start and end coordinates.
+
+        Returns:
+            namedtuple:
+                commute_time: Total commute time in minutes
+                first_leg (str): Mode of transit for first major leg
+                first_walk (float): Walk time in minutes to first transit or destination
+
+        Raises:
+            KeyError: If JSON from Bing does not match expected structure.
+
+        """
+        api_response = self._get_api_response(commute_request)
+        try:
+            trip = api_response['resourceSets'][0]['resources'][0]
+        except KeyError:
+            raise KeyError('JSON response from Bing does not have expected structure.')
+
+        travel_time_in_sec: int = trip.get('travelDuration')
+        travel_time_in_min: float = round(travel_time_in_sec / 60, 0)
+        try:
+            first_leg = get_first_leg_from_trip(trip=trip)
+        except ValueError:
+            logger.exception('Failed to get first transit leg info.')
+            first_leg = {}
+
+        Commute = namedtuple('Commute', ['commute_time', 'first_leg', 'first_walk'])
+        commute = Commute(
+            commute_time=travel_time_in_min,
+            first_leg=first_leg.get('mode'),
+            first_walk=first_leg.get('walktime')
+        )
+        return commute
+
+    def get_nearby_metro(self, metro_request):
+        api_response = self._get_api_response(metro_request)
         pass
 
-    def get_nearby_metro(self):
-        pass
-
-    def get_driving_info(self):
+    def get_driving_info(self, driving_request):
+        api_response = self._get_api_response(driving_request)
         pass
 
     def _get_api_response(self, api_call) -> dict:
@@ -109,6 +147,32 @@ class BingGeocoderAPICall(BingAPICall):
         self.url_args = {k: v for k, v in url_args.items() if v is not None}
 
 
+class BingCommuteAPICall(BingAPICall):
+    """Constructs URL args for API call to Bing maps for commute time between two locations.
+
+    Attributes:
+        baseurl (str): URL for this Bing Maps API call.
+        url_args (dict): Parameters to be appended to the `baseurl`.
+
+    Args:
+        startcoords (Geocoords): a namedtuple of geographic coordinates (lat/lon) as integers
+        endcoords (Geocoords): same as startcoords
+
+    """
+    baseurl = r"http://dev.virtualearth.net/REST/v1/Locations"
+
+    def __init__(self, startcoords, endcoords):
+        url_args = {
+            'wp.0': startcoords.to_string,
+            'wp.1': endcoords.to_string,
+            'timeType': 'Arrival',
+            'dateTime': support.get_commute_datetime('bing'),
+            'distanceUnit': 'mi',
+            'key': None,  # added by BingMapAPI method
+        }
+        self.url_args = {k: v for k, v in url_args.items() if v is not None}
+
+
 def get_bing_maps_data(home):
     """Return all data from Bing maps for a given home."""
     data = {}
@@ -119,63 +183,16 @@ def get_bing_maps_data(home):
         zip_code=home.get('parsed_address').get('ZipCode')
     )
     data['geocoords'] = bing_api.get_geocoords(geocoder=geocoder)
+    commute_request = BingCommuteAPICall(
+        startcoords=home['geocoords'],
+        endcoords=Geocoords._make(keys['Locations']['work_coords'].values())
+    )
+    commute = bing_api.get_commute(commute_request=commute_request)
+    data['commute_time'] = commute.commute_time
+    data['first_leg'] = commute.first_leg
+    data['first_walk'] = commute.first_walk
     # TODO: add steps for each of the Bing items: commute, nearby metro, etc.
     home.update(data)
-
-
-def get_bing_commute_time(startcoords, endcoords):
-    """Get commute travel time between two lat/lon tuples from Bing API.
-
-    Args:
-        startcoords (iterable): a list or tuple of geographic coordinates (lat/lon) as integers
-        endcoords (iterable): same as startcoords
-
-    Returns:
-        namedtuple:
-            commute_time: Total commute time in minutes
-            first_leg (str): Mode of transit for first major leg
-            first_walk (float): Walk time in minutes to first transit or destination
-
-    Raises:
-        BadResponse: If Bing response is not 200.
-        KeyError: If JSON from Bing does not match expected structure.
-
-    """
-    baseurl = r"http://dev.virtualearth.net/REST/V1/Routes/Transit"
-
-    url_dict = {
-        'wp.0': support.str_coords(startcoords),
-        'wp.1': support.str_coords(endcoords),
-        'timeType': 'Arrival',
-        'dateTime': support.get_commute_datetime('bing'),
-        'distanceUnit': 'mi',
-        'key': None
-    }
-    url_args = {k: v for k, v in url_dict.items() if v is not None}
-    response = requests.get(baseurl, params=url_args)
-    if response.status_code != 200:
-        raise support.BadResponse('Response code from bing not 200.')
-    r_dict = response.json()
-    try:
-        trip = r_dict['resourceSets'][0]['resources'][0]
-    except KeyError:
-        raise KeyError('JSON response from Bing does not have expected structure.')
-
-    travel_time_in_sec: int = trip.get('travelDuration')
-    travel_time_in_min: float = round(travel_time_in_sec/60, 0)
-    try:
-        first_leg = get_first_leg_from_trip(trip=trip)
-    except ValueError:
-        logger.exception('Failed to get first transit leg info.')
-        first_leg = {}
-
-    Commute = namedtuple('Commute', ['commute_time', 'first_leg', 'first_walk'])
-    commute = Commute(
-        commute_time=travel_time_in_min,
-        first_leg=first_leg.get('mode'),
-        first_walk=first_leg.get('walktime')
-    )
-    return commute
 
 
 def get_first_leg_from_trip(trip: dict) -> dict:

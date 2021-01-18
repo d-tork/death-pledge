@@ -337,23 +337,34 @@ def get_bing_maps_data(home):
         address=home.get('full_address'),
         zip_code=home.get('parsed_address').get('ZipCode')
     )
-    homecoords = bing_api.get_geocoords(geocoder=geocoder)
-    data['geocoords'] = homecoords
+    try:
+        homecoords = bing_api.get_geocoords(geocoder=geocoder)
+    except support.BadResponse:
+        pass
+    else:
+        data['geocoords'] = homecoords
 
     commute_request = BingCommuteAPICall(
         startcoords=homecoords,
         endcoords=Geocoords._make(keys['Locations']['work_coords'].values())
     )
-    commute = bing_api.get_commute(commute_request=commute_request)
-    data['commute_time'] = commute.commute_time
-    data['first_leg'] = commute.first_leg
-    data['first_walk'] = commute.first_walk
+    try:
+        commute = bing_api.get_commute(commute_request=commute_request)
+    except support.BadResponse:
+        pass
+    else:
+        data['commute_time'] = commute.commute_time
+        data['first_leg'] = commute.first_leg
+        data['first_walk'] = commute.first_walk
 
     nearby_metro_request = BingNearbyMetroAPICall(startcoords=homecoords)
-    data['nearby_metro'] = bing_api.get_nearby_metro(
-        metro_request=nearby_metro_request,
-        homecoords=homecoords
-    )
+    try:
+        data['nearby_metro'] = bing_api.get_nearby_metro(
+            metro_request=nearby_metro_request,
+            homecoords=homecoords
+        )
+    except support.BadResponse:
+        pass
 
     for place, attribs in keys['Locations']['favorite_driving'].items():
         place_geocoder = BingGeocoderAPICall(address=attribs['addr'])

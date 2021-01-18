@@ -11,7 +11,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 from django.utils.text import slugify
-from itertools import zip_longest
 from collections import namedtuple
 from urllib.parse import urlparse
 
@@ -183,7 +182,7 @@ class HomeScoutSoup(BeautifulSoup):
         self.data['scraped_source'] = 'Homescout'
         self.logger.debug('Added scraping operation metadata')
 
-        # Process three sections
+        # Add three sections to data
         self.data.update(self._get_main_box())
         self.data.update(self._get_quick_look())
         self.data.update(self._get_estimated_value())

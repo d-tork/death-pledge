@@ -88,8 +88,8 @@ def scrape_from_url_df(urls, db_client, *args, **kwargs):
             current_home.upload(db_name=deathpledge.RAW_DATABASE_NAME, db_client=db_client)
 
 
-def scrape_from_homescout_gallery(db_client, *args, **kwargs):
-    cards = check.main()
+def scrape_from_homescout_gallery(db_client, pages: int, *args, **kwargs):
+    cards = check.main(max_pages=pages)
     with SeleniumDriver(*args, **kwargs) as wd:
         homescout = hs.HomeScoutWebsite(webdriver=wd.webdriver)
         for card in cards:

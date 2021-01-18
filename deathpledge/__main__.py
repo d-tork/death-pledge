@@ -47,7 +47,7 @@ def parse_commandline_arguments():
 
 
 def run_homescout(db_client):
-    scrape2.scrape_from_homescout_gallery(db_client=db_client, quiet=True)
+    scrape2.scrape_from_homescout_gallery(db_client=db_client, quiet=True, max_pages=1)
 
 
 def get_raw_data(args, google_creds, db_client):

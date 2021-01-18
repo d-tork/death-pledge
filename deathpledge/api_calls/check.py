@@ -28,12 +28,12 @@ class HomeToBeChecked(object):
         return any([price_changed, status_changed])
 
 
-def get_gallery_cards(**kwargs) -> list:
-    with SeleniumDriver(quiet=False) as wd:
+def get_gallery_cards(max_pages, **kwargs) -> list:
+    with SeleniumDriver(**kwargs) as wd:
         homescout = hs.HomeScoutWebsite(webdriver=wd.webdriver)
         homescout.sign_into_website()
 
-        listing_pages = homescout.collect_listings(**kwargs)
+        listing_pages = homescout.collect_listings(max_pages=max_pages)
         all_cards = []
         for page in listing_pages:
             cards = page.scrape_page()
@@ -70,16 +70,19 @@ def check_cards_for_changes(cards: dict) -> list:
         except (KeyError, StopIteration):
             pass
         else:
-            homecard.exists = True
-            if homecard.has_changed(doc):
-                homecard.changed = True
+            if doc is None:  # docid is in db, but deleted
+                pass
+            else:
+                homecard.exists = True
+                if homecard.has_changed(doc):
+                    homecard.changed = True
         finally:
             checked_cards.append(homecard)
     return checked_cards
 
 
-def main(**kwargs) -> list:
-    cards = get_gallery_cards(**kwargs)
+def main(max_pages, **kwargs) -> list:
+    cards = get_gallery_cards(max_pages=max_pages, **kwargs)
     cards_by_docid = get_docids_for_gallery_cards(cards=cards)
     checked_cards = check_cards_for_changes(cards_by_docid)
     return checked_cards

@@ -63,12 +63,15 @@ class HomeScoutWebsite(classes.WebDataSource):
         self.webdriver.get(self._config['results_url'])
         sleep(2)
         listing_pages = []
-        for page in range(1, max_pages):
+        for page in range(max_pages):
             results_page_soup = HomeScoutList(self.webdriver.page_source, 'html.parser')
             listing_pages.append(results_page_soup)
-            WebDriverWait(self.webdriver, 10).until(
-                EC.presence_of_element_located((By.CLASS_NAME, 'mcl-paging-next'))
-            )
+            try:
+                WebDriverWait(self.webdriver, 10).until(
+                    EC.presence_of_element_located((By.CLASS_NAME, 'mcl-paging-next'))
+                )
+            except TimeoutException:
+                raise IndexError('Reached last page of results')
             paging_buttons = self._get_paging_buttons()
             next_button = paging_buttons[1]
             next_button.click()
@@ -185,11 +188,19 @@ class HomeScoutSoup(BeautifulSoup):
         # Add three sections to data
         self.data.update(self._get_main_box())
         self.data.update(self._get_quick_look())
-        self.data.update(self._get_estimated_value())
         self.data.update(self._get_advanced())
+        try:
+            self.data.update(self._get_estimated_value())
+        except IndexError:
+            self.logger.debug('estimated value not available')
+            pass
+        self._correct_key_names()
 
     def _get_div_string(self, classname):
-        return str(self.find('div', attrs={'class': classname}))
+        return str(self.find('div', attrs={'class': classname}).text)
+
+    def _correct_key_names(self):
+        self.data['mls_number'] = self.data.pop('mls_id')
 
     def _get_address(self):
         address = self._get_div_string('detail-addr')
@@ -198,8 +209,8 @@ class HomeScoutSoup(BeautifulSoup):
 
     def _get_price_and_status(self):
         details_tag = self.find('div', attrs={'class': 'detail-listing-price'})
-        price = details_tag.contents[5]
-        status = details_tag.contents[11]
+        price = str(details_tag.contents[5])
+        status = str(details_tag.contents[11])
         return price, status
 
     def _get_vitals(self):
@@ -219,7 +230,7 @@ class HomeScoutSoup(BeautifulSoup):
     def _get_main_box(self) -> dict:
         """Add box details to home instance."""
         self.logger.debug('Getting main box details')
-        price, status = self.get_price_and_status()
+        price, status = self._get_price_and_status()
         address, citystate = self._get_address()
         vitals = self._get_vitals()
 
@@ -231,6 +242,7 @@ class HomeScoutSoup(BeautifulSoup):
             'baths': vitals.baths,
             'sqft': vitals.sqft,
             'badge': status,
+            'status': status,
             'list_price': price
         }
         return main_data
@@ -242,7 +254,12 @@ class HomeScoutSoup(BeautifulSoup):
         quicklook = self.find('div', attrs={'class': 'detail-left quick-look'})
         attributes = quicklook.find_all('div', attrs={'class': 'attribute'})
         for attrib in attributes:
-            attrib_name, attrib_value = attrib.text.split(':  ')
+            try:
+                attrib_items = [x.strip() for x in attrib.text.split(':')]
+                attrib_name, attrib_value = attrib_items
+            except Exception as e:
+                self.logger.error(f"attribute getter failed to split '{attrib.text}", exc_info=e)
+                continue
             attrib_name = self._slugify(attrib_name)
             quick_data[attrib_name] = attrib_value
         return quick_data

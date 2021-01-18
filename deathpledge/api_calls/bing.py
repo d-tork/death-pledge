@@ -110,10 +110,12 @@ class BingMapsAPI(object):
             )
             walk_info = self.get_walk_time(walk_request=walk_request)
             metro_stations.update(
-                {'{}'.format(name.upper()): walk_info}
+                {'{}'.format(name.upper()): dict(
+                    distance=walk_info.distance, duration=walk_info.duration
+                )}
             )
         sorted_metro_list = sorted(
-            metro_stations.items(), key=lambda x: x[1].get('walk_distance_miles')
+            metro_stations.items(), key=lambda x: x[1].get('distance')
         )
         return dict(sorted_metro_list)
 
@@ -235,12 +237,12 @@ class BingCommuteAPICall(BingAPICall):
         endcoords (Geocoords): same as startcoords
 
     """
-    baseurl = r"http://dev.virtualearth.net/REST/v1/Locations"
+    baseurl = r"http://dev.virtualearth.net/REST/V1/Routes/Transit"
 
     def __init__(self, startcoords, endcoords):
         url_args = {
-            'wp.0': startcoords.to_string,
-            'wp.1': endcoords.to_string,
+            'wp.0': startcoords.to_string(),
+            'wp.1': endcoords.to_string(),
             'timeType': 'Arrival',
             'dateTime': support.get_commute_datetime('bing'),
             'distanceUnit': 'mi',
@@ -265,7 +267,7 @@ class BingNearbyMetroAPICall(BingAPICall):
     def __init__(self, startcoords):
         url_args = {
             'query': 'metro station',
-            'userLocation': startcoords.to_string,
+            'userLocation': startcoords.to_string(),
             'maxResults': 2,
             'key': None,  # added by BingMapAPI method
         }
@@ -288,8 +290,8 @@ class BingWalkAPICall(BingAPICall):
 
     def __init__(self, startcoords, endcoords):
         url_args = {
-            'wp.0': startcoords.to_string,
-            'wp.1': endcoords.to_string,
+            'wp.0': startcoords.to_string(),
+            'wp.1': endcoords.to_string(),
             'optimize': 'time',
             'distanceUnit': 'mi',
             'key': None,  # added by BingMapAPI method
@@ -316,8 +318,8 @@ class BingDrivingAPICall(BingAPICall):
     def __init__(self, startcoords, endcoords, dayofweek=None, hrmin=None):
         commute_datetime_args = [x for x in [dayofweek, hrmin] if x is not None]
         url_args = {
-            'wp.0': startcoords.to_string,
-            'wp.1': endcoords.to_string,
+            'wp.0': startcoords.to_string(),
+            'wp.1': endcoords.to_string(),
             'optimize': 'timeWithTraffic',
             'distanceUnit': 'mi',
             'datetime': support.get_commute_datetime('bing', *commute_datetime_args),
@@ -353,9 +355,9 @@ def get_bing_maps_data(home):
         homecoords=homecoords
     )
 
-    for place, attribs in keys['Locations']['favorites_driving'].items():
+    for place, attribs in keys['Locations']['favorite_driving'].items():
         place_geocoder = BingGeocoderAPICall(address=attribs['addr'])
-        place_coords = tuple(BingMapsAPI.get_geocoords(geocoder=place_geocoder))
+        place_coords = bing_api.get_geocoords(geocoder=place_geocoder)
         driving_request = BingDrivingAPICall(
             startcoords=homecoords,
             endcoords=place_coords,

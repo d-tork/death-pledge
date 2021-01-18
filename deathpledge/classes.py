@@ -119,7 +119,7 @@ class Home(dict):
         for fn in cleaning_funcs:
             try:
                 fn(self)
-            except (AttributeError, ValueError) as e:
+            except (AttributeError, ValueError, KeyError) as e:
                 self.logger.exception(f'Cleaning step failed: {e}')
                 continue
 

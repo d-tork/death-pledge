@@ -93,7 +93,7 @@ def scrape_from_homescout_gallery(db_client, max_pages: int, *args, **kwargs):
     with SeleniumDriver(*args, **kwargs) as wd:
         homescout = hs.HomeScoutWebsite(webdriver=wd.webdriver)
         for card in cards:
-            if not card.exists:
+            if True:
                 current_home = classes.Home(url=card.url, docid=card.docid)
                 try:
                     current_home.scrape(website_object=homescout)

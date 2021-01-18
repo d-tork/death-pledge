@@ -68,7 +68,7 @@ class HomeScoutWebsite(classes.WebDataSource):
             listing_pages.append(results_page_soup)
             try:
                 WebDriverWait(self.webdriver, 10).until(
-                    EC.presence_of_element_located((By.CLASS_NAME, 'mcl-paging-next'))
+                    EC.presence_of_all_elements_located((By.CLASS_NAME, 'mcl-paging-next'))
                 )
             except TimeoutException:
                 raise IndexError('Reached last page of results')
@@ -218,7 +218,7 @@ class HomeScoutSoup(BeautifulSoup):
     def _get_price_and_status(self):
         details_tag = self.find('div', attrs={'class': 'detail-listing-price'})
         price = str(details_tag.contents[5])
-        status = str(details_tag.contents[11])
+        status = str(details_tag.contents[11]).title()
         return price, status
 
     def _get_vitals(self):

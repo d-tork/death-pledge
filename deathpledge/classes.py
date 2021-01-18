@@ -114,6 +114,7 @@ class Home(dict):
             cleaning.split_comma_delimited_fields,
             cleaning.convert_numbers,
             cleaning.parse_address,
+            cleaning.parse_homescout_date,
         ]
         for fn in cleaning_funcs:
             try:

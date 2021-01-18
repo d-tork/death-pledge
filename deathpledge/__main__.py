@@ -26,7 +26,7 @@ def main():
     with database.DatabaseClient() as cloudant:
         run_homescout(db_client=cloudant)
         gs.refresh_url_sheet(google_creds, db_client=cloudant)
-        # process_data(args, google_creds, db_client=cloudant)
+        process_data(args, google_creds, db_client=cloudant)
     return
 
 
@@ -47,7 +47,7 @@ def parse_commandline_arguments():
 
 
 def run_homescout(db_client):
-    scrape2.scrape_from_homescout_gallery(db_client=db_client, quiet=True, max_pages=1)
+    scrape2.scrape_from_homescout_gallery(db_client=db_client, quiet=False, max_pages=1)
 
 
 def get_urls_to_scrape(urls):

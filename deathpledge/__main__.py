@@ -25,7 +25,7 @@ def main():
 
     with database.DatabaseClient() as cloudant:
         if not args.process_only:
-            run_homescout(db_client=cloudant)
+            check_and_scrape_homescout(db_client=cloudant, max_pages=5, quiet=True)
             gs.refresh_url_sheet(google_creds, db_client=cloudant)
         process_data(args, google_creds, db_client=cloudant)
     return
@@ -40,15 +40,13 @@ def parse_commandline_arguments():
     )
     parser.add_argument('-n', default=None, type=int, dest='last_n',
                         help='Number of recent URLs to parse, starting from the bottom of the list.')
-    parser.add_argument('-f', '--force-all', action='store_true',
-                        help='Force the re-scrape of all URLs.')
     parser.add_argument('--process', action='store_true', dest='process_only',
                         help='Only process listings already in the raw db.')
     return parser.parse_args()
 
 
-def run_homescout(db_client):
-    scrape2.scrape_from_homescout_gallery(db_client=db_client, quiet=True, max_pages=5)
+def check_and_scrape_homescout(db_client, **kwargs):
+    scrape2.scrape_from_homescout_gallery(db_client=db_client, **kwargs)
 
 
 def get_urls_to_scrape(urls):
@@ -59,10 +57,10 @@ def get_urls_to_scrape(urls):
 
 
 def process_data(args, google_creds, db_client):
-    new_urls = gs.get_url_dataframe(google_creds, last_n=args.last_n)
-    fetched_raw_docs = bulk_fetch_raw_docs(new_urls, db_client)
-    for row in new_urls.itertuples():
-        if row.docid in db_client['deathpledge_clean_flat']:
+    urls = gs.get_url_dataframe(google_creds, last_n=args.last_n)
+    fetched_raw_docs = bulk_fetch_raw_docs(urls, db_client)
+    for row in urls.itertuples():
+        if row.docid in db_client[deathpledge.DATABASE_NAME]:
             continue
         doc = next((d for d in fetched_raw_docs if d['id'] == row.docid))['doc']
         home = classes.Home(

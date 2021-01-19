@@ -7,7 +7,6 @@ import logging
 
 import deathpledge
 from deathpledge import database, support, cleaning, enrich
-from deathpledge import keys
 
 
 class Home(dict):
@@ -125,7 +124,7 @@ class Home(dict):
 
     def enrich(self):
         """Add additional values from external sources."""
-        enrich.bing.get_bing_maps_data(self)
+        enrich.add_bing_maps_data(self)
         enrich.add_tether(self)
 
     def get_geocoords(self):

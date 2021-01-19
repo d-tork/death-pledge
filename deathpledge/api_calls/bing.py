@@ -14,6 +14,10 @@ from deathpledge import support
 logger = logging.getLogger(__name__)
 
 
+class BingFailure(Exception):
+    pass
+
+
 class BingMapsAPI(object):
     """Container for getting data from Bing Maps REST API."""
 
@@ -66,7 +70,7 @@ class BingMapsAPI(object):
         travel_time_in_sec: int = trip.get('travelDuration')
         travel_time_in_min: float = round(travel_time_in_sec / 60, 0)
         try:
-            first_leg = get_first_leg_from_trip(trip=trip)
+            first_leg = self._get_first_leg_from_trip(trip=trip)
         except ValueError:
             logger.exception('Failed to get first transit leg info.')
             first_leg = {}
@@ -78,6 +82,40 @@ class BingMapsAPI(object):
             first_walk=first_leg.get('walktime')
         )
         return commute
+
+    @staticmethod
+    def _get_first_leg_from_trip(trip: dict) -> dict:
+        """Get transit mode for first transit leg of journey, and the walk time to it.
+
+        Assume that the first step in trip is always a walk, set that to
+        be the first leg mode and walktime. If a bus or train follows in step
+        2, update the mode but keep the walk time from original walk.
+
+        Args:
+            trip: Commute JSON response from bing.
+
+        Returns:
+            mode (str), walktime (float)
+
+        Raises:
+            ValueError: If Bing gives a transit type other than walk, bus, or train.
+
+        """
+        itinerary = trip['routeLegs'][0]['itineraryItems']
+        first_leg = {
+            'mode': itinerary[0].get('iconType'),
+            'walktime': round(itinerary[0].get('travelDuration') / 60, 1)
+        }
+        for i, leg in enumerate(itinerary):
+            leg_mode = leg.get('iconType')
+            if leg_mode == 'Walk':
+                continue
+            elif leg_mode in ['Bus', 'Train']:
+                first_leg.update(dict(mode=leg_mode))
+                break
+            else:
+                raise ValueError(f"Unknown transit mode from Bing:'{leg_mode}'")
+        return first_leg
 
     def get_nearby_metro(self, metro_request, homecoords):
         """Get metro stations nearest a location from Bing API.
@@ -328,210 +366,73 @@ class BingDrivingAPICall(BingAPICall):
         self.url_args = {k: v for k, v in url_args.items() if v is not None}
 
 
-def get_bing_maps_data(home):
-    """Return all data from Bing maps for a given home."""
-    data = {}
-    bing_api = BingMapsAPI()
+class BingDataGetter(object):
+    """Adds Bing maps attributes to a home."""
 
-    geocoder = BingGeocoderAPICall(
-        address=home.get('full_address'),
-        zip_code=home.get('parsed_address').get('ZipCode')
-    )
-    try:
-        homecoords = bing_api.get_geocoords(geocoder=geocoder)
-    except support.BadResponse:
-        pass
-    else:
-        data['geocoords'] = homecoords
+    def __init__(self, home):
+        self.logger = logging.getLogger(f'{__name__}.{type(self).__name__}')
+        self.home = home
+        self.bing_api = BingMapsAPI()
 
-    commute_request = BingCommuteAPICall(
-        startcoords=homecoords,
-        endcoords=Geocoords._make(keys['Locations']['work_coords'].values())
-    )
-    try:
-        commute = bing_api.get_commute(commute_request=commute_request)
-    except support.BadResponse:
-        pass
-    else:
-        data['commute_time'] = commute.commute_time
-        data['first_leg'] = commute.first_leg
-        data['first_walk'] = commute.first_walk
+    def add_data_to_home(self):
+        if not self.home.get('geocoords'):
+            self._get_home_coordinates()
+        self._get_commute()
+        self._get_nearby_metro()
+        self._get_driving()
 
-    nearby_metro_request = BingNearbyMetroAPICall(startcoords=homecoords)
-    try:
-        data['nearby_metro'] = bing_api.get_nearby_metro(
-            metro_request=nearby_metro_request,
-            homecoords=homecoords
-        )
-    except support.BadResponse:
-        pass
-
-    for place, attribs in keys['Locations']['favorite_driving'].items():
-        place_geocoder = BingGeocoderAPICall(address=attribs['addr'])
-        place_coords = bing_api.get_geocoords(geocoder=place_geocoder)
-        driving_request = BingDrivingAPICall(
-            startcoords=homecoords,
-            endcoords=place_coords,
-            dayofweek=attribs.get('day'),
-            hrmin=attribs.get('time')
+    def _get_home_coordinates(self):
+        geocoder = BingGeocoderAPICall(
+            address=self.home.get('full_address'),
+            zip_code=self.home.get('parsed_address').get('ZipCode')
         )
         try:
-            drive = bing_api.get_driving_info(driving_request)
+            self.home['geocoords'] = self.bing_api.get_geocoords(geocoder=geocoder)
         except support.BadResponse:
-            continue
-        else:
-            data[f'{place}_dist'] = drive.distance
-            data[f'{place}_time'] = drive.duration
-    home.update(data)
+            raise BingFailure(f"Could not retrieve geocoords for {self.home['full_address']}")
 
-
-def get_first_leg_from_trip(trip: dict) -> dict:
-    """Get transit mode for first transit leg of journey, and the walk time to it.
-
-    Assume that the first step in trip is always a walk, set that to
-    be the first leg mode and walktime. If a bus or train follows in step
-    2, update the mode but keep the walk time from original walk.
-
-    Args:
-        trip: Commute JSON response from bing.
-
-    Returns:
-        mode (str), walktime (float)
-
-    Raises:
-        ValueError: If Bing gives a transit type other than walk, bus, or train.
-
-    """
-    itinerary = trip['routeLegs'][0]['itineraryItems']
-    first_leg = {
-        'mode': itinerary[0].get('iconType'),
-        'walktime': round(itinerary[0].get('travelDuration') / 60, 1)
-    }
-    for i, leg in enumerate(itinerary):
-        leg_mode = leg.get('iconType')
-        if leg_mode == 'Walk':
-            continue
-        elif leg_mode in ['Bus', 'Train']:
-            first_leg.update(dict(mode=leg_mode))
-            break
-        else:
-            raise ValueError(f"Unknown transit mode from Bing:'{leg_mode}'")
-    return first_leg
-
-
-def get_walking_info(startcoords, endcoords):
-    """Retrieves the walking distance and duration between two
-    sets of XY coords.
-
-    :returns (distance, duration) tuple
-    """
-    baseurl = r"http://dev.virtualearth.net/REST/V1/Routes/Walking"
-
-    url_dict = {
-        'wp.0': support.str_coords(startcoords),
-        'wp.1': support.str_coords(endcoords),
-        'optimize': 'time',
-        'distanceUnit': 'mi',
-        'key': None
-    }
-    url_args = {k: v for k, v in url_dict.items() if v is not None}
-    response = requests.get(baseurl, params=url_args)
-    r_dict = response.json()
-
-    distance = r_dict['resourceSets'][0]['resources'][0]['travelDistance']
-    duration = r_dict['resourceSets'][0]['resources'][0]['travelDuration']
-
-    walk_info = {
-        'walk_distance_miles': round(distance, 2),
-        'walk_time': '{}'.format(str(dt.timedelta(seconds=duration)))
-    }
-    return walk_info
-
-
-def find_nearest_metro(startcoords):
-    """Given coordinates to a house (or wherever), find the two
-    closest metro stations.
-
-    Some metro stations are known to Bing by the name "Metro". In
-    these cases, they usually have a good URL so I'm taking the
-    name from the WMATA page that references them.
-
-    Returns:
-        list: (name, geocoords) tuples
-
-    Raises:
-        BadResponse: If Bing doesn't return response code 200.
-    """
-    BASEURL = r"http://dev.virtualearth.net/REST/V1/LocalSearch/"
-
-    url_dict = {
-        'query': 'metro station',
-        'userLocation': support.str_coords(startcoords),
-        'maxResults': 2,
-        'key': None
-    }
-    url_args = {k: v for k, v in url_dict.items() if v is not None}
-    response = requests.get(BASEURL, params=url_args)
-
-    if response.status_code != 200:
-        print('Request for metro stations failed.')
-        raise support.BadResponse('Response code for metro stations not 200.')
-
-    r_dict = response.json()
-    metro_stations = {}
-    for result in r_dict['resourceSets'][0]['resources']:
-        name = result['name']
-        if (len(name) < 6) | (name == 'Metro Rail'):
-            web = result['Website']
-            url_last_slash = web.rfind('/')
-            url_page_extension = web.rfind('.')
-            name = web[url_last_slash + 1:url_page_extension]
-        coords = result['point']['coordinates']
-        walk_info = get_walking_info(startcoords, coords)
-        metro_stations.update(
-            {'{}'.format(name.upper()): walk_info}
+    def _get_commute(self):
+        commute_request = BingCommuteAPICall(
+            startcoords=self.home['geocoords'],
+            endcoords=Geocoords._make(keys['Locations']['work_coords'].values())
         )
-    sorted_metro_list = sorted(
-        metro_stations.items(), key=lambda x: x[1].get('walk_distance_miles')
-    )
-    return dict(sorted_metro_list)
+        try:
+            commute = self.bing_api.get_commute(commute_request=commute_request)
+        except support.BadResponse:
+            self.logger.exception(f"Could not get commute for {self.home['full_address']}")
+        else:
+            self.home.update({
+                'commute_time': commute.commute_time,
+                'first_leg': commute.first_leg,
+                'first_walk': commute.first_walk
+            })
 
+    def _get_nearby_metro(self):
+        nearby_metro_request = BingNearbyMetroAPICall(startcoords=self.home['geocoords'])
+        try:
+            self.home['nearby_metro'] = self.bing_api.get_nearby_metro(
+                metro_request=nearby_metro_request,
+                homecoords=self.home['geocoords']
+            )
+        except support.BadResponse:
+            self.logger.exception(f"Could not get nearby metro for {self.home['full_address']}")
 
-def get_driving_info(startcoords, endcoords, dayofweek=None, hrmin=None):
-    """Retrieves the driving distance and duration between two
-    sets of XY coords.
-    """
-    baseurl = r"http://dev.virtualearth.net/REST/V1/Routes/Driving"
-    # Do not pass args if they are not supplied (the function will use its defaults
-    #   but really, you should always include a time and day that you'll be driving.
-    commute_datetime_args = [x for x in [dayofweek, hrmin] if x is not None]
-
-    url_dict = {
-        'wp.0': support.str_coords(startcoords),
-        'wp.1': support.str_coords(endcoords),
-        'distanceUnit': 'mi',
-        'optimize': 'timeWithTraffic',
-        'datetime': support.get_commute_datetime('bing', *commute_datetime_args),
-        'key': None
-        }
-    url_args = {k: v for k, v in url_dict.items() if v is not None}
-    response = requests.get(baseurl, params=url_args)
-    if response.status_code != 200:
-        print('Request for driving time failed.')
-        raise support.BadResponse
-
-    r_dict = response.json()
-    distance = r_dict['resourceSets'][0]['resources'][0]['travelDistance']
-    duration = r_dict['resourceSets'][0]['resources'][0]['travelDuration']
-    # pretty print
-    distance = '{:.2f} miles'.format(distance)
-    duration = str(dt.timedelta(seconds=duration))
-    return distance, duration
-
-
-if __name__ == '__main__':
-    full_address = '1600 Pennsylvania Ave NW, Washington, DC 20500'
-    zip = 20500
-    bing_api = BingMapsAPI()
-    gc = BingGeocoderAPICall(address=full_address, zip_code=zip)
-    coords = bing_api.get_geocoords(gc)
+    def _get_driving(self):
+        for place, attribs in keys['Locations']['favorite_driving'].items():
+            place_geocoder = BingGeocoderAPICall(address=attribs['addr'])
+            place_coords = self.bing_api.get_geocoords(geocoder=place_geocoder)
+            driving_request = BingDrivingAPICall(
+                startcoords=self.home['geocoords'],
+                endcoords=place_coords,
+                dayofweek=attribs.get('day'),
+                hrmin=attribs.get('time')
+            )
+            try:
+                drive = self.bing_api.get_driving_info(driving_request)
+            except support.BadResponse:
+                continue
+            else:
+                self.home.update({
+                    f'{place}_dist': drive.distance,
+                    f'{place}_time': drive.duration
+                })

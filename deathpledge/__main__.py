@@ -24,8 +24,9 @@ def main():
     ).creds
 
     with database.DatabaseClient() as cloudant:
-        run_homescout(db_client=cloudant)
-        gs.refresh_url_sheet(google_creds, db_client=cloudant)
+        if not args.process_only:
+            run_homescout(db_client=cloudant)
+            gs.refresh_url_sheet(google_creds, db_client=cloudant)
         process_data(args, google_creds, db_client=cloudant)
     return
 
@@ -41,8 +42,8 @@ def parse_commandline_arguments():
                         help='Number of recent URLs to parse, starting from the bottom of the list.')
     parser.add_argument('-f', '--force-all', action='store_true',
                         help='Force the re-scrape of all URLs.')
-    parser.add_argument('--new', action='store_true', dest='only_new',
-                        help='Only scrape URLs that are not already in the database.')
+    parser.add_argument('--process', action='store_true', dest='process_only',
+                        help='Only process listings already in the raw db.')
     return parser.parse_args()
 
 

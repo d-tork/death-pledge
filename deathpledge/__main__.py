@@ -25,9 +25,10 @@ def main():
 
     with database.DatabaseClient() as cloudant:
         if not args.process_only:
-            check_and_scrape_homescout(db_client=cloudant, max_pages=5, quiet=True)
+            scrape_new_urls_from_google(google_creds=google_creds, db_client=cloudant)
+            check_and_scrape_homescout(db_client=cloudant, max_pages=args.pages, quiet=True)
             gs.refresh_url_sheet(google_creds, db_client=cloudant)
-        process_data(args, google_creds, db_client=cloudant)
+        process_data(google_creds, db_client=cloudant)
     return
 
 
@@ -38,8 +39,8 @@ def parse_commandline_arguments():
         and then uploads to the clean database.""",
         epilog='Using --force-all overrides --new.'
     )
-    parser.add_argument('-n', default=None, type=int, dest='last_n',
-                        help='Number of recent URLs to parse, starting from the bottom of the list.')
+    parser.add_argument('-n', default=None, type=int, dest='pages',
+                        help='Number of pages of results to scrape.')
     parser.add_argument('--process', action='store_true', dest='process_only',
                         help='Only process listings already in the raw db.')
     return parser.parse_args()
@@ -49,6 +50,12 @@ def check_and_scrape_homescout(db_client, **kwargs):
     scrape2.scrape_from_homescout_gallery(db_client=db_client, **kwargs)
 
 
+def scrape_new_urls_from_google(google_creds, db_client):
+    urls = gs.get_url_dataframe(google_creds)
+    urls_no_status = urls.df.loc[urls.df['status'].isna()]
+    scrape2.scrape_from_url_df(urls=urls_no_status, db_client=db_client)
+
+
 def get_urls_to_scrape(urls):
     """Split off url rows that are either still open or don't exist in database."""
     status_open = urls.df['status'] != 'Closed'
@@ -56,11 +63,12 @@ def get_urls_to_scrape(urls):
     return urls.df.loc[status_open | not_in_db]
 
 
-def process_data(args, google_creds, db_client):
-    urls = gs.get_url_dataframe(google_creds, last_n=args.last_n)
+def process_data(google_creds, db_client):
+    urls = gs.get_url_dataframe(google_creds)
     fetched_raw_docs = bulk_fetch_raw_docs(urls, db_client)
+    clean_db_doc_ids = database.get_doc_list(client=db_client, db_name=deathpledge.DATABASE_NAME)
     for row in urls.itertuples():
-        if row.docid in db_client[deathpledge.DATABASE_NAME]:
+        if row.docid in clean_db_doc_ids:
             continue
         doc = next((d for d in fetched_raw_docs if d['id'] == row.docid))['doc']
         home = classes.Home(

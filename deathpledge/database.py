@@ -14,6 +14,7 @@ Cloudant's docs:
 """
 
 from cloudant.client import Cloudant
+from cloudant.result import Result
 from time import sleep
 import logging
 
@@ -117,3 +118,9 @@ def get_url_list(client):
     # Turn into dict of {index: <home data>} for easier dataframing
     results = {i: x['key'] for i, x in enumerate(results['rows'])}
     return results
+
+
+def get_doc_list(client: Cloudant.iam, db_name: str) -> list:
+    db = client[db_name]
+    result_collection = Result(db.all_docs, include_docs=False)
+    return [*result_collection]

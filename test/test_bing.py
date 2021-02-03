@@ -1,5 +1,4 @@
 import unittest
-from collections import namedtuple
 
 from deathpledge.api_calls import bing
 
@@ -8,19 +7,21 @@ class BingGeocoordsTestCase(unittest.TestCase):
     def setUp(self):
         self.full_address = '1600 Pennsylvania Ave NW, Washington, DC 20500'
         self.zip_code = 20500
+        self.bing_api = bing.BingMapsAPI()
 
     def test_fetch_geocoords_with_zip_code(self):
-        coords = bing.get_coords(address=self.full_address, zip_code=self.zip_code)
-        self.assertIsInstance(coords, dict)
-        self.assertIn('lat', coords)
-        self.assertIsInstance(coords.get('lat'), float)
-        self.assertAlmostEqual(coords.get('lat'), 38.89743, places=2)
+        geocoder = bing.BingGeocoderAPICall(address=self.full_address, zip_code=self.zip_code)
+        coords = self.bing_api.get_geocoords(geocoder)
+        self.assertIsInstance(coords, bing.Geocoords)
+        self.assertIsInstance(coords.lat, float)
+        self.assertAlmostEqual(coords.lat, 38.89743, places=2)
 
     def test_fetch_geocoords_without_zip_code(self):
-        coords = bing.get_coords(address=self.full_address)
-        self.assertIsInstance(coords, dict)
-        self.assertIn('lat', coords)
-        self.assertIsInstance(coords.get('lat'), float)
+        geocoder = bing.BingGeocoderAPICall(address=self.full_address)
+        coords = self.bing_api.get_geocoords(geocoder)
+        self.assertIsInstance(coords, bing.Geocoords)
+        self.assertIsInstance(coords.lat, float)
+        self.assertAlmostEqual(coords.lat, 38.89743, places=2)
 
 
 class BingCommuteTestCase(unittest.TestCase):

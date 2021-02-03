@@ -6,7 +6,7 @@ import json
 import logging
 
 import deathpledge
-from deathpledge import realscout, database, support, cleaning, enrich
+from deathpledge import database, support, cleaning, enrich
 from deathpledge import keys
 
 
@@ -74,12 +74,6 @@ class Home(dict):
             added_date = datetime.now()
         return added_date
 
-    def create_docid_from_address(self):
-        """Generate docid from hash of address"""
-        scraped_address = support.clean_address(self['full_address'])
-        scraped_addr_id = support.create_house_id(scraped_address)
-        self.docid = self['_id'] = scraped_addr_id
-
     def fetch(self, db_name, db_client):
         """Retrieve existing data from database."""
         if self.docid:
@@ -103,7 +97,6 @@ class Home(dict):
         soup.scrape_soup()
         self.update(soup.data)
         self._add_class_attributes_as_dict_keys()
-        self.create_docid_from_address()
 
     def _add_class_attributes_as_dict_keys(self):
         """Add attributes to the data dictionary for this instance."""
@@ -121,6 +114,7 @@ class Home(dict):
             cleaning.split_comma_delimited_fields,
             cleaning.convert_numbers,
             cleaning.parse_address,
+            cleaning.parse_homescout_date,
         ]
         for fn in cleaning_funcs:
             try:
@@ -160,3 +154,22 @@ class Home(dict):
         outfilepath = path.join(deathpledge.LISTINGS_DIR, filename)
         with open(outfilepath, 'w') as f:
             f.write(json.dumps(self, indent=4))
+
+
+class ListingNotAvailable(Exception):
+    pass
+
+
+class WebDataSource(object):
+    """Website for scraping and related configuration.
+
+    Args:
+        webdriver: Selenium WebDriver for navigating in a browser.
+
+    """
+
+    def __init__(self, webdriver):
+        self.webdriver = webdriver
+
+    def get_soup_for_url(self):
+        raise NotImplementedError('Subclass must implement abstract method')

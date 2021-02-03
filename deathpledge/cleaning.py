@@ -4,6 +4,8 @@ import logging
 import usaddress
 from collections import defaultdict
 
+from deathpledge import TIMEFORMAT, support
+
 logger = logging.getLogger(__name__)
 
 
@@ -88,3 +90,10 @@ def parse_address(home):
         parsed[k].append(v)  # for multi-word values belonging to same key
     parsed = {k: ' '.join(v) for k, v in parsed.items()}
     home['parsed_address'] = parsed
+
+
+def parse_homescout_date(home):
+    """Convert date when added to homescout."""
+    date_added = home['new_on_homescout']
+    parsed_datetime = support.coerce_date_string_to_date(date_added)
+    formatted_datetime = parsed_datetime.strftime(TIMEFORMAT)

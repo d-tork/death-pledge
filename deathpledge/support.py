@@ -115,7 +115,7 @@ def create_house_id(addr):
 
 
 def coerce_date_string_to_date(date_str):
-    date_str_formats = ['%m/%d/%Y', '%Y-%m-%dT%H:%M:%S']
+    date_str_formats = ['%m/%d/%Y', '%Y-%m-%dT%H:%M:%S', '%m-%d-%Y']
     date_object = date_str
     for date_format in date_str_formats:
         try:

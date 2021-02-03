@@ -13,7 +13,7 @@ import subprocess
 
 import deathpledge
 from deathpledge import support, classes
-from deathpledge import realscout as rs
+from deathpledge.api_calls import homescout as hs, check
 
 logger = logging.getLogger(__name__)
 
@@ -71,8 +71,8 @@ def scrape_from_url_df(urls, db_client, *args, **kwargs):
 
     """
     with SeleniumDriver(*args, **kwargs) as wd:
-        realscout = rs.RealScoutWebsite(webdriver=wd.webdriver)
-        realscout.sign_into_website()
+        homescout = hs.HomeScoutWebsite(webdriver=wd.webdriver)
+        homescout.sign_into_website()
 
         for row in urls.itertuples(index=False):
             if not url_is_valid(row.url):
@@ -82,10 +82,27 @@ def scrape_from_url_df(urls, db_client, *args, **kwargs):
                 logger.debug('Instance property "skip_web_scrape" set to True, will not scrape.')
                 continue
             try:
-                current_home.scrape(website_object=realscout)
+                current_home.scrape(website_object=homescout)
             except:
                 continue
             current_home.upload(db_name=deathpledge.RAW_DATABASE_NAME, db_client=db_client)
+
+
+def scrape_from_homescout_gallery(db_client, max_pages: int, *args, **kwargs):
+    cards = check.main(max_pages=max_pages, **kwargs)
+    with SeleniumDriver(*args, **kwargs) as wd:
+        homescout = hs.HomeScoutWebsite(webdriver=wd.webdriver)
+        for card in cards:
+            if True:
+                current_home = classes.Home(url=card.url, docid=card.docid)
+                try:
+                    current_home.scrape(website_object=homescout)
+                except:
+                    raise
+                current_home.upload(db_name=deathpledge.RAW_DATABASE_NAME, db_client=db_client)
+            else:
+                if card.changed:
+                    pass  # TODO: execute procedure for updating raw database record
 
 
 def url_is_valid(url):

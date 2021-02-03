@@ -6,7 +6,7 @@ import logging
 import deathpledge
 from deathpledge.logs.log_setup import setup_logging
 from deathpledge.logs import *
-from deathpledge.api_calls import google_sheets as gs
+from deathpledge.api_calls import google_sheets as gs, check
 from deathpledge import classes, scrape2, support, database
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,8 @@ def main():
     ).creds
 
     with database.DatabaseClient() as cloudant:
-        get_raw_data(args, google_creds, db_client=cloudant)
+        run_homescout(db_client=cloudant)
+        gs.refresh_url_sheet(google_creds, db_client=cloudant)
         process_data(args, google_creds, db_client=cloudant)
     return
 
@@ -45,30 +46,8 @@ def parse_commandline_arguments():
     return parser.parse_args()
 
 
-def get_raw_data(args, google_creds, db_client):
-    urls = gs.get_url_dataframe(google_creds, last_n=args.last_n)
-    if args.force_all:
-        logger.info('Force option passed, scraping all specified URLs.')
-        urls_to_scrape = urls.df
-    elif args.only_new:
-        logger.info('Only_new option passed, skipping Active listings if I already have them.')
-        urls_to_scrape = get_only_new_urls(urls)
-    else:
-        urls_to_scrape = get_urls_to_scrape(urls)
-    skipped_url_count = urls.shape[0] - urls_to_scrape.shape[0]
-    logger.info(f'Scraping {len(urls_to_scrape)} URL(s), {skipped_url_count} skipped')
-
-    if urls_to_scrape.empty:
-        logger.info('No URLs to scrape, skipping browser sign-in')
-    else:
-        scrape2.scrape_from_url_df(urls=urls_to_scrape, quiet=True, db_client=db_client)
-    gs.refresh_url_sheet(google_creds, db_client)
-
-
-def get_only_new_urls(urls):
-    """Split off url rows that don't exist in database."""
-    not_in_db = urls.df['docid'].isna()
-    return urls.df.loc[not_in_db]
+def run_homescout(db_client):
+    scrape2.scrape_from_homescout_gallery(db_client=db_client, quiet=False, max_pages=1)
 
 
 def get_urls_to_scrape(urls):

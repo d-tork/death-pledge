@@ -72,6 +72,10 @@ class URLDataFrame(object):
     def _trim_last_n(self, n):
         self.df = self.df[-n:]
 
+    def drop_closed_listings(self):
+        closed = self.df.loc[self.df['status'].str.lower().isin(['Closed', 'Expired'])]
+        self.df = self.df.drop(index=closed.index)
+
 
 class GoogleCreds(object):
     """Credentials for OAuth2.
@@ -142,6 +146,7 @@ def get_url_dataframe(google_creds, **kwargs):
         pd.DataFrame.from_records(data=google_sheets_rows),
         **kwargs
     )
+    google_df.drop_closed_listings()
     return google_df
 
 

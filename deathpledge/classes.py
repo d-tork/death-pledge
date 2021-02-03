@@ -7,7 +7,6 @@ import logging
 
 import deathpledge
 from deathpledge import database, support, cleaning, enrich
-from deathpledge import keys
 
 
 class Home(dict):
@@ -119,16 +118,13 @@ class Home(dict):
         for fn in cleaning_funcs:
             try:
                 fn(self)
-            except (AttributeError, ValueError) as e:
-                self.logger.exception(f'Cleaning step failed: {e}')
+            except (AttributeError, ValueError, KeyError) as e:
+                self.logger.exception(f"Cleaning step '{fn}' failed: {e}")
                 continue
 
     def enrich(self):
         """Add additional values from external sources."""
-        enrich.add_coords(self, force=True)
-        enrich.add_bing_commute(self)
-        enrich.add_nearest_metro(self)
-        enrich.add_frequent_driving(self, keys['Locations']['favorite_driving'])
+        enrich.add_bing_maps_data(self)
         enrich.add_tether(self)
 
     def get_geocoords(self):

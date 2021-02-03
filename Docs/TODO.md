@@ -35,3 +35,22 @@ listings are getting by with 0-min bus stop walks simply because the first leg o
 stop, it's straight to the metro. However, that walk is 20-30 minutes and if that's the reality of the
 daily commute (30 min walking, 5 min metro ride) then that's a bit of a problem. 
 
+## Development notes
+
+### ~Nov 2020 - De-bulking the process
+1. No reason I can't just keep the browser open while getting listings from gsheets and looping 
+through them
+2. Bulk scrape, with single Selenium browser
+	- but push each doc back to raw db one by one
+	- the bulk upload functions I have are adding way too much complexity, get rid of them
+3. After scraping, update google sheet!
+4. Still with gsheet, proceed through doc IDs, pulling each one from raw and cleaning, enriching
+it, scoring it.
+5. New module: data sciency, pulls bulk docs w/ a view or query and applies/creates model
+6. API idea: given a house, return comparable houses, stack it against the others, generate visuals
+w/ that one highlighted
+
+* Need to be scraping a lot, lot more
+
+### Containerizing
+![Containerizing diagram](img/Containerizing_deathpledge.jpg)

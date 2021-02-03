@@ -55,7 +55,6 @@ class URLDataFrame(object):
     def _prepare_dataframe(self):
         self._set_first_row_as_headers()
         self._drop_null_rows()
-        self._remove_junk_from_urls()
         self._remove_duplicate_listings()
 
     def _set_first_row_as_headers(self):
@@ -64,32 +63,11 @@ class URLDataFrame(object):
     def _drop_null_rows(self):
         self.df.dropna(subset=['url'], inplace=True)
 
-    def _remove_junk_from_urls(self):
-        self.df['url'] = self.df['url'].apply(self.trim_url)
-
     def _remove_duplicate_listings(self):
         self.df.drop_duplicates(subset=['url'], keep='first', inplace=True)
 
     def _set_order_newest_to_oldest(self):
         self.df.sort_index(ascending=False, inplace=True)
-
-    @staticmethod
-    def trim_url(url_str: str) -> str:
-        """Remove extra params from URL.
-
-        Args:
-            url_str: Original URL.
-
-        Returns:
-            Modified URL.
-
-        """
-        parts = urlparse(url_str)
-        path_without_matched = parts.path.replace('/matched', '')
-        new_url = urlunparse(
-            (parts.scheme, parts.netloc, path_without_matched, '', '', '')
-        )
-        return new_url
 
     def _trim_last_n(self, n):
         self.df = self.df[-n:]

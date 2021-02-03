@@ -10,6 +10,8 @@ from selenium import webdriver
 from selenium.webdriver import firefox
 import logging
 import subprocess
+import random
+from time import sleep
 
 import deathpledge
 from deathpledge import support, classes
@@ -93,16 +95,23 @@ def scrape_from_homescout_gallery(db_client, max_pages: int, *args, **kwargs):
     with SeleniumDriver(*args, **kwargs) as wd:
         homescout = hs.HomeScoutWebsite(webdriver=wd.webdriver)
         for card in cards:
-            if True:
+            if not card.exists:
                 current_home = classes.Home(url=card.url, docid=card.docid)
                 try:
                     current_home.scrape(website_object=homescout)
+                    wait_a_random_time()
                 except:
-                    raise
-                current_home.upload(db_name=deathpledge.RAW_DATABASE_NAME, db_client=db_client)
+                    logger.error('Scraping failed for {card.url}', exc_info=True)
+                else:
+                    current_home.upload(db_name=deathpledge.RAW_DATABASE_NAME, db_client=db_client)
             else:
                 if card.changed:
                     pass  # TODO: execute procedure for updating raw database record
+
+
+def wait_a_random_time():
+    seconds_to_wait = random.randint(1, 10)
+    sleep(seconds_to_wait)
 
 
 def url_is_valid(url):

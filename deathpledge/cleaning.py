@@ -76,8 +76,12 @@ def convert_numbers(home):
         except KeyError:
             continue
         else:
-            home[key] = parse_number(val)
-        logger.debug(f'Field {key} converted to number')
+            try:
+                home[key] = parse_number(val)
+            except AttributeError:
+                continue
+            else:
+                logger.debug(f'Field {key} converted to number')
 
 
 def parse_address(home):

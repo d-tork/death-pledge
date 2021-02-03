@@ -72,10 +72,15 @@ class HomeScoutWebsite(classes.WebDataSource):
                 )
             except TimeoutException:
                 raise IndexError('Reached last page of results')
+            sleep(1)
             paging_buttons = self._get_paging_buttons()
-            next_button = paging_buttons[1]
-            next_button.click()
-            sleep(2)
+            try:
+                next_button = paging_buttons[1]
+            except IndexError:
+                logger.exception('Next page button could not be found')
+            else:
+                next_button.click()
+                sleep(2)
         return listing_pages
 
     def _get_paging_buttons(self):

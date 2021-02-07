@@ -39,7 +39,7 @@ def parse_commandline_arguments():
         and then uploads to the clean database.""",
         epilog='Using --force-all overrides --new.'
     )
-    parser.add_argument('-n', default=None, type=int, dest='pages',
+    parser.add_argument('-n', default=5, type=int, dest='pages',
                         help='Number of pages of results to scrape.')
     parser.add_argument('--process', action='store_true', dest='process_only',
                         help='Only process listings already in the raw db.')

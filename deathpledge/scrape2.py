@@ -14,7 +14,7 @@ import random
 from time import sleep
 
 import deathpledge
-from deathpledge import support, classes
+from deathpledge import support, classes, database
 from deathpledge.api_calls import homescout as hs, check
 
 logger = logging.getLogger(__name__)
@@ -60,18 +60,18 @@ class SeleniumDriver(object):
         self._geckodriver_version = output.stdout.splitlines()[0]
 
 
-def scrape_from_url_df(urls, db_client, *args, **kwargs):
+def scrape_from_url_df(urls, *args, **kwargs) -> list:
     """Given an array of URLs, create house instances and scrape web data.
 
     Args:
         urls (DataFrame): DataFrame-like object holding Google sheet rows
-        db_client (Cloudant.iam): Cloudant session client.
         *args, **kwargs: passed to SeleniumDriver
 
     Returns:
         list: Array of home instances.
 
     """
+    raw_homes = []
     with SeleniumDriver(*args, **kwargs) as wd:
         homescout = hs.HomeScoutWebsite(webdriver=wd.webdriver)
         homescout.sign_into_website()
@@ -86,14 +86,19 @@ def scrape_from_url_df(urls, db_client, *args, **kwargs):
             try:
                 current_home.scrape(website_object=homescout)
             except:
+                logger.exception(f'Scrape failed for {row.url}')
                 continue
-            current_home.upload(db_name=deathpledge.RAW_DATABASE_NAME, db_client=db_client)
+            clean_address = support.clean_address(current_home['full_address'])
+            current_home['_id'] = support.create_house_id(clean_address)
+            raw_homes.append(current_home)
+    return raw_homes
 
 
 def scrape_from_homescout_gallery(db_client, max_pages: int, *args, **kwargs):
     cards = check.main(max_pages=max_pages, **kwargs)
     with SeleniumDriver(*args, **kwargs) as wd:
         homescout = hs.HomeScoutWebsite(webdriver=wd.webdriver)
+        new_homes = []
         for card in cards:
             if not card.exists:
                 current_home = classes.Home(url=card.url, docid=card.docid)
@@ -103,10 +108,14 @@ def scrape_from_homescout_gallery(db_client, max_pages: int, *args, **kwargs):
                 except:
                     logger.error('Scraping failed for {card.url}', exc_info=True)
                 else:
+                    new_homes.append(current_home)
                     current_home.upload(db_name=deathpledge.RAW_DATABASE_NAME, db_client=db_client)
             else:
                 if card.changed:
                     pass  # TODO: execute procedure for updating raw database record
+    database.bulk_upload(
+        docs=new_homes, client=db_client, db_name=deathpledge.RAW_DATABASE_NAME
+    )
 
 
 def wait_a_random_time():

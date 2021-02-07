@@ -124,3 +124,8 @@ def get_doc_list(client: Cloudant.iam, db_name: str) -> list:
     db = client[db_name]
     result_collection = Result(db.all_docs, include_docs=False)
     return [*result_collection]
+
+
+def bulk_upload(docs: list, db_name: str, client: Cloudant.iam):
+    db = client[db_name]
+    db.bulk_docs(docs)

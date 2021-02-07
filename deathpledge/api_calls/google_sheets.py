@@ -2,6 +2,7 @@ import pickle
 import os
 import logging
 import pandas as pd
+import numpy as np
 from urllib.parse import urlparse, urlunparse
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
@@ -56,6 +57,7 @@ class URLDataFrame(object):
         self._set_first_row_as_headers()
         self._drop_null_rows()
         self._remove_duplicate_listings()
+        self._fill_blanks_with_na()
 
     def _set_first_row_as_headers(self):
         self.df = self.df.rename(columns=self.df.iloc[0]).drop(self.df.index[0])
@@ -66,6 +68,9 @@ class URLDataFrame(object):
     def _remove_duplicate_listings(self):
         self.df.drop_duplicates(subset=['url'], keep='first', inplace=True)
 
+    def _fill_blanks_with_na(self):
+        self.df.replace('', np.nan, inplace=True)
+
     def _set_order_newest_to_oldest(self):
         self.df.sort_index(ascending=False, inplace=True)
 
@@ -73,7 +78,7 @@ class URLDataFrame(object):
         self.df = self.df[-n:]
 
     def drop_closed_listings(self):
-        closed = self.df.loc[self.df['status'].str.lower().isin(['Closed', 'Expired'])]
+        closed = self.df.loc[self.df['status'].str.lower().isin(['closed', 'expired'])]
         self.df = self.df.drop(index=closed.index)
 
 

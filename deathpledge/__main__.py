@@ -19,8 +19,7 @@ def main():
 
     args = parse_commandline_arguments()
     google_creds = gs.GoogleCreds(
-        token_path=path.join(deathpledge.CONFIG_PATH, 'token.pickle'),
-        creds_path=path.join(deathpledge.CONFIG_PATH, 'oauth_client_id.json')
+        creds_dict=deathpledge.keys.get('Google_creds')
     ).creds
 
     with database.DatabaseClient() as cloudant:
@@ -89,7 +88,6 @@ def process_data(google_creds, db_client):
         home.update(doc)
         home.clean()
         home.enrich()
-        home.upload(db_name=deathpledge.DATABASE_NAME, db_client=db_client)
         clean_docs.append(home)
     database.bulk_upload(docs=clean_docs,
                          db_name=deathpledge.DATABASE_NAME,

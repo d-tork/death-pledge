@@ -109,7 +109,6 @@ def scrape_from_homescout_gallery(db_client, max_pages: int, *args, **kwargs):
                     logger.error('Scraping failed for {card.url}', exc_info=True)
                 else:
                     new_homes.append(current_home)
-                    current_home.upload(db_name=deathpledge.RAW_DATABASE_NAME, db_client=db_client)
             else:
                 if card.changed:
                     pass  # TODO: execute procedure for updating raw database record

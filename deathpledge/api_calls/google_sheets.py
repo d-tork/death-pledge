@@ -90,49 +90,34 @@ class GoogleCreds(object):
     time.
 
     Attributes:
-        creds: OAuth2 credentials.
+        creds_dict: OAuth2 credentials.
 
     """
 
-    def __init__(self, token_path, creds_path=None):
+    def __init__(self, creds_dict, creds_path=None):
         """Load credentials or generate them if they don't exist.
 
         Args:
-            token_path (str): Path to existing pickled token.
+            creds_dict (dict): Keys loaded from deathpledge config
             creds_path (str, Optional): Path to credentials if token is invalid.
 
         """
-        self.token_path = token_path
         self.creds_path = creds_path
+        self.creds_dict = creds_dict
         self.creds = self._get_valid_creds()
 
     def _get_valid_creds(self):
         """Load, refresh, or get new creds as needed."""
-        try:
-            creds = self._get_creds_from_existing_token()
-            creds.refresh(Request())
-        except (FileNotFoundError, TransportError):
-            creds = self._get_new_creds()
-            self._store_new_token_locally(creds)
+        creds = self._get_new_creds()
         return creds
-
-    def _get_creds_from_existing_token(self):
-        """Reads credentials from pickled token file."""
-        with open(self.token_path, 'rb') as token_file:
-            token = pickle.load(token_file)
-        return token
 
     def _get_new_creds(self):
         """Request new token with creds supplied."""
-        creds = service_account.Credentials.from_service_account_file(
-            filename=self.creds_path
-        )
+        try:
+            creds = service_account.Credentials.from_service_account_info(self.creds_dict)
+        except:
+            creds = service_account.Credentials.from_service_account_file(self.creds_path)
         return creds
-
-    def _store_new_token_locally(self, creds):
-        """Save token for re-use."""
-        with open(self.token_path, 'wb') as token_file:
-            pickle.dump(creds, token_file)
 
 
 def get_url_dataframe(google_creds, **kwargs):

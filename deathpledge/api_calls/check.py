@@ -65,7 +65,7 @@ def check_cards_for_changes(cards: dict) -> list:
     for docid, card in cards.items():
         homecard = HomeToBeChecked(docid=docid, card=card)
         try:
-            doc = next((d for d in fetched_docs if d['id'] == docid))['doc']
+            doc = fetched_docs.get(docid)['doc']
         except (KeyError, StopIteration):
             pass
         else:

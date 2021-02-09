@@ -102,11 +102,13 @@ def get_single_doc(doc_id, db_name, client):
     return doc
 
 
-def get_bulk_docs(doc_ids: list, db_name: str, client: Cloudant.iam) -> list:
+def get_bulk_docs(doc_ids: list, db_name: str, client: Cloudant.iam) -> dict:
     """Fetch multiple docs from the database."""
     db = client[db_name]
     result = db.all_docs(keys=doc_ids, include_docs=True)
-    return result['rows']
+    raw_rows = result['rows']
+    rows_by_docid = {x['id']: x for x in raw_rows if not x.get('error')}
+    return rows_by_docid
 
 
 def get_url_list(client):

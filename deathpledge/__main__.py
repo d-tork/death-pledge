@@ -101,7 +101,6 @@ def bulk_fetch_raw_docs(urls, db_client) -> dict:
         db_name=deathpledge.RAW_DATABASE_NAME,
         client=db_client
     )
-    fetched_docs = {x['id']: x for x in fetched_docs if not x.get('error')}
     return fetched_docs
 
 

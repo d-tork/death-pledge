@@ -19,8 +19,7 @@ def main():
 
     args = parse_commandline_arguments()
     google_creds = gs.GoogleCreds(
-        token_path=path.join(deathpledge.CONFIG_PATH, 'token.pickle'),
-        creds_path=path.join(deathpledge.CONFIG_PATH, 'oauth_client_id.json')
+        creds_dict=deathpledge.keys.get('Google_creds')
     ).creds
 
     with database.DatabaseClient() as cloudant:
@@ -39,7 +38,7 @@ def parse_commandline_arguments():
         and then uploads to the clean database.""",
         epilog='Using --force-all overrides --new.'
     )
-    parser.add_argument('-n', default=None, type=int, dest='pages',
+    parser.add_argument('-n', default=5, type=int, dest='pages',
                         help='Number of pages of results to scrape.')
     parser.add_argument('--process', action='store_true', dest='process_only',
                         help='Only process listings already in the raw db.')
@@ -53,7 +52,12 @@ def check_and_scrape_homescout(db_client, **kwargs):
 def scrape_new_urls_from_google(google_creds, db_client):
     urls = gs.get_url_dataframe(google_creds)
     urls_no_status = urls.df.loc[urls.df['status'].isna()]
-    scrape2.scrape_from_url_df(urls=urls_no_status, db_client=db_client)
+    new_homes = scrape2.scrape_from_url_df(urls=urls_no_status)
+    database.bulk_upload(
+        docs=new_homes,
+        db_name=deathpledge.RAW_DATABASE_NAME,
+        client=db_client
+    )
 
 
 def get_urls_to_scrape(urls):
@@ -67,10 +71,15 @@ def process_data(google_creds, db_client):
     urls = gs.get_url_dataframe(google_creds)
     fetched_raw_docs = bulk_fetch_raw_docs(urls, db_client)
     clean_db_doc_ids = database.get_doc_list(client=db_client, db_name=deathpledge.DATABASE_NAME)
+    clean_docs = []
     for row in urls.itertuples():
         if row.docid in clean_db_doc_ids:
             continue
-        doc = next((d for d in fetched_raw_docs if d['id'] == row.docid))['doc']
+        # Get this row's docid from raw database
+        try:
+            doc = fetched_raw_docs.get(row.docid)['doc']
+        except TypeError:
+            continue
         home = classes.Home(
             url=doc['url'],
             added_date=doc['added_date'],
@@ -79,16 +88,20 @@ def process_data(google_creds, db_client):
         home.update(doc)
         home.clean()
         home.enrich()
-        home.upload(db_name=deathpledge.DATABASE_NAME, db_client=db_client)
+        clean_docs.append(home)
+    database.bulk_upload(docs=clean_docs,
+                         db_name=deathpledge.DATABASE_NAME,
+                         client=db_client)
 
 
-def bulk_fetch_raw_docs(urls, db_client):
+def bulk_fetch_raw_docs(urls, db_client) -> dict:
     """Get the requested houses from the raw database."""
     fetched_docs = database.get_bulk_docs(
         doc_ids=urls.df['docid'].tolist(),
         db_name=deathpledge.RAW_DATABASE_NAME,
         client=db_client
     )
+    fetched_docs = {x['id']: x for x in fetched_docs if not x.get('error')}
     return fetched_docs
 
 

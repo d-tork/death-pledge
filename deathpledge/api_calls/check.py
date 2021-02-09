@@ -47,8 +47,7 @@ def get_docids_for_gallery_cards(cards: list) -> dict:
         full_address = ' '.join(
             [card.address, card.city_state_zip]
         )
-        clean_address = support.clean_address(full_address)
-        docid = support.create_house_id(clean_address)
+        docid = support.create_house_id(full_address)
         listings[docid] = card
     return listings
 

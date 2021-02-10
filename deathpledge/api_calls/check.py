@@ -19,7 +19,7 @@ class HomeToBeChecked(object):
         self.price = card.price
         self.status = card.status
         self.url = card.url
-        self.exists = False
+        self.exists_in_db = False
         self.changed = False
 
     def has_changed(self, fetched_doc):
@@ -53,7 +53,13 @@ def get_docids_for_gallery_cards(cards: list) -> dict:
 
 
 def check_cards_for_changes(cards: dict) -> list:
-    """Bulk fetch docs from database and check for changes."""
+    """Bulk fetch docs from database and check for changes.
+
+    Returns:
+        list: HomesToBeChecked, which have been checked and whose 'changed'
+            status has been set.
+
+    """
     docids_to_fetch = list(cards.keys())
     with database.DatabaseClient() as cloudant:
         fetched_docs = database.get_bulk_docs(
@@ -65,14 +71,14 @@ def check_cards_for_changes(cards: dict) -> list:
     for docid, card in cards.items():
         homecard = HomeToBeChecked(docid=docid, card=card)
         try:
-            doc = fetched_docs.get(docid)['doc']
-        except (KeyError, StopIteration):
+            doc = fetched_docs.get(docid).get('doc')
+        except (KeyError, AttributeError):
             pass
         else:
             if doc is None:  # docid is in db, but deleted
                 pass
             else:
-                homecard.exists = True
+                homecard.exists_in_db = True
                 if homecard.has_changed(doc):
                     homecard.changed = True
         finally:

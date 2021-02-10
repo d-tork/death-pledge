@@ -211,3 +211,7 @@ def test_refresh():
 
     with database.DatabaseClient() as cloudant:
             refresh_url_sheet(google_creds, db_client=cloudant)
+
+
+if __name__ == '__main__':
+    test_refresh()

@@ -129,5 +129,16 @@ def get_doc_list(client: Cloudant.iam, db_name: str) -> list:
 
 
 def bulk_upload(docs: list, db_name: str, client: Cloudant.iam):
+    """Push an array of docs to the database.
+
+    Documents _must_ have an ``_id`` field (and possibly a ``_rev`` field if
+    it's being updated).
+
+    """
+    for doc in docs:
+        try:
+            doc['_id'] = doc.docid
+        except AttributeError:
+            continue
     db = client[db_name]
     db.bulk_docs(docs)

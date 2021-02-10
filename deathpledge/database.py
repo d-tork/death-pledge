@@ -128,6 +128,23 @@ def get_doc_list(client: Cloudant.iam, db_name: str) -> list:
     return [*result_collection]
 
 
+def get_active_docs(client: Cloudant.iam, db_name: str) -> list:
+    db = client[db_name]
+    selector = {
+        'doctype': 'home',
+        'status': {'$in': [
+            'Active',
+            'Active Under Contract',
+            'Pending',
+            'Short Sale',
+            'Hold (Temp Off Market)'
+        ]}
+    }
+    query_results = db.get_query_result(selector)
+    docs = [doc for doc in query_results]
+    return docs
+
+
 def bulk_upload(docs: list, db_name: str, client: Cloudant.iam):
     """Push an array of docs to the database.
 

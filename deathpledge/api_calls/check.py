@@ -1,6 +1,8 @@
 """
 Module for checking for new or changed listings (not a full scrape)
 """
+from collections import namedtuple
+
 import deathpledge
 from deathpledge.scrape2 import SeleniumDriver
 from deathpledge.api_calls import homescout as hs
@@ -14,6 +16,8 @@ class HomeToBeChecked(object):
         card (Card): namedtuple from homescout.HomeScoutList
 
     """
+    RevIDs = namedtuple('RevIDs', ['raw', 'clean'], defaults=[None, None])
+
     def __init__(self, docid, card):
         self.docid = docid
         self.price = card.price
@@ -21,6 +25,7 @@ class HomeToBeChecked(object):
         self.url = card.url
         self.exists_in_db = False
         self.changed = False
+        self.rev_id = self.RevIDs()
 
     def has_changed(self, fetched_doc):
         price_changed = not(fetched_doc['list_price'] == self.price)
@@ -81,7 +86,6 @@ def check_cards_for_changes(cards: dict) -> list:
                 homecard.exists_in_db = True
                 if homecard.has_changed(doc):
                     homecard.changed = True
-                    # TODO: handle changes in cards (home vitals)
         finally:
             checked_cards.append(homecard)
     return checked_cards

@@ -102,11 +102,13 @@ def get_single_doc(doc_id, db_name, client):
     return doc
 
 
-def get_bulk_docs(doc_ids: list, db_name: str, client: Cloudant.iam) -> list:
+def get_bulk_docs(doc_ids: list, db_name: str, client: Cloudant.iam) -> dict:
     """Fetch multiple docs from the database."""
     db = client[db_name]
     result = db.all_docs(keys=doc_ids, include_docs=True)
-    return result['rows']
+    raw_rows = result['rows']
+    rows_by_docid = {x['id']: x for x in raw_rows if not x.get('error')}
+    return rows_by_docid
 
 
 def get_url_list(client):
@@ -126,6 +128,45 @@ def get_doc_list(client: Cloudant.iam, db_name: str) -> list:
     return [*result_collection]
 
 
-def bulk_upload(docs: list, db_name: str, client: Cloudant.iam):
+def get_active_docs(client: Cloudant.iam, db_name: str) -> list:
     db = client[db_name]
-    db.bulk_docs(docs)
+    selector = {
+        'doctype': 'home',
+        'status': {'$in': [
+            'Active',
+            'Active Under Contract',
+            'Pending',
+            'Short Sale',
+            'Hold (Temp Off Market)'
+        ]}
+    }
+    query_results = db.get_query_result(selector)
+    docs = [doc for doc in query_results]
+    return docs
+
+
+def bulk_upload(docs: list, db_name: str, client: Cloudant.iam):
+    """Push an array of docs to the database.
+
+    Documents _must_ have an ``_id`` field (and possibly a ``_rev`` field if
+    it's being updated).
+
+    """
+    for doc in docs:
+        try:
+            doc['_id'] = doc.docid
+        except AttributeError:
+            continue
+    db = client[db_name]
+    resp = db.bulk_docs(docs)
+    get_successful_uploads(resp)
+
+
+def get_successful_uploads(resp):
+    """Count how many docs were created out of how many attempted."""
+    attempted_count = len(resp)
+    successful = [i['id'] for i in resp if i.get('ok')]
+    logger.info('Created the following docs:')
+    for docid in successful:
+        logger.info(f'\t{docid}')
+    logger.info(f'{len(successful)}/{attempted_count} docs created')

@@ -137,7 +137,7 @@ def get_url_dataframe(google_creds, **kwargs):
         **kwargs
     )
     google_df.drop_closed_listings()
-    return google_df
+    return google_df.df
 
 
 def get_google_sheets_rows(google_creds):
@@ -201,3 +201,17 @@ def prep_dataframe_to_update_google(df):
     df = df.fillna('').astype('str')
     df = df.reset_index().T.reset_index().T.values.tolist()
     return df
+
+
+def test_refresh():
+    import deathpledge
+    google_creds = GoogleCreds(
+        creds_dict=deathpledge.keys.get('Google_creds')
+    ).creds
+
+    with database.DatabaseClient() as cloudant:
+            refresh_url_sheet(google_creds, db_client=cloudant)
+
+
+if __name__ == '__main__':
+    test_refresh()

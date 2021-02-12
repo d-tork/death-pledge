@@ -88,8 +88,7 @@ def scrape_from_url_df(urls, *args, **kwargs) -> list:
             except:
                 logger.exception(f'Scrape failed for {row.url}')
                 continue
-            clean_address = support.clean_address(current_home['full_address'])
-            current_home['_id'] = support.create_house_id(clean_address)
+            current_home.docid = support.create_house_id(current_home['full_address'])
             raw_homes.append(current_home)
     return raw_homes
 
@@ -100,7 +99,7 @@ def scrape_from_homescout_gallery(db_client, max_pages: int, *args, **kwargs):
         homescout = hs.HomeScoutWebsite(webdriver=wd.webdriver)
         new_homes = []
         for card in cards:
-            if not card.exists:
+            if not card.exists_in_db:
                 current_home = classes.Home(url=card.url, docid=card.docid)
                 try:
                     current_home.scrape(website_object=homescout)

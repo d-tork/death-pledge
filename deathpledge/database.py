@@ -158,4 +158,15 @@ def bulk_upload(docs: list, db_name: str, client: Cloudant.iam):
         except AttributeError:
             continue
     db = client[db_name]
-    db.bulk_docs(docs)
+    resp = db.bulk_docs(docs)
+    get_successful_uploads(resp)
+
+
+def get_successful_uploads(resp):
+    """Count how many docs were created out of how many attempted."""
+    attempted_count = len(resp)
+    successful = [i['id'] for i in resp if i.get('ok')]
+    logger.info('Created the following docs:')
+    for docid in successful:
+        logger.info(f'\t{docid}')
+    logger.info(f'{len(successful)}/{attempted_count} docs created')

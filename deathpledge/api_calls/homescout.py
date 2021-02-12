@@ -60,27 +60,14 @@ class HomeScoutWebsite(classes.WebDataSource):
         self.logger.info('signed in')
 
     def collect_listings(self, max_pages: int) -> list:
-        self.webdriver.get(self._config['results_url'])
-        sleep(2)
+        gallery = HomeScoutURL(self._config['results_url'])
         listing_pages = []
-        for page in range(max_pages):
+        while gallery.page <= max_pages:
+            self.webdriver.get(gallery.url)
+            sleep(2)
             results_page_soup = HomeScoutList(self.webdriver.page_source, 'html.parser')
             listing_pages.append(results_page_soup)
-            try:
-                WebDriverWait(self.webdriver, 10).until(
-                    EC.presence_of_all_elements_located((By.CLASS_NAME, 'mcl-paging-next'))
-                )
-            except TimeoutException:
-                raise IndexError('Reached last page of results')
-            sleep(1)
-            paging_buttons = self._get_paging_buttons()
-            try:
-                next_button = paging_buttons[1]
-            except IndexError:
-                logger.exception('Next page button could not be found')
-            else:
-                next_button.click()
-                sleep(2)
+            gallery.page += 1
         return listing_pages
 
     def _get_paging_buttons(self):

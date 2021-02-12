@@ -38,11 +38,11 @@ Run `python deathpledge --help` for a list of options
 
 ### Example usage
 ```
-# [re]process the last 5 URLs added
+# Scrape the first 5 pages of the gallery
 python deathpledge -n 5
 
-# process only new listings not already in database
-python deathpledge --new
+# process only new listings not already in clean database
+python deathpledge --process
 ```
 
 ## Rebuilding and using the Docker image
@@ -53,8 +53,12 @@ docker build -t deathpledge:latest .
 The entrypoint is the `deathpledge` module, so the `run` command accepts any command line arg that
 the module would
 ```
-# [re]process the last URL, even if it's Closed
-docker run deathpledge -n 1 -f
+docker run deathpledge -n 1
+```
+
+### Change the log level
+```
+docker run -e LOG_LEVEL=info deathpledge -n 1
 ```
 
 ### Entering the container interactively (for debugging)

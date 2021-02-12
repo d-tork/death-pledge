@@ -12,7 +12,7 @@ from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 from django.utils.text import slugify
 from collections import namedtuple
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
 import deathpledge
 from deathpledge import scrape2 as scrape
@@ -296,3 +296,43 @@ class HomeScoutSoup(BeautifulSoup):
             feature_val = feature.find('span', attrs={'class': 'feature-value'}).text
             advanced_data[feature_name] = feature_val
         return advanced_data
+
+
+class HomeScoutURL(object):
+    """For modifying a Homescout URL.
+
+    Properties:
+        page (int): Page of gallery results to navigate to.
+        url (str): Full URL.
+
+    """
+
+    def __init__(self, url: str):
+        self._url = url
+        self._parsed = urlparse(self._url)
+        self.query_params = self._parse_query_params()
+        self._page = self.query_params.get('Page')
+
+    def _parse_query_params(self):
+        query = self._parsed.query
+        query_dict = parse_qs(query)
+        return query_dict
+
+    @property
+    def page(self):
+        return int(self.query_params.get('Page')[0])
+
+    @page.setter
+    def page(self, new_page: int):
+        self.query_params['Page'] = [str(new_page)]
+
+    @property
+    def url(self):
+        new_query = urlencode(self.query_params, doseq=True)
+        re_parsed = (
+            self._parsed.scheme, self._parsed.netloc,
+            self._parsed.path, self._parsed.params,
+            new_query, self._parsed.fragment,
+        )
+        self._url = urlunparse(re_parsed)
+        return self._url

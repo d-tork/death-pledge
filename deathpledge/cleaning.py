@@ -101,3 +101,4 @@ def parse_homescout_date(home):
     date_added = home['new_on_homescout']
     parsed_datetime = support.coerce_date_string_to_date(date_added)
     formatted_datetime = parsed_datetime.strftime(TIMEFORMAT)
+    home['new_on_homescout'] = formatted_datetime

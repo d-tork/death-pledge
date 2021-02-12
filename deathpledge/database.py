@@ -154,12 +154,10 @@ def get_active_docs(client: Cloudant.iam, db_name: str) -> dict:
     db = client[db_name]
     selector = {
         'doctype': 'home',
-        'status': {'$in': [
-            'Active',
-            'Active Under Contract',
-            'Pending',
-            'Short Sale',
-            'Hold (Temp Off Market)'
+        'status': {'$nin': [
+            'Closed',
+            'Cancelled',
+            'Expired'
         ]}
     }
     query_results = db.get_query_result(selector)

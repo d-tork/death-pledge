@@ -70,15 +70,16 @@ def get_urls_to_scrape(urls):
 def process_data(google_creds, db_client):
     urls = gs.get_url_dataframe(google_creds, last_n=5)
     fetched_raw_docs = bulk_fetch_raw_docs(urls, db_client)
-    clean_db_doc_ids = database.get_active_docs(client=db_client, db_name=deathpledge.DATABASE_NAME)
+    fetched_clean_docs = database.get_active_docs(client=db_client, db_name=deathpledge.DATABASE_NAME)
     clean_docs = []
     for row in urls.itertuples():
-        if row.docid in clean_db_doc_ids:
+        if row.docid in fetched_clean_docs:
+            logger.info(f'doc {row.mls_number} already in clean database')
             continue
-        # Get this row's docid from raw database
         try:
-            doc = fetched_raw_docs.get(row.docid)['doc']
+            doc = fetched_raw_docs.get(row.docid)
         except TypeError:
+            logger.error(f'docid {row.mls_number} not found in clean or raw databases')
             continue
         home = classes.Home(
             url=doc['url'],
@@ -101,7 +102,13 @@ def bulk_fetch_raw_docs(urls, db_client) -> dict:
         db_name=deathpledge.RAW_DATABASE_NAME,
         client=db_client
     )
-    return fetched_docs
+    flattened = {k: fetched_docs[k]['doc'] for k, v in fetched_docs.items()}
+    for docid, doc in flattened.items():
+        try:
+            del doc['_rev']
+        except KeyError:
+            continue
+    return flattened
 
 
 if __name__ == '__main__':

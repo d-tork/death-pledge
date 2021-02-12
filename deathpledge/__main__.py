@@ -25,7 +25,7 @@ def main():
     with database.DatabaseClient() as cloudant:
         if not args.process_only:
             scrape_new_urls_from_google(google_creds=google_creds, db_client=cloudant)
-            check_and_scrape_homescout(db_client=cloudant, max_pages=args.pages, quiet=True)
+            # check_and_scrape_homescout(db_client=cloudant, max_pages=args.pages, quiet=True)
             gs.refresh_url_sheet(google_creds, db_client=cloudant)
         process_data(google_creds, db_client=cloudant)
     return
@@ -51,7 +51,7 @@ def check_and_scrape_homescout(db_client, **kwargs):
 
 def scrape_new_urls_from_google(google_creds, db_client):
     urls = gs.get_url_dataframe(google_creds)
-    urls_no_status = urls.df.loc[urls.df['status'].isna()]
+    urls_no_status = urls.loc[urls['status'].isna()]
     new_homes = scrape2.scrape_from_url_df(urls=urls_no_status)
     database.bulk_upload(
         docs=new_homes,
@@ -68,7 +68,7 @@ def get_urls_to_scrape(urls):
 
 
 def process_data(google_creds, db_client):
-    urls = gs.get_url_dataframe(google_creds)
+    urls = gs.get_url_dataframe(google_creds, last_n=5)
     fetched_raw_docs = bulk_fetch_raw_docs(urls, db_client)
     clean_db_doc_ids = database.get_active_docs(client=db_client, db_name=deathpledge.DATABASE_NAME)
     clean_docs = []
@@ -97,7 +97,7 @@ def process_data(google_creds, db_client):
 def bulk_fetch_raw_docs(urls, db_client) -> dict:
     """Get the requested houses from the raw database."""
     fetched_docs = database.get_bulk_docs(
-        doc_ids=urls.df['docid'].tolist(),
+        doc_ids=urls['docid'].tolist(),
         db_name=deathpledge.RAW_DATABASE_NAME,
         client=db_client
     )

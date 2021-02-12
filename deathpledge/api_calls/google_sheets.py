@@ -137,7 +137,7 @@ def get_url_dataframe(google_creds, **kwargs):
         **kwargs
     )
     google_df.drop_closed_listings()
-    return google_df
+    return google_df.df
 
 
 def get_google_sheets_rows(google_creds):

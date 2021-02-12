@@ -107,8 +107,9 @@ def scrape_from_homescout_gallery(db_client, max_pages: int, *args, **kwargs):
                 if card.changed:
                     # update clean in place
                     clean_doc = clean_db[card.docid]
-                    clean_doc['list_price'] = card.price
+                    clean_doc['list_price'] = cleaning.parse_number(card.price)
                     clean_doc['status'] = card.status
+                    clean_doc.save()
 
                     raw_doc_local = fetched_raw_docs.get(card.docid)['doc']
                     raw_doc_local['list_price'] = card.price
@@ -128,8 +129,6 @@ def scrape_from_homescout_gallery(db_client, max_pages: int, *args, **kwargs):
     homes_for_raw_upload = new_homes + changed_homes
     if homes_for_raw_upload:
         database.bulk_upload(docs=homes_for_raw_upload, client=db_client, db_name=deathpledge.RAW_DATABASE_NAME)
-    if changed_homes:
-        database.bulk_upload(docs=changed_homes, client=db_client, db_name=deathpledge.DATABASE_NAME)
 
 
 def wait_a_random_time():

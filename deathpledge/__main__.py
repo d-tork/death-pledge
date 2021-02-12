@@ -79,7 +79,7 @@ def process_data(google_creds, db_client):
     clean_docs = []
     for row in urls.itertuples():
         if row.docid in fetched_clean_docs:
-            logger.info(f'doc {row.mls_number} already in clean database')
+            logger.debug(f'doc {row.mls_number} already in clean database')
             continue
         try:
             doc = fetched_raw_docs.get(row.docid)

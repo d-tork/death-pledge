@@ -10,10 +10,12 @@ from selenium import webdriver
 from selenium.webdriver import firefox
 import logging
 import subprocess
+import random
+from time import sleep
 
 import deathpledge
-from deathpledge import support, classes
-from deathpledge import realscout as rs
+from deathpledge import support, classes, database, cleaning
+from deathpledge.api_calls import homescout as hs, check
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +31,7 @@ class SeleniumDriver(object):
             quiet (bool): Whether to hide (True) or show (False) web browser as it scrapes.
 
         """
+        self.logger = logging.getLogger(f'{__name__}.{type(self).__name__}')
         self._geckodriver_version = None
         self._options.headless = quiet
         self.webdriver = webdriver.Firefox(options=self._options, executable_path=self._geckodriver_path)
@@ -41,7 +44,7 @@ class SeleniumDriver(object):
         try:
             self.webdriver.__exit__(self, exc_type, exc_value, traceback)
         except Exception:
-            logger.exception('Webdriver failed to exit.')
+            self.logger.exception('Webdriver failed to exit.')
 
     @property
     def geckodriver_version(self):
@@ -57,21 +60,21 @@ class SeleniumDriver(object):
         self._geckodriver_version = output.stdout.splitlines()[0]
 
 
-def scrape_from_url_df(urls, db_client, *args, **kwargs):
+def scrape_from_url_df(urls, *args, **kwargs) -> list:
     """Given an array of URLs, create house instances and scrape web data.
 
     Args:
         urls (DataFrame): DataFrame-like object holding Google sheet rows
-        db_client (Cloudant.iam): Cloudant session client.
         *args, **kwargs: passed to SeleniumDriver
 
     Returns:
         list: Array of home instances.
 
     """
+    raw_homes = []
     with SeleniumDriver(*args, **kwargs) as wd:
-        realscout = rs.RealScoutWebsite(webdriver=wd.webdriver)
-        realscout.sign_into_website()
+        homescout = hs.HomeScoutWebsite(webdriver=wd.webdriver)
+        homescout.sign_into_website()
 
         for row in urls.itertuples(index=False):
             if not url_is_valid(row.url):
@@ -80,8 +83,58 @@ def scrape_from_url_df(urls, db_client, *args, **kwargs):
             if current_home.skip_web_scrape:
                 logger.debug('Instance property "skip_web_scrape" set to True, will not scrape.')
                 continue
-            current_home.scrape(website_object=realscout)
-            current_home.upload(db_name=deathpledge.RAW_DATABASE_NAME, db_client=db_client)
+            try:
+                current_home.scrape(website_object=homescout)
+            except:
+                logger.exception(f'Scrape failed for {row.url}')
+                continue
+            current_home.docid = support.create_house_id(current_home['full_address'])
+            raw_homes.append(current_home)
+    return raw_homes
+
+
+def scrape_from_homescout_gallery(db_client, max_pages: int, *args, **kwargs):
+    cards = check.main(max_pages=max_pages, **kwargs)
+    ids_to_fetch = [card.docid for card in cards]
+    fetched_raw_docs = database.get_bulk_docs(
+        doc_ids=ids_to_fetch, db_name=deathpledge.RAW_DATABASE_NAME, client=db_client)
+    clean_db = db_client[deathpledge.DATABASE_NAME]
+    with SeleniumDriver(*args, **kwargs) as wd:
+        homescout = hs.HomeScoutWebsite(webdriver=wd.webdriver)
+        new_homes, changed_homes = [], []
+        for card in cards:
+            if card.exists_in_db:
+                if card.changed:
+                    # update clean in place
+                    clean_doc = clean_db[card.docid]
+                    clean_doc['list_price'] = card.price
+                    clean_doc['status'] = card.status
+
+                    raw_doc_local = fetched_raw_docs.get(card.docid)['doc']
+                    raw_doc_local['list_price'] = card.price
+                    raw_doc_local['status'] = card.status
+                    changed_homes.append(raw_doc_local)
+                else:
+                    pass
+            else:
+                current_home = classes.Home(url=card.url, docid=card.docid)
+                try:
+                    current_home.scrape(website_object=homescout)
+                    wait_a_random_time()
+                except:
+                    logger.error('Scraping failed for {card.url}', exc_info=True)
+                else:
+                    new_homes.append(current_home)
+    homes_for_raw_upload = new_homes + changed_homes
+    if homes_for_raw_upload:
+        database.bulk_upload(docs=homes_for_raw_upload, client=db_client, db_name=deathpledge.RAW_DATABASE_NAME)
+    if changed_homes:
+        database.bulk_upload(docs=changed_homes, client=db_client, db_name=deathpledge.DATABASE_NAME)
+
+
+def wait_a_random_time():
+    seconds_to_wait = random.randint(1, 10)
+    sleep(seconds_to_wait)
 
 
 def url_is_valid(url):

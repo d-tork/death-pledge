@@ -1,0 +1,29 @@
+.git/
+.idea/
+.pytest_cache/
+
+build/
+dist/
+
+data/
+*.egg-info/
+docs/
+notebook/
+test/
+venv/
+
+deathpledge/db/
+*.log
+
+*.sw*
+*~
+*.pdf
+
+
+# Caches and compiled files
+**/__pycache__/
+*.pyc
+
+# Mac Desktop Services file (folder display options)
+.DS_Store
+

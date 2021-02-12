@@ -6,8 +6,7 @@ import json
 import logging
 
 import deathpledge
-from deathpledge import realscout, database, support, cleaning, enrich
-from deathpledge import keys
+from deathpledge import database, support, cleaning, enrich
 
 
 class Home(dict):
@@ -74,12 +73,6 @@ class Home(dict):
             added_date = datetime.now()
         return added_date
 
-    def create_docid_from_address(self):
-        """Generate docid from hash of address"""
-        scraped_address = support.clean_address(self['full_address'])
-        scraped_addr_id = support.create_house_id(scraped_address)
-        self.docid = self['_id'] = scraped_addr_id
-
     def fetch(self, db_name, db_client):
         """Retrieve existing data from database."""
         if self.docid:
@@ -97,12 +90,17 @@ class Home(dict):
         """Fetch listing data from RealScout."""
         try:
             soup = website_object.get_soup_for_url(self.url)
-        except Exception as e:
-            self.logger.exception(f'Failed to get soup for {self.url}: {e}')
-            return
-        listing_data = realscout.scrape_soup(self, soup)
-        self.update(listing_data)
-        self.create_docid_from_address()
+        except:
+            self.logger.exception(f'Failed to get soup for {self.url}')
+            raise
+        soup.scrape_soup()
+        self.update(soup.data)
+        self._add_class_attributes_as_dict_keys()
+
+    def _add_class_attributes_as_dict_keys(self):
+        """Add attributes to the data dictionary for this instance."""
+        self['url'] = self.url
+        self['added_date'] = self.added_date.strftime(deathpledge.TIMEFORMAT)
 
     def clean(self):
         """Parse and clean all string values meant to be numeric.
@@ -115,20 +113,18 @@ class Home(dict):
             cleaning.split_comma_delimited_fields,
             cleaning.convert_numbers,
             cleaning.parse_address,
+            cleaning.parse_homescout_date,
         ]
         for fn in cleaning_funcs:
             try:
                 fn(self)
-            except (AttributeError, ValueError) as e:
-                self.logger.exception(f'Cleaning step failed: {e}')
+            except (AttributeError, ValueError, KeyError) as e:
+                self.logger.warning(f"Cleaning step '{fn}' failed: {e}")
                 continue
 
     def enrich(self):
         """Add additional values from external sources."""
-        enrich.add_coords(self, force=True)
-        enrich.add_bing_commute(self)
-        enrich.add_nearest_metro(self)
-        enrich.add_frequent_driving(self, keys['Locations']['favorite_driving'])
+        enrich.add_bing_maps_data(self)
         enrich.add_tether(self)
 
     def get_geocoords(self):
@@ -139,13 +135,6 @@ class Home(dict):
             geocoords = self.get('geocoords')
         return geocoords
 
-    def save_local(self, filename=None):
-        if not filename:
-            filename = support.create_filename_from_addr(self['full_address'])
-        outfilepath = path.join(deathpledge.LISTINGS_DIR, filename)
-        with open(outfilepath, 'w') as f:
-            f.write(json.dumps(self, indent=4))
-
     def upload(self, db_name, db_client):
         """Send JSON to database."""
         try:
@@ -154,3 +143,29 @@ class Home(dict):
             self.logger.error('Upload failed, saving to disk.', exc_info=True)
             self.save_local()
         return
+
+    def save_local(self, filename=None):
+        if not filename:
+            filename = support.create_filename_from_addr(self.get('full_address'))
+        outfilepath = path.join(deathpledge.LISTINGS_DIR, filename)
+        with open(outfilepath, 'w') as f:
+            f.write(json.dumps(self, indent=4))
+
+
+class ListingNotAvailable(Exception):
+    pass
+
+
+class WebDataSource(object):
+    """Website for scraping and related configuration.
+
+    Args:
+        webdriver: Selenium WebDriver for navigating in a browser.
+
+    """
+
+    def __init__(self, webdriver):
+        self.webdriver = webdriver
+
+    def get_soup_for_url(self):
+        raise NotImplementedError('Subclass must implement abstract method')

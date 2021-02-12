@@ -53,24 +53,6 @@ class EnrichCommuteTestCase(EnrichTestCase):
         self.new_home = self._instantiate_new_home()
         enrich.add_coords(self.new_home)
 
-    def test_set_new_commute(self):
-        enrich.add_bing_commute(self.new_home)
-        for key in ['work_commute', 'first_walk_mins', 'first_leg_type']:
-            self.assertIsNotNone(self.new_home.get(key))
-
-    def test_existing_bing_commute_skipped(self):
-        """If all values are present, a new commute is not fetched."""
-        self._set_fake_commute()
-        enrich.add_bing_commute(self.new_home)
-        for k, fake_value in self.fake_commute.items():
-            self.assertEqual(self.new_home.get(k), fake_value)
-
-    def test_existing_bing_commute_force_retrieved(self):
-        self._set_fake_commute()
-        enrich.add_bing_commute(self.new_home, force=True)
-        time_should_not_be_999 = self.new_home.get('work_commute')
-        self.assertNotEqual(time_should_not_be_999, 999)
-
     def _set_fake_commute(self):
         self.new_home.update(self.fake_commute)
 

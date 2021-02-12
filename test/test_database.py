@@ -10,10 +10,12 @@ class BulkFetchDocsTestCase(unittest.TestCase):
                      '3af1b97a895162cbf729ddf7a828e4ec476df151']
 
     def setUp(self):
-        self.multiple_docs = database.get_bulk_docs(
-            db_name=deathpledge.RAW_DATABASE_NAME,
-            doc_ids=self.sample_docids
-        )
+        with database.DatabaseClient() as client:
+            self.multiple_docs = database.get_bulk_docs(
+                doc_ids=self.sample_docids,
+                db_name=deathpledge.RAW_DATABASE_NAME,
+                client=client
+            )
 
     def test_bulk_gets_list(self):
         self.assertIsInstance(self.multiple_docs, list)

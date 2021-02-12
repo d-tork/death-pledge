@@ -13,9 +13,11 @@ python3 -m venv venv && source venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
-Then install the `deathpledge` module as editable
+Copy or create keys, tokens, config to the config/ dir.
+
+Install the `deathpledge` module as editable
 ```
-python -m pip install -e .
+python -m pip install -e .[dev]
 ```
 
 If you're using zsh and want to install extras for the dev environment, the bracket `[` has a 
@@ -31,8 +33,31 @@ Only with the proper credentials can this be run:
 * Google OAuth for my spreadsheet, or else feed it your own list of URLs
 * Real estate login
 * Bing Maps API token
-* Citymapper token
 
-1. Run `main.py` to refresh all listings from the Google sheet, OR
-2. Run `sample.py` to just test the last entry in the Google sheet
+Run `python deathpledge --help` for a list of options
 
+### Example usage
+```
+# [re]process the last 5 URLs added
+python deathpledge -n 5
+
+# process only new listings not already in database
+python deathpledge --new
+```
+
+## Rebuilding and using the Docker image
+```
+docker build -t deathpledge:latest .
+```
+
+The entrypoint is the `deathpledge` module, so the `run` command accepts any command line arg that
+the module would
+```
+# [re]process the last URL, even if it's Closed
+docker run deathpledge -n 1 -f
+```
+
+### Entering the container interactively (for debugging)
+```
+docker run -it --entrypoint sh deathpledge
+```

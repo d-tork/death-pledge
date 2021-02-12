@@ -28,8 +28,9 @@ class HomeToBeChecked(object):
         self.rev_id = self.RevIDs()
 
     def has_changed(self, fetched_doc):
-        price_changed = not(fetched_doc['list_price'] == self.price)
-        status_changed = not(fetched_doc['status'] == self.status)
+        cleaned_price = self.price.replace('$', '')
+        price_changed = not (fetched_doc['list_price'] == cleaned_price)
+        status_changed = not (fetched_doc['status'].lower() == self.status.lower())
         return any([price_changed, status_changed])
 
 
@@ -60,6 +61,9 @@ def get_docids_for_gallery_cards(cards: list) -> dict:
 def check_cards_for_changes(cards: dict) -> list:
     """Bulk fetch docs from database and check for changes.
 
+    Args:
+        cards: Gallery card details by docid
+
     Returns:
         list: HomesToBeChecked, which have been checked and whose 'changed'
             status has been set.
@@ -67,24 +71,22 @@ def check_cards_for_changes(cards: dict) -> list:
     """
     docids_to_fetch = list(cards.keys())
     with database.DatabaseClient() as cloudant:
-        fetched_docs = database.get_bulk_docs(
-            doc_ids=docids_to_fetch,
-            db_name=deathpledge.RAW_DATABASE_NAME,
-            client=cloudant
+        fetched_raw_docs = database.get_bulk_docs(
+            doc_ids=docids_to_fetch, db_name=deathpledge.RAW_DATABASE_NAME, client=cloudant
         )
     checked_cards = []
     for docid, card in cards.items():
         homecard = HomeToBeChecked(docid=docid, card=card)
         try:
-            doc = fetched_docs.get(docid).get('doc')
-        except (KeyError, AttributeError):
+            raw_doc = fetched_raw_docs.get(docid).get('doc')
+        except (KeyError, AttributeError):  # docid not in raw db
             pass
         else:
-            if doc is None:  # docid is in db, but deleted
+            if raw_doc is None:  # docid is in db, but deleted
                 pass
             else:
                 homecard.exists_in_db = True
-                if homecard.has_changed(doc):
+                if homecard.has_changed(raw_doc):
                     homecard.changed = True
         finally:
             checked_cards.append(homecard)

@@ -25,7 +25,8 @@ def main():
     with database.DatabaseClient() as cloudant:
         if not args.process_only:
             scrape_new_urls_from_google(google_creds=google_creds, db_client=cloudant)
-            # check_and_scrape_homescout(db_client=cloudant, max_pages=args.pages, quiet=True)
+            gs.refresh_url_sheet(google_creds, db_client=cloudant)
+            check_and_scrape_homescout(db_client=cloudant, max_pages=args.pages, quiet=True)
             gs.refresh_url_sheet(google_creds, db_client=cloudant)
         process_data(google_creds, db_client=cloudant)
     return
@@ -53,7 +54,7 @@ def scrape_new_urls_from_google(google_creds, db_client):
     urls = gs.get_url_dataframe(google_creds)
     urls_no_status = urls.loc[urls['status'].isna()]
     logger.info(f'{len(urls_no_status)} new rows to be scraped')
-    if urls_no_status.empty():
+    if urls_no_status.empty:
         return
 
     new_homes = scrape2.scrape_from_url_df(urls=urls_no_status)
@@ -73,7 +74,7 @@ def get_urls_to_scrape(urls):
 
 def process_data(google_creds, db_client):
     urls = gs.get_url_dataframe(google_creds, last_n=None)
-    fetched_raw_docs = bulk_fetch_raw_docs(urls, db_client)
+    fetched_raw_docs = database.bulk_fetch_raw_docs(urls, db_client)
     fetched_clean_docs = database.get_active_docs(client=db_client, db_name=deathpledge.DATABASE_NAME)
     clean_docs = []
     for row in urls.itertuples():
@@ -97,22 +98,6 @@ def process_data(google_creds, db_client):
     database.bulk_upload(docs=clean_docs,
                          db_name=deathpledge.DATABASE_NAME,
                          client=db_client)
-
-
-def bulk_fetch_raw_docs(urls, db_client) -> dict:
-    """Get the requested houses from the raw database."""
-    fetched_docs = database.get_bulk_docs(
-        doc_ids=urls['docid'].tolist(),
-        db_name=deathpledge.RAW_DATABASE_NAME,
-        client=db_client
-    )
-    flattened = {k: fetched_docs[k]['doc'] for k, v in fetched_docs.items()}
-    for docid, doc in flattened.items():
-        try:
-            del doc['_rev']
-        except KeyError:
-            continue
-    return flattened
 
 
 if __name__ == '__main__':

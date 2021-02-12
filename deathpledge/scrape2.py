@@ -14,7 +14,7 @@ import random
 from time import sleep
 
 import deathpledge
-from deathpledge import support, classes, database
+from deathpledge import support, classes, database, cleaning
 from deathpledge.api_calls import homescout as hs, check
 
 logger = logging.getLogger(__name__)
@@ -95,11 +95,28 @@ def scrape_from_url_df(urls, *args, **kwargs) -> list:
 
 def scrape_from_homescout_gallery(db_client, max_pages: int, *args, **kwargs):
     cards = check.main(max_pages=max_pages, **kwargs)
+    ids_to_fetch = [card.docid for card in cards]
+    fetched_raw_docs = database.get_bulk_docs(
+        doc_ids=ids_to_fetch, db_name=deathpledge.RAW_DATABASE_NAME, client=db_client)
+    clean_db = db_client[deathpledge.DATABASE_NAME]
     with SeleniumDriver(*args, **kwargs) as wd:
         homescout = hs.HomeScoutWebsite(webdriver=wd.webdriver)
-        new_homes = []
+        new_homes, changed_homes = [], []
         for card in cards:
-            if not card.exists_in_db:
+            if card.exists_in_db:
+                if card.changed:
+                    # update clean in place
+                    clean_doc = clean_db[card.docid]
+                    clean_doc['list_price'] = card.price
+                    clean_doc['status'] = card.status
+
+                    raw_doc_local = fetched_raw_docs.get(card.docid)['doc']
+                    raw_doc_local['list_price'] = card.price
+                    raw_doc_local['status'] = card.status
+                    changed_homes.append(raw_doc_local)
+                else:
+                    pass
+            else:
                 current_home = classes.Home(url=card.url, docid=card.docid)
                 try:
                     current_home.scrape(website_object=homescout)
@@ -108,12 +125,11 @@ def scrape_from_homescout_gallery(db_client, max_pages: int, *args, **kwargs):
                     logger.error('Scraping failed for {card.url}', exc_info=True)
                 else:
                     new_homes.append(current_home)
-            else:
-                if card.changed:
-                    pass  # TODO: execute procedure for updating raw database record
-    database.bulk_upload(
-        docs=new_homes, client=db_client, db_name=deathpledge.RAW_DATABASE_NAME
-    )
+    homes_for_raw_upload = new_homes + changed_homes
+    if homes_for_raw_upload:
+        database.bulk_upload(docs=homes_for_raw_upload, client=db_client, db_name=deathpledge.RAW_DATABASE_NAME)
+    if changed_homes:
+        database.bulk_upload(docs=changed_homes, client=db_client, db_name=deathpledge.DATABASE_NAME)
 
 
 def wait_a_random_time():

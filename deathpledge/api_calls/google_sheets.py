@@ -78,7 +78,7 @@ class URLDataFrame(object):
         self.df = self.df[-n:]
 
     def drop_closed_listings(self):
-        closed = self.df.loc[self.df['status'].str.lower().isin(['closed', 'expired'])]
+        closed = self.df.loc[self.df['status'].str.lower().isin(['closed', 'expired', 'cancelled'])]
         self.df = self.df.drop(index=closed.index)
 
 

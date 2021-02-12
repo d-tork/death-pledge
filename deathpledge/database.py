@@ -128,7 +128,29 @@ def get_doc_list(client: Cloudant.iam, db_name: str) -> list:
     return [*result_collection]
 
 
-def get_active_docs(client: Cloudant.iam, db_name: str) -> list:
+def bulk_fetch_raw_docs(urls, db_client) -> dict:
+    """Get the requested houses from the raw database."""
+    fetched_docs = get_bulk_docs(
+        doc_ids=urls['docid'].tolist(),
+        db_name=deathpledge.RAW_DATABASE_NAME,
+        client=db_client
+    )
+    flattened = {k: fetched_docs[k]['doc'] for k, v in fetched_docs.items()}
+    for docid, doc in flattened.items():
+        try:
+            del doc['_rev']
+        except KeyError:
+            continue
+    return flattened
+
+
+def get_active_docs(client: Cloudant.iam, db_name: str) -> dict:
+    """Get docs where status is not some form of closed.
+
+    Returns:
+        dict: Mapping of docid to doc
+
+    """
     db = client[db_name]
     selector = {
         'doctype': 'home',
@@ -141,7 +163,7 @@ def get_active_docs(client: Cloudant.iam, db_name: str) -> list:
         ]}
     }
     query_results = db.get_query_result(selector)
-    docs = [doc for doc in query_results]
+    docs = {result['_id']: result for result in query_results}
     return docs
 
 

@@ -81,6 +81,7 @@ def check_cards_for_changes(cards: dict) -> list:
                 homecard.exists_in_db = True
                 if homecard.has_changed(doc):
                     homecard.changed = True
+                    # TODO: handle changes in cards (home vitals)
         finally:
             checked_cards.append(homecard)
     return checked_cards

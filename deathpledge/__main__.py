@@ -14,10 +14,11 @@ logger = logging.getLogger(__name__)
 
 @support.timing
 def main():
-    logging_config = path.join(deathpledge.PROJ_PATH, 'config', 'logging.yaml')
-    setup_logging(config_path=logging_config)
-
     args = parse_commandline_arguments()
+
+    logging_config = path.join(deathpledge.PROJ_PATH, 'config', 'logging.yaml')
+    setup_logging(config_path=logging_config, verbose=args.verbose)
+
     google_creds = gs.GoogleCreds(
         creds_dict=deathpledge.keys.get('Google_creds')
     ).creds
@@ -43,6 +44,8 @@ def parse_commandline_arguments():
                         help='Number of pages of results to scrape.')
     parser.add_argument('--process', action='store_true', dest='process_only',
                         help='Only process listings already in the raw db.')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='increase output verbosity')
     return parser.parse_args()
 
 

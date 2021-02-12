@@ -16,12 +16,6 @@ handlers:
     formatter: simple
     stream: ext://sys.stdout
 
-  debug_console:
-    class: logging.StreamHandler
-    level: DEBUG
-    formatter: simple
-    stream: ext://sys.stdout
-
   dp_info_file:
     () : __main__.dp_infologger
     level: INFO
@@ -35,7 +29,7 @@ handlers:
 loggers:
   deathpledge:
     level: DEBUG
-    handlers: [dp_info_file, dp_debug_file, debug_console]
+    handlers: [dp_info_file, dp_debug_file, console]
     propagate: no
   deathpledge.database:
     level: INFO

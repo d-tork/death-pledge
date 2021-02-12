@@ -37,7 +37,8 @@ def dp_debugger():
 def setup_logging(
         config_path=LOGCONFIG_FILE,
         default_level=logging.INFO,
-        env_key='LOG_CFG'
+        env_key='LOG_CFG',
+        verbose=None
 ):
     path = config_path
     value = os.getenv(env_key, None)
@@ -46,6 +47,8 @@ def setup_logging(
     if os.path.exists(path):
         with open(path, 'rt') as f:
             config = yaml.safe_load(f.read())
+        if verbose:
+            config['handlers']['console']['level'] = 'DEBUG'
         logging.config.dictConfig(config)
     else:
         logging.basicConfig(level=default_level)

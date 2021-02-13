@@ -12,6 +12,7 @@ import logging
 import subprocess
 import random
 from time import sleep
+from datetime import datetime
 
 import deathpledge
 from deathpledge import support, classes, database, cleaning
@@ -109,6 +110,7 @@ def scrape_from_homescout_gallery(db_client, max_pages: int, *args, **kwargs):
                     clean_doc = clean_db[card.docid]
                     clean_doc['list_price'] = cleaning.parse_number(card.price)
                     clean_doc['status'] = card.status
+                    clean_doc['scraped_time'] = datetime.now().strftime(deathpledge.TIMEFORMAT)
                     clean_doc.save()
 
                     raw_doc_local = fetched_raw_docs.get(card.docid)['doc']

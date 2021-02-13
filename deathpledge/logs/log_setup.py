@@ -34,12 +34,8 @@ def dp_debugger():
     return logger
 
 
-def setup_logging(
-        config_path=LOGCONFIG_FILE,
-        default_level=logging.INFO,
-        env_key='LOG_CFG',
-        verbose=None
-):
+def setup_logging(config_path=LOGCONFIG_FILE, default_level=logging.INFO,
+                  env_key='LOG_CFG', verbose=None):
     path = config_path
     value = os.getenv(env_key, None)
     if value:

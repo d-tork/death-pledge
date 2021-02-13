@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='death-pledge',
-    version='2020.12.5',
+    version='2021.02.12',
     author='Daniel Torkelson',
     packages=find_packages(include=['deathpledge', 'deathpledge.*']),
     install_requires=[

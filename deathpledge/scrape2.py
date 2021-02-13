@@ -75,7 +75,6 @@ def scrape_from_url_df(urls, *args, **kwargs) -> list:
     raw_homes = []
     with SeleniumDriver(*args, **kwargs) as wd:
         homescout = hs.HomeScoutWebsite(webdriver=wd.webdriver)
-        homescout.sign_into_website()
 
         for row in urls.itertuples(index=False):
             if not url_is_valid(row.url):

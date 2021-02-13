@@ -55,8 +55,6 @@ def convert_numbers(home):
         'list_price',
         'sale_price',
         'price_per_sqft',
-        'hoa_fee',
-        'condo_coop_fee',
         'tax_annual_amount',
         'county_tax',
         'tax_assessed_value',
@@ -82,6 +80,24 @@ def convert_numbers(home):
                 continue
             else:
                 logger.debug(f'Field {key} converted to number')
+
+
+def split_fee_frequency(home):
+    """Parses HOA/Co-op fee and frequency."""
+    fee_fields = ['hoa_fee', 'condocoop_fee']
+    for key in fee_fields:
+        try:
+            val = home[key]
+        except KeyError:
+            continue
+        try:
+            fee, freq = val.split('/')
+        except (AttributeError, ValueError):
+            logger.exception(f'Failed to split {key}: {val}')
+        else:
+            home[key] = parse_number(fee)
+            home[f'{key}_frequency'] = freq
+            logger.debug(f'Field {key} split and converted')
 
 
 def parse_address(home):

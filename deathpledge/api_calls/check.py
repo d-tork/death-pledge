@@ -2,11 +2,14 @@
 Module for checking for new or changed listings (not a full scrape)
 """
 from collections import namedtuple
+import logging
 
 import deathpledge
 from deathpledge.scrape2 import SeleniumDriver
 from deathpledge.api_calls import homescout as hs
 from deathpledge import support, database, classes
+
+logger = logging.getLogger(__name__)
 
 
 class HomeToBeChecked(object):

@@ -112,6 +112,7 @@ class Home(dict):
         cleaning_funcs = [
             cleaning.split_comma_delimited_fields,
             cleaning.convert_numbers,
+            cleaning.split_fee_frequency,
             cleaning.parse_address,
             cleaning.parse_homescout_date,
         ]

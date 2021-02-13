@@ -2,11 +2,14 @@
 Module for checking for new or changed listings (not a full scrape)
 """
 from collections import namedtuple
+import logging
 
 import deathpledge
 from deathpledge.scrape2 import SeleniumDriver
 from deathpledge.api_calls import homescout as hs
 from deathpledge import support, database, classes
+
+logger = logging.getLogger(__name__)
 
 
 class HomeToBeChecked(object):
@@ -37,7 +40,6 @@ class HomeToBeChecked(object):
 def get_gallery_cards(max_pages, **kwargs) -> list:
     with SeleniumDriver(**kwargs) as wd:
         homescout = hs.HomeScoutWebsite(webdriver=wd.webdriver)
-        homescout.sign_into_website()
 
         listing_pages = homescout.collect_listings(max_pages=max_pages)
         all_cards = []

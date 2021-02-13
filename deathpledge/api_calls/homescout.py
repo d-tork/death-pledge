@@ -12,7 +12,7 @@ from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 from django.utils.text import slugify
 from collections import namedtuple
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
 import deathpledge
 from deathpledge import scrape2 as scrape
@@ -60,27 +60,15 @@ class HomeScoutWebsite(classes.WebDataSource):
         self.logger.info('signed in')
 
     def collect_listings(self, max_pages: int) -> list:
-        self.webdriver.get(self._config['results_url'])
-        sleep(2)
+        gallery = HomeScoutURL(self._config['results_url'])
         listing_pages = []
-        for page in range(max_pages):
+        while gallery.page <= max_pages:
+            self.logger.info(f'Getting page {gallery.page} of gallery results')
+            self.webdriver.get(gallery.url)
+            sleep(2)
             results_page_soup = HomeScoutList(self.webdriver.page_source, 'html.parser')
             listing_pages.append(results_page_soup)
-            try:
-                WebDriverWait(self.webdriver, 10).until(
-                    EC.presence_of_all_elements_located((By.CLASS_NAME, 'mcl-paging-next'))
-                )
-            except TimeoutException:
-                raise IndexError('Reached last page of results')
-            sleep(1)
-            paging_buttons = self._get_paging_buttons()
-            try:
-                next_button = paging_buttons[1]
-            except IndexError:
-                logger.exception('Next page button could not be found')
-            else:
-                next_button.click()
-                sleep(2)
+            gallery.page += 1
         return listing_pages
 
     def _get_paging_buttons(self):
@@ -296,3 +284,43 @@ class HomeScoutSoup(BeautifulSoup):
             feature_val = feature.find('span', attrs={'class': 'feature-value'}).text
             advanced_data[feature_name] = feature_val
         return advanced_data
+
+
+class HomeScoutURL(object):
+    """For modifying a Homescout URL.
+
+    Properties:
+        page (int): Page of gallery results to navigate to.
+        url (str): Full URL.
+
+    """
+
+    def __init__(self, url: str):
+        self._url = url
+        self._parsed = urlparse(self._url)
+        self.query_params = self._parse_query_params()
+        self._page = self.query_params.get('Page')
+
+    def _parse_query_params(self):
+        query = self._parsed.query
+        query_dict = parse_qs(query)
+        return query_dict
+
+    @property
+    def page(self):
+        return int(self.query_params.get('Page')[0])
+
+    @page.setter
+    def page(self, new_page: int):
+        self.query_params['Page'] = [str(new_page)]
+
+    @property
+    def url(self):
+        new_query = urlencode(self.query_params, doseq=True)
+        re_parsed = (
+            self._parsed.scheme, self._parsed.netloc,
+            self._parsed.path, self._parsed.params,
+            new_query, self._parsed.fragment,
+        )
+        self._url = urlunparse(re_parsed)
+        return self._url

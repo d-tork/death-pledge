@@ -56,11 +56,6 @@ the module would
 docker run deathpledge -n 1
 ```
 
-### Change the log level
-```
-docker run -e LOG_LEVEL=info deathpledge -n 1
-```
-
 ### Entering the container interactively (for debugging)
 ```
 docker run -it --entrypoint sh deathpledge

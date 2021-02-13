@@ -63,6 +63,7 @@ class HomeScoutWebsite(classes.WebDataSource):
         gallery = HomeScoutURL(self._config['results_url'])
         listing_pages = []
         while gallery.page <= max_pages:
+            self.logger.info(f'Getting page {gallery.page} of gallery results')
             self.webdriver.get(gallery.url)
             sleep(2)
             results_page_soup = HomeScoutList(self.webdriver.page_source, 'html.parser')

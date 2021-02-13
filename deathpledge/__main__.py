@@ -98,9 +98,10 @@ def process_data(google_creds, db_client):
         home.clean()
         home.enrich()
         clean_docs.append(home)
-    database.bulk_upload(docs=clean_docs,
-                         db_name=deathpledge.DATABASE_NAME,
-                         client=db_client)
+    if clean_docs:
+        database.bulk_upload(docs=clean_docs,
+                             db_name=deathpledge.DATABASE_NAME,
+                             client=db_client)
 
 
 if __name__ == '__main__':

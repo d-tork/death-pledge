@@ -178,8 +178,8 @@ def bulk_upload(docs: list, db_name: str, client: Cloudant.iam):
         except AttributeError:
             continue
     db = client[db_name]
-    resp = db.bulk_docs(docs, db_name)
-    get_successful_uploads(resp)
+    resp = db.bulk_docs(docs)
+    get_successful_uploads(resp, db_name=db_name)
 
 
 def get_successful_uploads(resp: list, db_name: str):

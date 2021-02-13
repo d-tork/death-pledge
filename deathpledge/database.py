@@ -144,8 +144,8 @@ def bulk_fetch_raw_docs(urls, db_client) -> dict:
     return flattened
 
 
-def get_active_docs(client: Cloudant.iam, db_name: str) -> dict:
-    """Get docs where status is not some form of closed.
+def get_active_doc_ids(client: Cloudant.iam, db_name: str) -> dict:
+    """Get docids where status is not some form of closed.
 
     Returns:
         dict: Mapping of docid to doc
@@ -160,7 +160,7 @@ def get_active_docs(client: Cloudant.iam, db_name: str) -> dict:
             'Expired'
         ]}
     }
-    query_results = db.get_query_result(selector)
+    query_results = db.get_query_result(selector=selector, fields=['_id'])
     docs = {result['_id']: result for result in query_results}
     return docs
 

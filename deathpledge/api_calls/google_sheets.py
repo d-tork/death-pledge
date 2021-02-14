@@ -58,6 +58,7 @@ class URLDataFrame(object):
         self._drop_null_rows()
         self._remove_duplicate_listings()
         self._fill_blanks_with_na()
+        self._fill_empty_added_date()
 
     def _set_first_row_as_headers(self):
         self.df = self.df.rename(columns=self.df.iloc[0]).drop(self.df.index[0])
@@ -70,6 +71,10 @@ class URLDataFrame(object):
 
     def _fill_blanks_with_na(self):
         self.df.replace('', np.nan, inplace=True)
+
+    def _fill_empty_added_date(self):
+        todays_date = pd.Timestamp.today().strftime('%m/%d/%Y')
+        self.df['added_date'].fillna(todays_date, inplace=True)
 
     def _set_order_newest_to_oldest(self):
         self.df.sort_index(ascending=False, inplace=True)

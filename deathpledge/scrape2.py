@@ -106,6 +106,7 @@ def scrape_from_homescout_gallery(db_client, max_pages: int, *args, **kwargs):
             if card.exists_in_db:
                 if card.changed:
                     # update clean in place
+                    sleep(10)
                     clean_doc = clean_db[card.docid]
                     clean_doc['list_price'] = cleaning.parse_number(card.price)
                     clean_doc['status'] = card.status

@@ -220,3 +220,17 @@ def get_successful_uploads(resp: list, db_name: str):
     for docid in successful:
         logger.info(f'\t{docid}')
     logger.info(f'{len(successful)}/{attempted_count} docs created')
+
+
+def delete_bad_docs(id_prefix: str, db_name: str):
+    """Delete docs which received a bad doc_id."""
+    with DatabaseClient() as cloudant:
+        db = cloudant[db_name]
+        response = db.all_docs(include_docs=False)
+        all_docs = rate_limit_pull(response['rows'], est_doc_count=775)
+        docs_to_delete = [x for x in all_docs if x['id'].startswith(id_prefix)]
+        proceed = input(f'{len(docs_to_delete)} will be deleted: ')
+        for part in rate_limit_push(docs_to_delete):
+            for doc in part:
+                db[doc['id']].delete()
+                sleep(1)

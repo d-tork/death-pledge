@@ -79,7 +79,6 @@ def get_urls_to_scrape(urls):
 def process_data(google_creds, db_client):
     urls = gs.get_url_dataframe(google_creds, last_n=None)
     fetched_raw_docs = database.bulk_fetch_raw_docs(urls, db_client)
-    sleep(2)
     fetched_clean_docs = database.get_active_doc_ids(
         client=db_client, db_name=deathpledge.DATABASE_NAME, est_doc_count=len(fetched_raw_docs))
     clean_docs = []

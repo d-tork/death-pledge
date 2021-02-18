@@ -154,13 +154,16 @@ def get_active_doc_ids(client: Cloudant.iam, db_name: str, **kwargs) -> dict:
     db = client[db_name]
     selector = {
         'doctype': 'home',
-        'status': {'$nin': [
-            'Closed',
-            'Cancelled',
-            'Expired'
+        'status': {'$in': [
+            'Active',
+            'Pending',
+            'Active Under Contract',
+            'ACTIVE',
+            'PENDING',
+            'ACTIVE UNDER CONTRACT',
         ]}
     }
-    query_results = db.get_query_result(selector=selector, fields=['_id'])
+    query_results = db.get_query_result(selector=selector, fields=['_id', '_rev'])
     docs = {result['_id']: result for result in rate_limit_pull(query_results, **kwargs)}
     return docs
 

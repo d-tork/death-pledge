@@ -106,7 +106,7 @@ def get_bulk_docs(doc_ids: list, db_name: str, client: Cloudant.iam) -> dict:
     """Fetch multiple docs from the database."""
     db = client[db_name]
     result = db.all_docs(keys=doc_ids, include_docs=True)
-    raw_rows = result['rows']
+    raw_rows = rate_limit_pull(result['rows'], est_doc_count=len(doc_ids))
     rows_by_docid = {x['id']: x for x in raw_rows if not x.get('error')}
     return rows_by_docid
 
@@ -122,10 +122,10 @@ def get_url_list(client):
     return results
 
 
-def get_doc_list(client: Cloudant.iam, db_name: str) -> list:
+def get_doc_list(client: Cloudant.iam, db_name: str, **kwargs) -> list:
     db = client[db_name]
     result_collection = Result(db.all_docs, include_docs=False)
-    return [*result_collection]
+    return [*rate_limit_pull(result_collection, **kwargs)]
 
 
 def bulk_fetch_raw_docs(urls, db_client) -> dict:
@@ -144,7 +144,7 @@ def bulk_fetch_raw_docs(urls, db_client) -> dict:
     return flattened
 
 
-def get_active_doc_ids(client: Cloudant.iam, db_name: str) -> dict:
+def get_active_doc_ids(client: Cloudant.iam, db_name: str, **kwargs) -> dict:
     """Get docids where status is not some form of closed.
 
     Returns:
@@ -161,7 +161,7 @@ def get_active_doc_ids(client: Cloudant.iam, db_name: str) -> dict:
         ]}
     }
     query_results = db.get_query_result(selector=selector, fields=['_id'])
-    docs = {result['_id']: result for result in query_results}
+    docs = {result['_id']: result for result in rate_limit_pull(query_results, **kwargs)}
     return docs
 
 
@@ -178,8 +178,38 @@ def bulk_upload(docs: list, db_name: str, client: Cloudant.iam):
         except AttributeError:
             continue
     db = client[db_name]
-    resp = db.bulk_docs(docs)
+    resp = []
+    for part in rate_limit_push(docs=docs):
+        part_resp = db.bulk_docs(part)
+        resp.extend(part_resp)
     get_successful_uploads(resp, db_name=db_name)
+
+
+def rate_limit_push(docs: list) -> list:
+    """Slow the calls to Cloudant in order to not exceed write limit."""
+    doc_count = len(docs)
+    iterations = int(doc_count / 20) + 1
+    start = 0
+    for i in range(iterations):
+        stop = start + 20
+        partition = [x for x in docs[start:stop]]
+        start = stop
+        sleep(1)
+        yield partition
+
+
+def rate_limit_pull(docs: list, est_doc_count: int = 1000) -> list:
+    """Slow the calls to Cloudant in order to not exceed read limit."""
+    iterations = int(est_doc_count / 20) + 1
+    start = 0
+    all_docs = []
+    for i in range(iterations):
+        stop = start + 20
+        partition = [x for x in docs[start:stop]]
+        all_docs.extend(partition)
+        start = stop
+        sleep(1)
+    return all_docs
 
 
 def get_successful_uploads(resp: list, db_name: str):

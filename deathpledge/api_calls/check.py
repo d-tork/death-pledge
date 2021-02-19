@@ -69,10 +69,7 @@ def get_gallery_cards(max_pages, **kwargs) -> list:
 def get_docids_for_gallery_cards(cards: list) -> dict:
     listings = {}
     for card in cards:
-        full_address = ' '.join(
-            [card.address, card.city_state_zip]
-        )
-        docid = support.create_house_id(full_address)
+        docid = support.create_house_id(card.mls)
         listings[docid] = card
     return listings
 
@@ -107,8 +104,6 @@ def check_cards_for_changes(cards: dict) -> list:
                 homecard.exists_in_db = True
                 if homecard.has_changed(raw_doc):
                     homecard.changed = True
-
-
         finally:
             checked_cards.append(homecard)
     return checked_cards

@@ -6,7 +6,6 @@ import datetime
 from datetime import datetime as dt
 from fake_useragent import UserAgent
 from django.utils.text import slugify
-from hashlib import sha1
 
 
 class BadResponse(Exception):
@@ -108,10 +107,10 @@ def clean_address(addr):
     return slugify(addr).replace('-', ' ').upper()
 
 
-def create_house_id(addr):
-    """Get SHA-1 hash from address (slugified and space-separated)."""
-    clean_addr = clean_address(addr)
-    return sha1(clean_addr.encode()).hexdigest()
+def create_house_id(mls):
+    """Get SHA-1 hash from MLS."""
+    clean_mls = mls.upper()
+    return clean_mls
 
 
 def coerce_date_string_to_date(date_str):

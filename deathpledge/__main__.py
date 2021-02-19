@@ -94,7 +94,7 @@ def process_data(google_creds, db_client):
         home = classes.Home(
             url=doc['url'],
             added_date=doc['added_date'],
-            docid=doc['_id']
+            docid=doc['mls_number'],
         )
         home.update(doc)
         home.clean()

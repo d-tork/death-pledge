@@ -9,6 +9,7 @@ from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
+from selenium.webdriver import ActionChains
 from bs4 import BeautifulSoup
 
 import deathpledge
@@ -28,6 +29,13 @@ class RealtorWebsite(classes.WebDataSource):
 
     def get_url_from_search(self, full_address: str):
         self.webdriver.get(self.search_url)
+        search_field = self.webdriver.find_element_by_id('rdc-main-search-nav-hero')
+        search_input = search_field.find_element_by_class_name('input')
+        search_input.send_keys(full_address)
+        sleep(1)
+        search_button = search_field.find_element_by_xpath("//button[@aria-label='Search']")
+        search_button.click()
+        self.logger.debug('stop here')
 
     def get_soup_for_url(self, url):
         """Get BeautifulSoup object for a URL.

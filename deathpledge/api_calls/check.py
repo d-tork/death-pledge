@@ -5,9 +5,8 @@ from collections import namedtuple
 import logging
 
 import deathpledge
-from deathpledge.scrape2 import SeleniumDriver
 from deathpledge.api_calls import homescout as hs, realtor
-from deathpledge import support, database, cleaning
+from deathpledge import support, database, cleaning, scrape2
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +54,7 @@ class HomeToBeChecked(object):
 
 
 def get_gallery_cards(max_pages, **kwargs) -> list:
-    with SeleniumDriver(**kwargs) as wd:
+    with scrape2.SeleniumDriver(**kwargs) as wd:
         homescout = hs.HomeScoutWebsite(webdriver=wd.webdriver)
 
         listing_pages = homescout.collect_listings(max_pages=max_pages)
@@ -118,9 +117,10 @@ def get_cards_from_hs_gallery(max_pages, **kwargs) -> list:
 
 def check_home_for_sale_status(home):
     """Check address elsewhere for sale status."""
-    realtor_com = realtor.RealtorWebsite()
-    url = realtor_com.get_url_from_search(full_address=home.get('full_address'))
-    soup = realtor_com.get_soup_for_url(url=url)
+    with scrape2.SeleniumDriver(quiet=False) as wd:
+        realtor_com = realtor.RealtorWebsite(webdriver=wd.webdriver)
+        url = realtor_com.get_url_from_search(full_address=home.get('full_address'))
+        soup = realtor_com.get_soup_for_url(url=url)
     logger.debug('stop here')
 
 

@@ -96,11 +96,11 @@ def split_fee_frequency(home):
         try:
             fee, freq = val.split('/')
         except (AttributeError, ValueError):
-            logger.exception(f'Failed to split {key}: {val}')
+            fee = val
         else:
-            home[key] = parse_number(fee)
             home[f'{key}_frequency'] = freq
             logger.debug(f'Field {key} split and converted')
+        home[key] = parse_number(fee)
 
 
 def parse_address(home):

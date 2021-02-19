@@ -20,13 +20,14 @@ logger = logging.getLogger(__name__)
 
 class RealtorWebsite(classes.WebDataSource):
     """Container for Realtor.com website and access methods for scraping the self."""
+    search_url = 'https://www.realtor.com/soldhomes'
 
     def __init__(self, *args, **kwargs):
         self.logger = logging.getLogger(f'{__name__}.{type(self).__name__}')
         super().__init__(*args, **kwargs)
 
-    def collect_listings(self, max_pages: int) -> list:
-        raise NotImplementedError()
+    def get_url_from_search(self, full_address: str):
+        self.webdriver.get(self.search_url)
 
     def get_soup_for_url(self, url):
         """Get BeautifulSoup object for a URL.

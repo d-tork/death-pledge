@@ -21,6 +21,10 @@ from deathpledge import classes
 logger = logging.getLogger(__name__)
 
 
+class HomeSoldException(Exception):
+    pass
+
+
 class HomeScoutWebsite(classes.WebDataSource):
     """Container for Homescout website and access methods for scraping the self."""
 
@@ -232,6 +236,9 @@ class HomeScoutSoup(BeautifulSoup):
         """Add box details to home instance."""
         self.logger.debug('Getting main box details')
         price, status = self._get_price_and_status()
+        if int(price) == 0:
+            raise HomeSoldException('Price set to zero, indicating a sold home.')
+
         address, citystate = self._get_address()
         vitals = self._get_vitals()
 

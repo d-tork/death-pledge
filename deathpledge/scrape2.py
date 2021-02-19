@@ -87,6 +87,7 @@ def scrape_from_url_df(urls, *args, **kwargs) -> list:
                 current_home.scrape(website_object=homescout)
             except hs.HomeSoldException:
                 check.check_home_for_sale_status(current_home)
+                current_home['probably_sold'] = True
             except:
                 logger.exception(f'Scrape failed for {row.url}')
                 continue

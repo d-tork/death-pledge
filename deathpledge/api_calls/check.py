@@ -117,11 +117,7 @@ def get_cards_from_hs_gallery(max_pages, **kwargs) -> list:
 
 def check_home_for_sale_status(home):
     """Check address elsewhere for sale status."""
-    with scrape2.SeleniumDriver(quiet=False) as wd:
-        realtor_com = realtor.RealtorWebsite(webdriver=wd.webdriver)
-        url = realtor_com.get_url_from_search(full_address=home.get('full_address'))
-        soup = realtor_com.get_soup_for_url(url=url)
-    logger.debug('stop here')
+    pass
 
 
 if __name__ == '__main__':

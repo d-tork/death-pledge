@@ -94,7 +94,7 @@ def scrape_from_url_df(urls, *args, **kwargs) -> list:
 
 
 def scrape_from_homescout_gallery(db_client, max_pages: int, *args, **kwargs):
-    cards = check.main(max_pages=max_pages, **kwargs)
+    cards = check.get_cards_from_hs_gallery(max_pages=max_pages, **kwargs)
     ids_to_fetch = [card.docid for card in cards]
     fetched_raw_docs = database.get_bulk_docs(
         doc_ids=ids_to_fetch, db_name=deathpledge.RAW_DATABASE_NAME, client=db_client)

@@ -109,12 +109,9 @@ def check_cards_for_changes(cards: dict) -> list:
     return checked_cards
 
 
-def main(max_pages, **kwargs) -> list:
+def get_cards_from_hs_gallery(max_pages, **kwargs) -> list:
     cards = get_gallery_cards(max_pages=max_pages, **kwargs)
     cards_by_docid = get_docids_for_gallery_cards(cards=cards)
     checked_cards = check_cards_for_changes(cards_by_docid)
     return checked_cards
 
-
-if __name__ == '__main__':
-    main()

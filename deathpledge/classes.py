@@ -126,7 +126,10 @@ class Home(dict):
 
     def enrich(self):
         """Add additional values from external sources."""
-        enrich.add_bing_maps_data(self)
+        try:
+            enrich.add_bing_maps_data(self)
+        except:
+            self.logger.exception('Bing enriching failed.')
         enrich.add_tether(self)
 
     def get_geocoords(self):

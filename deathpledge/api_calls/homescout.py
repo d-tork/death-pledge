@@ -236,7 +236,7 @@ class HomeScoutSoup(BeautifulSoup):
         """Add box details to home instance."""
         self.logger.debug('Getting main box details')
         price, status = self._get_price_and_status()
-        if int(price) == 0:
+        if int(price.replace(',', '')) == 0:
             raise HomeSoldException('Price set to zero, indicating a sold home.')
 
         address, citystate = self._get_address()

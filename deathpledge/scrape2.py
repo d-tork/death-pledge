@@ -85,6 +85,9 @@ def scrape_from_url_df(urls, *args, **kwargs) -> list:
                 continue
             try:
                 current_home.scrape(website_object=homescout)
+            except hs.HomeSoldException:
+                check.check_home_for_sale_status(current_home)
+                current_home['probably_sold'] = True
             except:
                 logger.exception(f'Scrape failed for {row.url}')
                 continue
@@ -94,7 +97,7 @@ def scrape_from_url_df(urls, *args, **kwargs) -> list:
 
 
 def scrape_from_homescout_gallery(db_client, max_pages: int, *args, **kwargs):
-    cards = check.main(max_pages=max_pages, **kwargs)
+    cards = check.get_cards_from_hs_gallery(max_pages=max_pages, **kwargs)
     ids_to_fetch = [card.docid for card in cards]
     fetched_raw_docs = database.get_bulk_docs(
         doc_ids=ids_to_fetch, db_name=deathpledge.RAW_DATABASE_NAME, client=db_client)

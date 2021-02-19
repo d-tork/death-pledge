@@ -5,9 +5,8 @@ from collections import namedtuple
 import logging
 
 import deathpledge
-from deathpledge.scrape2 import SeleniumDriver
-from deathpledge.api_calls import homescout as hs
-from deathpledge import support, database, cleaning
+from deathpledge.api_calls import homescout as hs, realtor
+from deathpledge import support, database, cleaning, scrape2
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +54,7 @@ class HomeToBeChecked(object):
 
 
 def get_gallery_cards(max_pages, **kwargs) -> list:
-    with SeleniumDriver(**kwargs) as wd:
+    with scrape2.SeleniumDriver(**kwargs) as wd:
         homescout = hs.HomeScoutWebsite(webdriver=wd.webdriver)
 
         listing_pages = homescout.collect_listings(max_pages=max_pages)
@@ -109,12 +108,22 @@ def check_cards_for_changes(cards: dict) -> list:
     return checked_cards
 
 
-def main(max_pages, **kwargs) -> list:
+def get_cards_from_hs_gallery(max_pages, **kwargs) -> list:
     cards = get_gallery_cards(max_pages=max_pages, **kwargs)
     cards_by_docid = get_docids_for_gallery_cards(cards=cards)
     checked_cards = check_cards_for_changes(cards_by_docid)
     return checked_cards
 
 
+def check_home_for_sale_status(home):
+    """Check address elsewhere for sale status."""
+    pass
+
+
 if __name__ == '__main__':
-    main()
+    from deathpledge.classes import Home
+
+    sample_home = Home(added_date='1/18/2021', docid='VAAR175062')
+    with deathpledge.database.DatabaseClient() as cloudant:
+        sample_home.fetch(db_name=deathpledge.DATABASE_NAME, db_client=cloudant)
+    check_home_for_sale_status(sample_home)

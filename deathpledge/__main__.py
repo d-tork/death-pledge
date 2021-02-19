@@ -28,7 +28,7 @@ def main():
         if not args.process_only:
             scrape_new_urls_from_google(google_creds=google_creds, db_client=cloudant)
             gs.refresh_url_sheet(google_creds, db_client=cloudant)
-            check_and_scrape_homescout(db_client=cloudant, max_pages=args.pages, quiet=True)
+            check_and_scrape_homescout(db_client=cloudant, max_pages=args.pages, quiet=False)
             gs.refresh_url_sheet(google_creds, db_client=cloudant)
         process_data(google_creds, db_client=cloudant)
     return
@@ -55,12 +55,16 @@ def check_and_scrape_homescout(db_client, **kwargs):
 
 
 def scrape_new_urls_from_google(google_creds, db_client):
+    """TODO: still scrape active listings, not just brand new ones.
+
+    However, when they get pushed to raw, they will not have _rev IDs so
+    they will be rejected. Need a way to get the _rev for the ones that
+    have been updated.
+
+    """
     urls = gs.get_url_dataframe(google_creds)
     urls_no_status = urls.loc[urls['status'].isna()]
     logger.info(f'{len(urls_no_status)} new rows to be scraped')
-    if urls_no_status.empty:
-        return
-
     new_homes = scrape2.scrape_from_url_df(urls=urls_no_status)
     database.bulk_upload(
         docs=new_homes,

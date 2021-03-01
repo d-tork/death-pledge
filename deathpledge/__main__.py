@@ -2,7 +2,7 @@
 from os import path
 import argparse
 import logging
-from time import sleep
+from datetime import datetime
 
 import deathpledge
 from deathpledge.logs.log_setup import setup_logging
@@ -89,7 +89,6 @@ def process_data(google_creds, db_client):
     for row in urls.itertuples():
         if row.docid in fetched_clean_docs:
             logger.debug(f'doc {row.mls_number} already in clean database')
-            continue
         try:
             doc = fetched_raw_docs.get(row.docid)
         except TypeError:
@@ -103,6 +102,8 @@ def process_data(google_creds, db_client):
         home.update(doc)
         home.clean()
         home.enrich()
+        home['modified_date'] = datetime.now().strftime(deathpledge.TIMEFORMAT)
+        home['_rev'] = fetched_clean_docs[row.docid].get('_rev')
         clean_docs.append(home)
     if clean_docs:
         database.bulk_upload(docs=clean_docs,

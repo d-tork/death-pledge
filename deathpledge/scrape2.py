@@ -116,11 +116,14 @@ def scrape_from_homescout_gallery(db_client, max_pages: int, *args, **kwargs):
                 if card.changed:
                     # update clean in place
                     sleep(10)
-                    clean_doc = clean_db[card.docid]
-                    clean_doc['list_price'] = cleaning.parse_number(card.price)
-                    clean_doc['status'] = card.status
-                    clean_doc['scraped_time'] = datetime.now().strftime(deathpledge.TIMEFORMAT)
-                    clean_doc.save()
+                    try:
+                        clean_doc = clean_db[card.docid]
+                        clean_doc['list_price'] = cleaning.parse_number(card.price)
+                        clean_doc['status'] = card.status
+                        clean_doc['scraped_time'] = datetime.now().strftime(deathpledge.TIMEFORMAT)
+                        clean_doc.save()
+                    except KeyError:
+                        pass
 
                     raw_doc_local = fetched_raw_docs.get(card.docid)['doc']
                     raw_doc_local['list_price'] = card.price

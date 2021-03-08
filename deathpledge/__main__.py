@@ -112,7 +112,7 @@ def process_data(google_creds, db_client):
             logger.debug(f'doc {row.mls_number} already in clean database')
         try:
             doc = fetched_raw_docs.get(row.docid)
-        except TypeError:
+        except (TypeError, KeyError):
             logger.error(f'docid {row.mls_number} not found in clean or raw databases')
             continue
         home = classes.Home(
@@ -124,7 +124,10 @@ def process_data(google_creds, db_client):
         home.clean()
         home.enrich()
         home['modified_date'] = datetime.now().strftime(deathpledge.TIMEFORMAT)
-        home['_rev'] = fetched_clean_docs[row.docid].get('_rev')
+        try:
+            home['_rev'] = fetched_clean_docs[row.docid].get('_rev')
+        except KeyError:
+            pass
         clean_docs.append(home)
     if clean_docs:
         database.bulk_upload(docs=clean_docs,

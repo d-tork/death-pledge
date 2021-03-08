@@ -69,10 +69,13 @@ def scrape_from_url_df(urls, *args, **kwargs) -> list:
         *args, **kwargs: passed to SeleniumDriver
 
     Returns:
-        list: Array of home instances.
+        tuple:
+            list: Array of newly scraped home instances.
+            list: Array of homes detected to have been closed.
 
     """
     raw_homes = []
+    closed_listings = []
     with SeleniumDriver(*args, **kwargs) as wd:
         homescout = hs.HomeScoutWebsite(webdriver=wd.webdriver)
 
@@ -88,12 +91,15 @@ def scrape_from_url_df(urls, *args, **kwargs) -> list:
             except hs.HomeSoldException:
                 check.check_home_for_sale_status(current_home)
                 current_home['probably_sold'] = True
+                current_home['status'] = 'Closed'
+                closed_listings.append(current_home)
+                continue
             except:
                 logger.exception(f'Scrape failed for {row.url}')
                 continue
             current_home.docid = support.create_house_id(current_home['mls_number'])
             raw_homes.append(current_home)
-    return raw_homes
+    return raw_homes, closed_listings
 
 
 def scrape_from_homescout_gallery(db_client, max_pages: int, *args, **kwargs):

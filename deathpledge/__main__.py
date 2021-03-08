@@ -3,6 +3,7 @@ from os import path
 import argparse
 import logging
 from datetime import datetime
+from time import sleep
 
 import deathpledge
 from deathpledge.logs.log_setup import setup_logging
@@ -65,12 +66,32 @@ def scrape_new_urls_from_google(google_creds, db_client):
     urls = gs.get_url_dataframe(google_creds)
     urls_no_status = urls.loc[urls['status'].isna()]
     logger.info(f'{len(urls_no_status)} new rows to be scraped')
-    new_homes = scrape2.scrape_from_url_df(urls=urls_no_status)
-    database.bulk_upload(
-        docs=new_homes,
-        db_name=deathpledge.RAW_DATABASE_NAME,
-        client=db_client
-    )
+    urls = temp_shrink_df(urls)
+    new_homes, closed_listings = scrape2.scrape_from_url_df(urls=urls)
+    if new_homes:
+        database.bulk_upload(
+            docs=new_homes,
+            db_name=deathpledge.RAW_DATABASE_NAME,
+            client=db_client
+        )
+    if closed_listings:
+        update_closed_listings(listings=closed_listings, db_client=db_client)
+
+
+def temp_shrink_df(df):
+    """Only keep 60 active rows, no realscout"""
+    return df.head(60)
+
+
+def update_closed_listings(listings, db_client):
+    raw_db = db_client[deathpledge.RAW_DATABASE_NAME]
+    for home in listings:
+        raw_doc = raw_db[home.docid]
+        raw_doc['status'] = home['status']
+        home['modified_date'] = datetime.now().strftime(deathpledge.TIMEFORMAT)
+        raw_doc.save()
+        logger.info(f"{home.docid} assumed closed; updated in raw database.")
+        sleep(5)
 
 
 def get_urls_to_scrape(urls):

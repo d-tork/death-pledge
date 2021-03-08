@@ -220,8 +220,7 @@ def get_successful_uploads(resp: list, db_name: str):
     attempted_count = len(resp)
     successful = [i['id'] for i in resp if i.get('ok')]
     logger.info(f'Created the following docs in {db_name}:')
-    for docid in successful:
-        logger.info(f'\t{docid}')
+    logger.info(f'\t{successful}')
     logger.info(f'{len(successful)}/{attempted_count} docs created')
 
 

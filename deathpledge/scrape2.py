@@ -81,6 +81,7 @@ def scrape_from_url_df(urls, *args, **kwargs) -> list:
 
         for row in urls.itertuples(index=False):
             if not url_is_valid(row.url):
+                logger.warning(f'URL {row.url} is not valid')
                 continue
             current_home = classes.Home(**row._asdict())
             if current_home.skip_web_scrape:

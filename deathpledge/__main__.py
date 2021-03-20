@@ -88,6 +88,7 @@ def update_closed_listings(listings, db_client):
     for home in listings:
         raw_doc = raw_db[home.docid]
         raw_doc['status'] = home['status']
+        raw_doc['probably_sold'] = home.get('probably_sold')
         home['modified_date'] = datetime.now().strftime(deathpledge.TIMEFORMAT)
         raw_doc.save()
         logger.info(f"{home.docid} assumed closed; updated in raw database.")

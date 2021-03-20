@@ -67,10 +67,10 @@ def scrape_new_urls_from_google(google_creds, db_client):
     urls_no_status = urls.loc[urls['status'].isna()]
     logger.info(f'{len(urls_no_status)} new rows to be scraped')
     urls = temp_shrink_df(urls)
-    new_homes, closed_listings = scrape2.scrape_from_url_df(urls=urls)
-    if new_homes:
+    active_listings, closed_listings = scrape2.scrape_from_url_df(urls=urls)
+    if active_listings:
         database.bulk_upload(
-            docs=new_homes,
+            docs=active_listings,
             db_name=deathpledge.RAW_DATABASE_NAME,
             client=db_client
         )

@@ -7,6 +7,8 @@ from datetime import datetime as dt
 from fake_useragent import UserAgent
 from django.utils.text import slugify
 
+import deathpledge
+
 
 class BadResponse(Exception):
     pass
@@ -125,3 +127,13 @@ def coerce_date_string_to_date(date_str):
         except ValueError:
             continue
     return date_object
+
+
+def update_modified_date(home):
+    """Stamp the time and date after a change.
+
+    Args:
+        home (deathpledge.classes.Home): instance being updated
+
+    """
+    home['modified_date'] = dt.now().strftime(deathpledge.TIMEFORMAT)

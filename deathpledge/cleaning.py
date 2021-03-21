@@ -45,7 +45,10 @@ def split_comma_delimited_fields(home):
 
 
 def parse_number(s):
-    return float(s.split()[0].replace(',', '').replace('$', '').replace('+', ''))
+    try:
+        return float(s.split()[0].replace(',', '').replace('$', '').replace('+', ''))
+    except AttributeError:
+        return s
 
 
 def convert_numbers(home):

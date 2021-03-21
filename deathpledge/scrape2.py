@@ -15,7 +15,7 @@ from time import sleep
 from datetime import datetime
 
 import deathpledge
-from deathpledge import support, classes, database, cleaning
+from deathpledge import support, classes, cleaning
 from deathpledge.api_calls import homescout as hs, check
 
 logger = logging.getLogger(__name__)
@@ -61,21 +61,20 @@ class SeleniumDriver(object):
         self._geckodriver_version = output.stdout.splitlines()[0]
 
 
-def scrape_from_url_df(urls, *args, **kwargs) -> list:
+def scrape_from_url_df(urls, *args, **kwargs) -> tuple:
     """Given an array of URLs, create house instances and scrape web data.
 
     Args:
-        urls (DataFrame): DataFrame-like object holding Google sheet rows
-        *args, **kwargs: passed to SeleniumDriver
+        urls (DataFrame): DataFrame-like object holding Google sheet rows.
+        *args, **kwargs: passed to SeleniumDriver.
 
-    Returns:
-        tuple:
-            list: Array of newly scraped home instances.
-            list: Array of homes detected to have been closed.
+    Returns: tuple
+        list: scraped home instances
+        list: homes which failed the scrape because they are probably sold
 
     """
-    raw_homes = []
-    closed_listings = []
+    scraped_homes = []
+    closed_homes = []
     with SeleniumDriver(*args, **kwargs) as wd:
         homescout = hs.HomeScoutWebsite(webdriver=wd.webdriver)
 
@@ -84,34 +83,28 @@ def scrape_from_url_df(urls, *args, **kwargs) -> list:
                 logger.warning(f'URL {row.url} is not valid')
                 continue
             current_home = classes.Home(**row._asdict())
-            if current_home.skip_web_scrape:
-                logger.debug('Instance property "skip_web_scrape" set to True, will not scrape.')
-                continue
             try:
                 current_home.scrape(website_object=homescout)
             except hs.HomeSoldException:
-                check.check_home_for_sale_status(current_home)
+                logger.warning(f'URL {row.url} is already sold.')
                 current_home['probably_sold'] = True
-                current_home['status'] = 'Closed'
-                closed_listings.append(current_home)
+                closed_homes.append(current_home)
                 continue
             except:
                 logger.exception(f'Scrape failed for {row.url}')
                 continue
-            current_home.docid = support.create_house_id(current_home['mls_number'])
-            raw_homes.append(current_home)
-    return raw_homes, closed_listings
+            else:
+                current_home.docid = support.create_house_id(current_home['mls_number'])
+                scraped_homes.append(current_home)
+    return scraped_homes, closed_homes
 
 
 def scrape_from_homescout_gallery(db_client, max_pages: int, *args, **kwargs):
     cards = check.get_cards_from_hs_gallery(max_pages=max_pages, **kwargs)
-    ids_to_fetch = [card.docid for card in cards]
-    fetched_raw_docs = database.get_bulk_docs(
-        doc_ids=ids_to_fetch, db_name=deathpledge.RAW_DATABASE_NAME, client=db_client)
     clean_db = db_client[deathpledge.DATABASE_NAME]
     with SeleniumDriver(*args, **kwargs) as wd:
         homescout = hs.HomeScoutWebsite(webdriver=wd.webdriver)
-        new_homes, changed_homes = [], []
+        new_homes = []
         for card in cards:
             if card.exists_in_db:
                 if card.changed:
@@ -125,11 +118,6 @@ def scrape_from_homescout_gallery(db_client, max_pages: int, *args, **kwargs):
                         clean_doc.save()
                     except KeyError:
                         pass
-
-                    raw_doc_local = fetched_raw_docs.get(card.docid)['doc']
-                    raw_doc_local['list_price'] = card.price
-                    raw_doc_local['status'] = card.status
-                    changed_homes.append(raw_doc_local)
                 else:
                     pass
             else:
@@ -141,9 +129,7 @@ def scrape_from_homescout_gallery(db_client, max_pages: int, *args, **kwargs):
                     logger.error('Scraping failed for {card.url}', exc_info=True)
                 else:
                     new_homes.append(current_home)
-    homes_for_raw_upload = new_homes + changed_homes
-    if homes_for_raw_upload:
-        database.bulk_upload(docs=homes_for_raw_upload, client=db_client, db_name=deathpledge.RAW_DATABASE_NAME)
+    return new_homes
 
 
 def wait_a_random_time():

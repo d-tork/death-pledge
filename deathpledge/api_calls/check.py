@@ -5,8 +5,8 @@ from collections import namedtuple
 import logging
 
 import deathpledge
-from deathpledge.api_calls import homescout as hs, realtor
-from deathpledge import support, database, cleaning, scrape2
+from deathpledge.api_calls import homescout as hs
+from deathpledge import support, database, cleaning, scrape2, classes
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ class HomeToBeChecked(object):
         self.changed = False
 
     def has_changed(self, fetched_doc):
-        prev_price = cleaning.parse_number(fetched_doc.get('list_price'))
+        prev_price = fetched_doc.get('list_price')
         price_changed = self._get_price_change(prev_price=prev_price)
 
         prev_status = fetched_doc.get('status')
@@ -86,22 +86,22 @@ def check_cards_for_changes(cards: dict) -> list:
     """
     docids_to_fetch = list(cards.keys())
     with database.DatabaseClient() as cloudant:
-        fetched_raw_docs = database.get_bulk_docs(
-            doc_ids=docids_to_fetch, db_name=deathpledge.RAW_DATABASE_NAME, client=cloudant
+        fetched_clean_docs = database.get_bulk_docs(
+            doc_ids=docids_to_fetch, db_name=deathpledge.DATABASE_NAME, client=cloudant
         )
     checked_cards = []
     for docid, card in cards.items():
         homecard = HomeToBeChecked(docid=docid, card=card)
         try:
-            raw_doc = fetched_raw_docs.get(docid).get('doc')
-        except (KeyError, AttributeError):  # docid not in raw db
+            clean_doc = fetched_clean_docs.get(docid).get('doc')
+        except (KeyError, AttributeError):  # docid not in db
             pass
         else:
-            if raw_doc is None:  # docid is in db, but deleted
+            if clean_doc is None:  # docid is in db, but deleted
                 pass
             else:
                 homecard.exists_in_db = True
-                if homecard.has_changed(raw_doc):
+                if homecard.has_changed(clean_doc):
                     homecard.changed = True
         finally:
             checked_cards.append(homecard)
@@ -115,9 +115,40 @@ def get_cards_from_hs_gallery(max_pages, **kwargs) -> list:
     return checked_cards
 
 
-def check_home_for_sale_status(home):
-    """Check address elsewhere for sale status."""
-    pass
+def check_urls_for_changes(urls) -> list:
+    """Check active listings in google sheet for changes in price or status.
+
+    Args:
+        urls (pd.DataFrame): URLs still active in google sheet
+
+    Returns:
+        list: Home instances which have been updated with new information.
+
+    """
+    docids_to_fetch = urls['docid'].tolist()
+    with database.DatabaseClient() as cloudant:
+        fetched_clean_docs = database.get_bulk_docs(
+            doc_ids=docids_to_fetch, db_name=deathpledge.DATABASE_NAME, client=cloudant
+        )
+    checked_homes = []
+    scraped_homes, sold_homes = scrape2.scrape_from_url_df(urls=urls)  # TODO: replace with simple GET?
+    for current_home in scraped_homes + sold_homes:
+        try:
+            database_doc = fetched_clean_docs.get(current_home.docid).get('doc')
+        except (KeyError, AttributeError):
+            logger.warning(f'docid {current_home.docid} should be in clean database, but is not')
+            continue
+        else:
+            if database_doc is None:
+                logger.warning(f'docid {current_home.docid} in db, but deleted')
+                continue
+            else:
+                current_home.clean()
+                database_doc.update(current_home)
+                support.update_modified_date(database_doc)
+                logger.debug('check here that database_doc does not get f*cked')
+                checked_homes.append(database_doc)
+    return checked_homes
 
 
 if __name__ == '__main__':
@@ -126,4 +157,3 @@ if __name__ == '__main__':
     sample_home = Home(added_date='1/18/2021', docid='VAAR175062')
     with deathpledge.database.DatabaseClient() as cloudant:
         sample_home.fetch(db_name=deathpledge.DATABASE_NAME, db_client=cloudant)
-    check_home_for_sale_status(sample_home)

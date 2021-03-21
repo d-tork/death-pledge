@@ -7,8 +7,8 @@ from deathpledge.api_calls import google_sheets as gs
 
 class URLDataFrameClassTestCase(unittest.TestCase):
     def setUp(self):
-        self.header = ['added_date', 'status', 'url', 'ml_number', 'full_address', 'docid', 'comments']
-        self.data = ['5/3/2019', 'Closed', 'www.sample.com?query=hi', 'MDPG10001', '867 North maple', 'abc12def', None]
+        self.header = ['added_date', 'status', 'url', 'mls_number', 'full_address', 'docid', 'probably_sold']
+        self.data = ['5/3/2019', 'Closed', 'www.sample.com?query=hi', 'MDPG10001', '867 North maple', 'abc12def', True]
         self.df = pd.DataFrame(data=[self.header, self.data])
 
     def test_field_name_in_column_headers(self):
@@ -20,11 +20,12 @@ class URLDataFrameClassTestCase(unittest.TestCase):
         null_url_count = urls.df['url'].isna().sum()
         self.assertEqual(null_url_count, 0)
 
+    @unittest.skip('not cleaning query params anymore')
     def test_no_params_in_urls(self):
         urls = gs.URLDataFrame(self.df)
         url = urls.df['url'].iloc[0]
         q_mark_location = url.find('?')
-        self.assertEqual(q_mark_location, -1)
+        self.assertEqual(-1, q_mark_location)
 
 
 class UrlTrimmerTestCase(unittest.TestCase):

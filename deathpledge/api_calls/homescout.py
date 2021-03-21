@@ -249,7 +249,6 @@ class HomeScoutSoup(BeautifulSoup):
             'beds': vitals.beds,
             'baths': vitals.baths,
             'sqft': vitals.sqft,
-            'badge': status,
             'status': status,
             'list_price': price
         }

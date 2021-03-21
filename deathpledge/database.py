@@ -112,9 +112,9 @@ def get_bulk_docs(doc_ids: list, db_name: str, client: Cloudant.iam) -> dict:
     return rows_by_docid
 
 
-def get_url_list(client):
+def get_url_list(client) -> dict:
     """Get all docs from URL view, for filling in Google sheet."""
-    db = client[deathpledge.RAW_DATABASE_NAME]
+    db = client[deathpledge.DATABASE_NAME]
     ddoc_id = '_design/simpleViews'
     view_name = 'urlList'
     results = db.get_view_result(ddoc_id, view_name, raw_result=True, include_docs=False)
@@ -225,13 +225,13 @@ def get_successful_uploads(resp: list, db_name: str):
     logger.info(f'{len(successful)}/{attempted_count} docs created')
 
 
-def delete_bad_docs(id_prefix: str, db_name: str):
+def delete_bad_docs(ids: list, db_name: str):
     """Delete docs which received a bad doc_id."""
     with DatabaseClient() as cloudant:
         db = cloudant[db_name]
         response = db.all_docs(include_docs=False)
-        all_docs = rate_limit_pull(response['rows'], est_doc_count=775)
-        docs_to_delete = [x for x in all_docs if x['id'].startswith(id_prefix)]
+        all_docs = rate_limit_pull(response['rows'], est_doc_count=1000)
+        docs_to_delete = [x for x in all_docs if x['id'] in ids]
         proceed = input(f'{len(docs_to_delete)} will be deleted: ')
         for part in rate_limit_push(docs_to_delete):
             for doc in part:

@@ -85,6 +85,29 @@ class URLDataFrame(object):
     def drop_closed_listings(self):
         closed = self.df.loc[self.df['status'].str.lower().isin(['closed', 'expired', 'cancelled'])]
         self.df = self.df.drop(index=closed.index)
+        self._drop_pre_2021_listings()
+
+    def _drop_pre_2021_listings(self):
+        """Anything prior to 2021 was from realscout, and thus is unavailable."""
+        self.df['added_date'] = pd.to_datetime(self.df['added_date'])
+        pre_2021 = self.df.loc[self.df['added_date'].dt.year < 2021]
+        self.df = self.df.drop(index=pre_2021.index)
+
+    def mark_rows_for_processing(self):
+        """Create labels for easier filtering.
+
+        If no status, needs to be scraped (URL was added manually).
+        If 'active', it has already been scraped at least once and
+            needs to be checked for price/status changes.
+        """
+        new_for_scraping = self.df['status'].isna()
+        active_statuses = ['active', 'active under contract', 'pending']
+        active_for_checking = self.df['status'].str.lower().isin(active_statuses)
+        self.df['next_action'] = np.where(new_for_scraping, 'scrape', None)
+        self.df['next_action'].fillna(
+            self.df['next_action'].mask(active_for_checking, 'check'),
+            inplace=True
+        )
 
 
 class GoogleCreds(object):
@@ -126,14 +149,14 @@ class GoogleCreds(object):
 
 
 def get_url_dataframe(google_creds, **kwargs):
-    """Get manually curated list of realscout URLs from Google sheets.
+    """Get listings catalog from Google sheets.
 
     Args:
         google_creds: pickled credentials
         **kwargs: passed to URLDataFrame instance
 
     Returns:
-        DataFrame: URL data
+        pd.DataFrame: URL data
 
     """
     google_sheets_rows = get_google_sheets_rows(google_creds)
@@ -142,6 +165,7 @@ def get_url_dataframe(google_creds, **kwargs):
         **kwargs
     )
     google_df.drop_closed_listings()
+    google_df.mark_rows_for_processing()
     return google_df.df
 
 
@@ -167,16 +191,10 @@ def get_values_from_google_sheets_response(response):
 
 def refresh_url_sheet(google_creds, db_client):
     """Push document list from db back to URL sheet."""
-    logger.info('Refreshing Google sheet with view from raw database')
+    logger.info('Refreshing Google sheet with view from database')
     url_view = database.get_url_list(client=db_client)
-    url_df = pd.DataFrame.from_dict(
-        url_view, orient='index',
-        columns=['added_date', 'status', 'url', 'mls_number', 'full_address', 'docid']
-    )
-    url_df['added_date'] = pd.to_datetime(url_df['added_date']).dt.strftime('%m/%d/%Y')
-    url_df.dropna(subset=['added_date'], inplace=True)
-    url_df = url_df.set_index('added_date')
-    url_list = prep_dataframe_to_update_google(url_df)
+    url_df = create_url_df_for_gsheet(url_view)
+    url_list = convert_dataframe_to_list(url_df)
 
     # Send to google
     service = build('sheets', 'v4', credentials=google_creds, cache_discovery=False)
@@ -196,7 +214,20 @@ def refresh_url_sheet(google_creds, db_client):
     logger.info(response)
 
 
-def prep_dataframe_to_update_google(df):
+def create_url_df_for_gsheet(url_view: dict) -> pd.DataFrame:
+    """Create a dataframe from the results of the database view."""
+    df = pd.DataFrame.from_dict(
+        url_view, orient='index',
+        columns=['added_date', 'status', 'url', 'mls_number', 'full_address', 'docid',
+                 'probably_sold']
+    )
+    df['added_date'] = pd.to_datetime(df['added_date']).dt.strftime('%m/%d/%Y')
+    df.dropna(subset=['added_date'], inplace=True)
+    df = df.set_index('added_date')
+    return df
+
+
+def convert_dataframe_to_list(df: pd.DataFrame) -> list:
     """Converts a dataframe to iterable values for Google batchUpdate.
 
     Returns
@@ -204,8 +235,8 @@ def prep_dataframe_to_update_google(df):
 
     """
     df = df.fillna('').astype('str')
-    df = df.reset_index().T.reset_index().T.values.tolist()
-    return df
+    rows_as_list = df.reset_index().T.reset_index().T.values.tolist()
+    return rows_as_list
 
 
 def test_refresh():
@@ -215,7 +246,7 @@ def test_refresh():
     ).creds
 
     with database.DatabaseClient() as cloudant:
-            refresh_url_sheet(google_creds, db_client=cloudant)
+        refresh_url_sheet(google_creds, db_client=cloudant)
 
 
 if __name__ == '__main__':

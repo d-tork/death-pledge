@@ -130,7 +130,10 @@ class Home(dict):
             enrich.add_bing_maps_data(self)
         except:
             self.logger.exception('Bing enriching failed.')
-        enrich.add_tether(self)
+        try:
+            enrich.add_tether(self)
+        except KeyError:
+            self.logger.exception('Could not add tether; likely no geocoords.')
 
     def get_geocoords(self):
         try:

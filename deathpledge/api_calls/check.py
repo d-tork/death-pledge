@@ -24,7 +24,7 @@ class HomeToBeChecked(object):
         self.logger = logging.getLogger(f'{__name__}.{type(self).__name__}')
         self.docid = docid
         self.price = card.price
-        self.status = card.status
+        self.status = card.status.title()
         self.url = card.url
         self.mls = card.mls
         self.exists_in_db = False

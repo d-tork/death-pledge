@@ -17,6 +17,7 @@ from cloudant.client import Cloudant
 from cloudant.result import Result
 from time import sleep
 import logging
+from tqdm import tqdm
 
 import deathpledge
 from deathpledge import keys
@@ -193,7 +194,7 @@ def rate_limit_push(docs: list) -> list:
     doc_count = len(docs)
     iterations = int(doc_count / 20) + 1
     start = 0
-    for i in range(iterations):
+    for i in tqdm(range(iterations)):
         stop = start + 20
         partition = [x for x in docs[start:stop]]
         start = stop
@@ -206,7 +207,7 @@ def rate_limit_pull(docs: list, est_doc_count: int = 1000) -> list:
     iterations = int(est_doc_count / 20) + 1
     start = 0
     all_docs = []
-    for i in range(iterations):
+    for i in tqdm(range(iterations)):
         stop = start + 20
         partition = [x for x in docs[start:stop]]
         all_docs.extend(partition)
@@ -220,8 +221,7 @@ def get_successful_uploads(resp: list, db_name: str):
     attempted_count = len(resp)
     successful = [i['id'] for i in resp if i.get('ok')]
     logger.info(f'Created the following docs in {db_name}:')
-    for docid in successful:
-        logger.info(f'\t{docid}')
+    logger.info(f'\t{successful}')
     logger.info(f'{len(successful)}/{attempted_count} docs created')
 
 

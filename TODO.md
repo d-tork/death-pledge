@@ -74,3 +74,6 @@ DCDC503606 - off market
 VAFX1175642 - sold for 289000 (aristotle)
 
 TODO: index the date added field and sort the soldView 
+TODO: check these sold prices (the ones currently in the spreadsheet) against
+both HomesSold (email), Homescout map view, and Danielle's BrightMLS (and maybe
+even zillow for good measure). Am I getting good info from realtor.com??

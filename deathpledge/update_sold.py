@@ -15,7 +15,11 @@ def update_sold(google_creds, db_client):
     """Get manual changes from google sheet and send to DB."""
     logger.info('Updating sale info from google sheet')
     sold_df = get_sold_dataframe(google_creds)
-    updated_rows = sold_df.loc[sold_df['sold'].notna() & sold_df['sale_price'].notna()]
+    updated_rows = sold_df.loc[
+            sold_df['sold'].notna()
+            & sold_df['sale_price'].notna()
+            & sold_df['notes'].notna()
+            ]
     push_changes_to_db(updated_rows, db_client=db_client)
 
 
@@ -29,7 +33,7 @@ def get_sold_dataframe(google_creds):
         pd.DataFrame: URL data
 
     """
-    google_sheets_rows = gs.get_google_sheets_rows(google_creds, sheet_range='sold_range')
+    google_sheets_rows = gs.get_google_sheets_rows(google_creds, sheet_range='sold_sheet')
     google_df = pd.DataFrame.from_records(data=google_sheets_rows)
     # Set first row as headers
     google_df = google_df.rename(columns=google_df.iloc[0]).drop(google_df.index[0])
@@ -45,15 +49,33 @@ def push_changes_to_db(sold_df, db_client):
         except KeyError:
             logger.error(f'{row.mls_number} not found in database, cannot update')
             continue
-        if row.sale_price and row.sold:
-            db_doc['sale_price'] = int(row.sale_price)
-            sold_date = support.coerce_date_string_to_date(row.sold)
-            db_doc['sold'] = sold_date.strftime(deathpledge.TIMEFORMAT)
-            db_doc['probably_sold'] = False
+        except AttributeError:
+            logger.exception(f'Something wrong with row {row}')
+            continue
+        else:
+            if row.sale_price and row.sold:
+                update_sale_price(row, db_doc)
+                update_sold_date(row, db_doc)
+                db_doc['probably_sold'] = False
+            update_notes(row, db_doc)
             support.update_modified_date(db_doc)
             db_doc.save()
             logger.info(f'Sale info updated in doc {row.mls_number}')
+        finally:
             sleep(2)
+
+
+def update_sale_price(row, doc):
+    doc['sale_price'] = int(row.sale_price)
+
+
+def update_sold_date(row, doc):
+    sold_date = support.coerce_date_string_to_date(row.sold)
+    doc['sold'] = sold_date.strftime(deathpledge.TIMEFORMAT)
+
+
+def update_notes(row, doc):
+    doc['notes'] = row.notes
 
 
 def refresh_sold_list(google_creds, db_client):
@@ -61,42 +83,44 @@ def refresh_sold_list(google_creds, db_client):
     logger.info('Refreshing Google sheet with view from database')
     sold_view = database.get_view(client=db_client, view='soldList')
     sold_df = create_sold_df_for_gsheet(sold_view)
-    sold_df = add_empty_rows_buffer(sold_df)
     sold_list = gs.convert_dataframe_to_list(sold_df)
 
     # Send to google
     service = build('sheets', 'v4', credentials=google_creds, cache_discovery=False)
-    url_obj = dict(
-        range=gs.SPREADSHEET_DICT['sold_range'],
+
+    # Clear existing values in all columns
+    clear_response = service.spreadsheets().values().clear(
+            spreadsheetId=gs.SPREADSHEET_DICT['spreadsheetId'],
+            range=gs.SPREADSHEET_DICT['sold_values']
+            ).execute()
+    logger.info(clear_response)
+
+    data_obj = dict(
+        range=gs.SPREADSHEET_DICT['sold_sheet'],
         majorDimension='ROWS',
         values=sold_list)
-    response = service.spreadsheets().values().batchUpdate(
+    data_response = service.spreadsheets().values().batchUpdate(
         spreadsheetId=gs.SPREADSHEET_DICT['spreadsheetId'],
         body=dict(
             valueInputOption='USER_ENTERED',
             includeValuesInResponse=False,
             data=[
-                url_obj
+                data_obj
             ])
     ).execute()
-    logger.info(response)
+    logger.info(data_response)
 
 
 def create_sold_df_for_gsheet(sold_view: dict) -> pd.DataFrame:
     """Create a dataframe from the results of the database view."""
     df = pd.DataFrame.from_dict(
         sold_view, orient='index',
-        columns=['added_date', 'mls_number', 'full_address', 'list_price', 'sale_price', 'sold']
+        columns=['added_date', 'mls_number', 'full_address', 'list_price',
+            'sale_price', 'sold', 'notes']
     )
     df['added_date'] = pd.to_datetime(df['added_date']).dt.strftime('%m/%d/%Y')
     df = df.set_index('added_date')
     return df
-
-
-def add_empty_rows_buffer(df):
-    row_len = df.shape[0]
-    empty_rows = [[''] * row_len] * 500
-    sold_list.extend(empty_rows)
 
 
 def test_fill():

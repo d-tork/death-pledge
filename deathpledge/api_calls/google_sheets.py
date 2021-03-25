@@ -27,7 +27,8 @@ SPREADSHEET_DICT = {
     'master_range': 'Master_list!A1',
     'scores': 'Scores!A1',
     'raw_data': 'raw_data!A1',
-    'sold_range': 'Sold'
+    'sold_sheet': 'Sold',
+    'sold_values': 'Sold!A2:F',
 }
 
 

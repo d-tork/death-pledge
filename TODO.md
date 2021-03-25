@@ -49,3 +49,21 @@ A couple of the probably_sold listings were sent to DB with the two sale prices 
 docs in the DB where probably_sold exists (true or false) and sale price exists, then double-check their values.
 
 Then I need to solve the extension problem so that blank columns are added as well as rows.
+
+## Changes
+DCDC510388 - not sold, listed on 1/18/21 for $359,900 and changed to $349,900 on  3/3/21
+	- however, that's the MLS from realtor.com which does not match my cloudant: DCDC503778
+
+* [x] DCDC504266 - $395000 on 2/15/21
+* [x] VAAR175030 - $295000 on 2/9/21
+* [x] VAAR175122 - now listed as a rental
+* [x] VAAX255008 - $294000 on 3/5/21
+* [x] VAAX255036 - $350000 on 2/19/21
+* [x] VAFX1173950 - $384000 on 2/26/21
+* [x] VAFX1175916 - $375000 on 2/5/21
+* [x] VAFX1176172 - $280000 on 2/19/21
+* [x] VAFX1176494 - $352000 on 3/10/21
+
+### First real run
+* [x] VAFX1174760
+* [x] VAAX255002

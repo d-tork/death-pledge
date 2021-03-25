@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 def update_sold(google_creds, db_client):
     """Get manual changes from google sheet and send to DB."""
+    logger.info('Updating sale info from google sheet')
     sold_df = get_sold_dataframe(google_creds)
     updated_rows = sold_df.loc[sold_df['sold'].notna() & sold_df['sale_price'].notna()]
     push_changes_to_db(updated_rows, db_client=db_client)
@@ -44,10 +45,12 @@ def push_changes_to_db(sold_df, db_client):
         except KeyError:
             logger.error(f'{row.mls_number} not found in database, cannot update')
             continue
-        if row.sale_price & row.sold:
+        if row.sale_price and row.sold:
             db_doc['sale_price'] = row.sale_price
             sold_date = support.coerce_date_string_to_date(row.sold)
             db_doc['sold'] = sold_date.strftime(deathpledge.TIMEFORMAT)
+            db_doc['probably_sold'] = False
+            support.update_modified_date(db_doc)
             db_doc.save()
             logger.info(f'Sale info updated in doc {row.mls_number}')
             sleep(2)

@@ -7,7 +7,7 @@ import deathpledge
 from deathpledge.logs.log_setup import setup_logging
 from deathpledge.logs import *
 from deathpledge.api_calls import google_sheets as gs, check
-from deathpledge import scrape2, support, database
+from deathpledge import scrape2, support, database, update_sold
 
 logger = logging.getLogger(__name__)
 
@@ -24,10 +24,12 @@ def main():
     ).creds
 
     with database.DatabaseClient() as cloudant:
+        update_sold.update_sold(google_creds=google_creds, db_client=cloudant)
         check_new_and_active_from_google(google_creds=google_creds, db_client=cloudant)
         gs.refresh_url_sheet(google_creds, db_client=cloudant)
         check_and_scrape_homescout(db_client=cloudant, max_pages=args.pages, quiet=True)
         gs.refresh_url_sheet(google_creds, db_client=cloudant)
+        update_sold.update_sold(google_creds=google_creds, db_client=cloudant)
     return
 
 
@@ -47,7 +49,7 @@ def parse_commandline_arguments():
 
 def check_new_and_active_from_google(google_creds, db_client):
     """Go through google sheet to update actives and scrape new URLs."""
-    urls = gs.get_url_dataframe(google_creds).head(90)
+    urls = gs.get_url_dataframe(google_creds)
     to_scrape = urls.loc[urls['next_action'] == 'scrape']
     to_check = urls.loc[urls['next_action'] == 'check']
     logger.info(f'{len(to_scrape)} new rows to be scraped')

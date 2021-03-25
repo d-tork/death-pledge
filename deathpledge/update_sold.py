@@ -16,10 +16,10 @@ def update_sold(google_creds, db_client):
     logger.info('Updating sale info from google sheet')
     sold_df = get_sold_dataframe(google_creds)
     updated_rows = sold_df.loc[
-            sold_df['sold'].notna()
-            & sold_df['sale_price'].notna()
-            & sold_df['notes'].notna()
+            (sold_df['sold'].notna() & sold_df['sale_price'].notna())
+            | sold_df['notes'].notna()
             ]
+    logger.info(f'Updated rows: {len(updated_rows)}')
     push_changes_to_db(updated_rows, db_client=db_client)
 
 
@@ -57,7 +57,8 @@ def push_changes_to_db(sold_df, db_client):
                 update_sale_price(row, db_doc)
                 update_sold_date(row, db_doc)
                 db_doc['probably_sold'] = False
-            update_notes(row, db_doc)
+            if row.notes:
+                update_notes(row, db_doc)
             support.update_modified_date(db_doc)
             db_doc.save()
             logger.info(f'Sale info updated in doc {row.mls_number}')

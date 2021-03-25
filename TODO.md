@@ -67,3 +67,10 @@ DCDC510388 - not sold, listed on 1/18/21 for $359,900 and changed to $349,900 on
 ### First real run
 * [x] VAFX1174760
 * [x] VAAX255002
+
+### Notes added
+VAAR175122 - for rent
+DCDC503606 - off market
+VAFX1175642 - sold for 289000 (aristotle)
+
+TODO: index the date added field and sort the soldView 

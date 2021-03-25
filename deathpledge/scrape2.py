@@ -88,6 +88,7 @@ def scrape_from_url_df(urls, *args, **kwargs) -> tuple:
             except hs.HomeSoldException:
                 logger.warning(f'URL {row.url} is already sold.')
                 current_home['probably_sold'] = True
+                current_home['status'] = 'Closed'
                 closed_homes.append(current_home)
                 continue
             except:

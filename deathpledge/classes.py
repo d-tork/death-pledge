@@ -116,6 +116,7 @@ class Home(dict):
             cleaning.split_fee_frequency,
             cleaning.parse_address,
             cleaning.parse_homescout_date,
+            cleaning.convert_status_case,
         ]
         for fn in cleaning_funcs:
             try:

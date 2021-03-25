@@ -112,12 +112,11 @@ def get_bulk_docs(doc_ids: list, db_name: str, client: Cloudant.iam) -> dict:
     return rows_by_docid
 
 
-def get_url_list(client) -> dict:
+def get_view(client, view: str) -> dict:
     """Get all docs from URL view, for filling in Google sheet."""
     db = client[deathpledge.DATABASE_NAME]
     ddoc_id = '_design/simpleViews'
-    view_name = 'urlList'
-    results = db.get_view_result(ddoc_id, view_name, raw_result=True, include_docs=False)
+    results = db.get_view_result(ddoc_id, view, raw_result=True, include_docs=False)
     # Turn into dict of {index: <home data>} for easier dataframing
     results = {i: x['key'] for i, x in enumerate(results['rows'])}
     return results

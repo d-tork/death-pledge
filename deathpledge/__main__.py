@@ -47,7 +47,7 @@ def parse_commandline_arguments():
 
 def check_new_and_active_from_google(google_creds, db_client):
     """Go through google sheet to update actives and scrape new URLs."""
-    urls = gs.get_url_dataframe(google_creds)
+    urls = gs.get_url_dataframe(google_creds).head(90)
     to_scrape = urls.loc[urls['next_action'] == 'scrape']
     to_check = urls.loc[urls['next_action'] == 'check']
     logger.info(f'{len(to_scrape)} new rows to be scraped')

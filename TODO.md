@@ -43,3 +43,9 @@ function (doc) {
 }
 ```
 
+# 3/25/21
+
+A couple of the probably_sold listings were sent to DB with the two sale prices I had, so I need to loop through all
+docs in the DB where probably_sold exists (true or false) and sale price exists, then double-check their values.
+
+Then I need to solve the extension problem so that blank columns are added as well as rows.

@@ -46,7 +46,7 @@ def push_changes_to_db(sold_df, db_client):
             logger.error(f'{row.mls_number} not found in database, cannot update')
             continue
         if row.sale_price and row.sold:
-            db_doc['sale_price'] = row.sale_price
+            db_doc['sale_price'] = int(row.sale_price)
             sold_date = support.coerce_date_string_to_date(row.sold)
             db_doc['sold'] = sold_date.strftime(deathpledge.TIMEFORMAT)
             db_doc['probably_sold'] = False
@@ -61,9 +61,8 @@ def refresh_sold_list(google_creds, db_client):
     logger.info('Refreshing Google sheet with view from database')
     sold_view = database.get_view(client=db_client, view='soldList')
     sold_df = create_sold_df_for_gsheet(sold_view)
+    sold_df = add_empty_rows_buffer(sold_df)
     sold_list = gs.convert_dataframe_to_list(sold_df)
-    empty_rows = [[''] * 10] * 500
-    sold_list.extend(empty_rows)
 
     # Send to google
     service = build('sheets', 'v4', credentials=google_creds, cache_discovery=False)
@@ -87,11 +86,17 @@ def create_sold_df_for_gsheet(sold_view: dict) -> pd.DataFrame:
     """Create a dataframe from the results of the database view."""
     df = pd.DataFrame.from_dict(
         sold_view, orient='index',
-        columns=['added_date', 'mls_number', 'full_address', 'list_price']
+        columns=['added_date', 'mls_number', 'full_address', 'list_price', 'sale_price', 'sold']
     )
     df['added_date'] = pd.to_datetime(df['added_date']).dt.strftime('%m/%d/%Y')
     df = df.set_index('added_date')
     return df
+
+
+def add_empty_rows_buffer(df):
+    row_len = df.shape[0]
+    empty_rows = [[''] * row_len] * 500
+    sold_list.extend(empty_rows)
 
 
 def test_fill():

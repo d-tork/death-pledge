@@ -122,7 +122,7 @@ class Home(dict):
             try:
                 fn(self)
             except (AttributeError, ValueError, KeyError) as e:
-                self.logger.warning(f"Cleaning step '{fn}' failed: {e}")
+                self.logger.warning(f"Cleaning step '{fn}' failed for {self.docid}: {e}")
                 continue
 
     def enrich(self):

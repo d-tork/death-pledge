@@ -54,7 +54,7 @@ def check_new_and_active_from_google(google_creds, db_client, **kwargs):
     logger.info(f'{len(to_scrape)} new rows to be scraped')
 
     if not to_scrape.empty:
-        scraped_homes, _ = scrape2.scrape_from_url_df(urls=to_scrape, **kwargs)
+        scraped_homes, _ = scrape2.scrape_from_url_df(urls=to_scrape, sign_in=True, **kwargs)
         database.bulk_upload(
             docs=scraped_homes,
             db_name=deathpledge.RAW_DATABASE_NAME,
@@ -62,7 +62,7 @@ def check_new_and_active_from_google(google_creds, db_client, **kwargs):
         )
         process_and_save(scraped_homes, db_client=db_client)
     if not to_check.empty:
-        checked = check.check_urls_for_changes(urls=to_check)
+        checked = check.check_urls_for_changes(urls=to_check, sign_in=False)
         database.bulk_upload(checked, db_name=deathpledge.DATABASE_NAME, client=db_client)
 
 

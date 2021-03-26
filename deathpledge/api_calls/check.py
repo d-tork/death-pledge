@@ -121,11 +121,12 @@ def get_cards_from_hs_gallery(max_pages, **kwargs) -> list:
     return checked_cards
 
 
-def check_urls_for_changes(urls) -> list:
+def check_urls_for_changes(urls, **kwargs) -> list:
     """Check active listings in google sheet for changes in price or status.
 
     Args:
         urls (pd.DataFrame): URLs still active in google sheet
+        kwargs: passed to ``scrape_from_url_df``, e.g. sign_in=True
 
     Returns:
         list: Home instances which have been updated with new information.
@@ -137,7 +138,7 @@ def check_urls_for_changes(urls) -> list:
             doc_ids=docids_to_fetch, db_name=deathpledge.DATABASE_NAME, client=cloudant
         )
     checked_homes = []
-    scraped_homes, sold_homes = scrape2.scrape_from_url_df(urls=urls)
+    scraped_homes, sold_homes = scrape2.scrape_from_url_df(urls=urls, **kwargs)
     for current_home in scraped_homes + sold_homes:
         try:
             database_doc = fetched_clean_docs.get(current_home.docid).get('doc')

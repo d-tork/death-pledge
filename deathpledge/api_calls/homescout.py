@@ -49,6 +49,7 @@ class HomeScoutWebsite(classes.WebDataSource):
     def _enter_website_credentials(self):
         login_link = self.webdriver.find_elements_by_class_name('action-link')[1]
         login_link.click()
+        self._wait_for_login_fields()
 
         inputs = self.webdriver.find_elements_by_class_name('login-textbox')
         email_field, password_field = inputs[6:8]
@@ -57,6 +58,11 @@ class HomeScoutWebsite(classes.WebDataSource):
         password_field.send_keys(self._config['password'])
         login_button = self.webdriver.find_element(By.CLASS_NAME, 'login-button')
         login_button.click()
+
+    def _wait_for_login_fields(self):
+        login_form = self.webdriver.find_element_by_class_name('login-form')
+        WebDriverWait(self.webdriver, 15).until(EC.visibility_of(login_form))
+        self.logger.debug('login text boxes loaded')
 
     def _wait_for_successful_signin(self):
         mystuff = self.webdriver.find_element_by_class_name('mystuff-link')

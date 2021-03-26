@@ -62,11 +62,12 @@ class SeleniumDriver(object):
         self._geckodriver_version = output.stdout.splitlines()[0]
 
 
-def scrape_from_url_df(urls, *args, **kwargs) -> tuple:
+def scrape_from_url_df(urls, sign_in=False, *args, **kwargs) -> tuple:
     """Given an array of URLs, create house instances and scrape web data.
 
     Args:
         urls (DataFrame): DataFrame-like object holding Google sheet rows.
+        sign_in (bool): Whether to sign into the website or browse anonymously.
         *args, **kwargs: passed to SeleniumDriver.
 
     Returns: tuple
@@ -79,6 +80,8 @@ def scrape_from_url_df(urls, *args, **kwargs) -> tuple:
     closed_homes = []
     with SeleniumDriver(*args, **kwargs) as wd:
         homescout = hs.HomeScoutWebsite(webdriver=wd.webdriver)
+        if sign_in:
+            homescout.sign_into_website()
 
         pbar = tqdm(total=len(urls))
         for row in urls.itertuples(index=False):

@@ -269,6 +269,8 @@ class HomeScoutSoup(BeautifulSoup):
                 continue
             attrib_name = self._slugify(attrib_name)
             quick_data[attrib_name] = attrib_value
+        description = self.find('div', attrs={'class': 'feature-display'})
+        quick_data['description'] = description.text
         return quick_data
 
     def _get_estimated_value(self) -> dict:

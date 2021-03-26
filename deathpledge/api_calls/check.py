@@ -66,6 +66,12 @@ def get_gallery_cards(max_pages, **kwargs) -> list:
 
 
 def get_docids_for_gallery_cards(cards: list) -> dict:
+    """Set docid to MLS from gallery card.
+
+    A somewhat redundant step of copying a field, but this is to ensure
+    consistency with the old methods that refer to docid, rather than
+    to MLS number.
+    """
     listings = {}
     for card in cards:
         docid = support.create_house_id(card.mls)

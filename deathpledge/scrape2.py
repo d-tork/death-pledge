@@ -13,6 +13,7 @@ import subprocess
 import random
 from time import sleep
 from datetime import datetime
+from tqdm import tqdm
 
 import deathpledge
 from deathpledge import support, classes, cleaning
@@ -73,12 +74,15 @@ def scrape_from_url_df(urls, *args, **kwargs) -> tuple:
         list: homes which failed the scrape because they are probably sold
 
     """
+    logger.info(f'Scraping {len(urls)} urls...')
     scraped_homes = []
     closed_homes = []
     with SeleniumDriver(*args, **kwargs) as wd:
         homescout = hs.HomeScoutWebsite(webdriver=wd.webdriver)
 
+        pbar = tqdm(total=len(urls))
         for row in urls.itertuples(index=False):
+            pbar.update(1)
             if not url_is_valid(row.url):
                 logger.warning(f'URL {row.url} is not valid')
                 continue
@@ -88,6 +92,7 @@ def scrape_from_url_df(urls, *args, **kwargs) -> tuple:
             except hs.HomeSoldException:
                 logger.warning(f'URL {row.url} is already sold.')
                 current_home['probably_sold'] = True
+                current_home['status'] = 'Closed'
                 closed_homes.append(current_home)
                 continue
             except:

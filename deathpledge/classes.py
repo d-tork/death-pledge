@@ -109,13 +109,14 @@ class Home(dict):
         so cleaning can happen or fail to happen without disrupting the flow.
         For example, a home fetched from the database would not need cleaning.
         """
-        self.logger.info(f'Cleaning {self.docid}')
+        self.logger.debug(f'Cleaning {self.docid}')
         cleaning_funcs = [
             cleaning.split_comma_delimited_fields,
             cleaning.convert_numbers,
             cleaning.split_fee_frequency,
             cleaning.parse_address,
             cleaning.parse_homescout_date,
+            cleaning.convert_status_case,
         ]
         for fn in cleaning_funcs:
             try:

@@ -26,7 +26,9 @@ SPREADSHEET_DICT = {
     'url_range': 'URLs',
     'master_range': 'Master_list!A1',
     'scores': 'Scores!A1',
-    'raw_data': 'raw_data!A1'
+    'raw_data': 'raw_data!A1',
+    'sold_sheet': 'Sold',
+    'sold_values': 'Sold!A2:G',
 }
 
 
@@ -159,7 +161,7 @@ def get_url_dataframe(google_creds, **kwargs):
         pd.DataFrame: URL data
 
     """
-    google_sheets_rows = get_google_sheets_rows(google_creds)
+    google_sheets_rows = get_google_sheets_rows(google_creds, sheet_range='url_range')
     google_df = URLDataFrame(
         pd.DataFrame.from_records(data=google_sheets_rows),
         **kwargs
@@ -169,18 +171,18 @@ def get_url_dataframe(google_creds, **kwargs):
     return google_df.df
 
 
-def get_google_sheets_rows(google_creds):
+def get_google_sheets_rows(google_creds, sheet_range: str):
     logger.info('Getting data from Google sheets')
-    response = get_google_sheets_api_response(google_creds)
+    response = get_google_sheets_api_response(google_creds, sheet_range=sheet_range)
     rows = get_values_from_google_sheets_response(response)
     return rows
 
 
-def get_google_sheets_api_response(google_creds):
+def get_google_sheets_api_response(google_creds, sheet_range: str):
     service = build('sheets', 'v4', credentials=google_creds, cache_discovery=False)
     sheet_obj = service.spreadsheets()
     request = sheet_obj.values().get(spreadsheetId=SPREADSHEET_DICT['spreadsheetId'],
-                                     range=SPREADSHEET_DICT['url_range'])
+                                     range=SPREADSHEET_DICT[sheet_range])
     response = request.execute()
     return response
 
@@ -192,7 +194,7 @@ def get_values_from_google_sheets_response(response):
 def refresh_url_sheet(google_creds, db_client):
     """Push document list from db back to URL sheet."""
     logger.info('Refreshing Google sheet with view from database')
-    url_view = database.get_url_list(client=db_client)
+    url_view = database.get_view(client=db_client, view='urlList')
     url_df = create_url_df_for_gsheet(url_view)
     url_list = convert_dataframe_to_list(url_df)
 

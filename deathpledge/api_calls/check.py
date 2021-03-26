@@ -131,7 +131,7 @@ def check_urls_for_changes(urls) -> list:
             doc_ids=docids_to_fetch, db_name=deathpledge.DATABASE_NAME, client=cloudant
         )
     checked_homes = []
-    scraped_homes, sold_homes = scrape2.scrape_from_url_df(urls=urls)  # TODO: replace with simple GET?
+    scraped_homes, sold_homes = scrape2.scrape_from_url_df(urls=urls)
     for current_home in scraped_homes + sold_homes:
         try:
             database_doc = fetched_clean_docs.get(current_home.docid).get('doc')
@@ -146,7 +146,7 @@ def check_urls_for_changes(urls) -> list:
                 current_home.clean()
                 database_doc.update(current_home)
                 support.update_modified_date(database_doc)
-                logger.debug('check here that database_doc does not get f*cked')
+                logger.debug('check here that database_doc is now "closed" if probably sold')
                 checked_homes.append(database_doc)
     return checked_homes
 

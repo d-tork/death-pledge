@@ -25,8 +25,8 @@ def main():
 
     with database.DatabaseClient() as cloudant:
         update_sold.update_sold(google_creds=google_creds, db_client=cloudant)
-        check_new_and_active_from_google(google_creds=google_creds, db_client=cloudant, quiet=False)
-        check_and_scrape_homescout(db_client=cloudant, max_pages=args.pages, quiet=False)
+        check_new_and_active_from_google(google_creds=google_creds, db_client=cloudant, quiet=True)
+        check_and_scrape_homescout(db_client=cloudant, max_pages=args.pages, quiet=True)
         gs.refresh_url_sheet(google_creds, db_client=cloudant)
         update_sold.refresh_sold_list(google_creds=google_creds, db_client=cloudant)
     return
@@ -48,7 +48,7 @@ def parse_commandline_arguments():
 
 def check_new_and_active_from_google(google_creds, db_client, **kwargs):
     """Go through google sheet to update actives and scrape new URLs."""
-    urls = gs.get_url_dataframe(google_creds)
+    urls = gs.get_url_dataframe(google_creds).head(20)
     to_scrape = urls.loc[urls['next_action'] == 'scrape']
     to_check = urls.loc[urls['next_action'] == 'check']
     logger.info(f'{len(to_scrape)} new rows to be scraped')

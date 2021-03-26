@@ -110,21 +110,17 @@ def scrape_from_homescout_gallery(db_client, max_pages: int, *args, **kwargs):
     with SeleniumDriver(*args, **kwargs) as wd:
         homescout = hs.HomeScoutWebsite(webdriver=wd.webdriver)
         new_homes = []
+        pbar = tqdm(total=len(cards))
         for card in cards:
+            pbar.update(1)
             if card.exists_in_db:
                 if card.changed:
                     # update clean in place
                     sleep(10)
                     try:
-                        clean_doc = clean_db[card.docid]
-                        clean_doc['list_price'] = cleaning.parse_number(card.price)
-                        clean_doc['status'] = card.status
-                        clean_doc['scraped_time'] = datetime.now().strftime(deathpledge.TIMEFORMAT)
-                        clean_doc.save()
+                        update_changed_doc_with_card(clean_db, card)
                     except KeyError:
                         pass
-                else:
-                    pass
             else:
                 current_home = classes.Home(url=card.url, docid=card.docid)
                 try:
@@ -135,6 +131,15 @@ def scrape_from_homescout_gallery(db_client, max_pages: int, *args, **kwargs):
                 else:
                     new_homes.append(current_home)
     return new_homes
+
+
+def update_changed_doc_with_card(clean_db, card):
+    """Update price, status, and scrape time with gallery card."""
+    doc = clean_db[card.docid]
+    doc['list_price'] = cleaning.parse_number(card.price)
+    doc['status'] = card.status
+    doc['scraped_time'] = datetime.now().strftime(deathpledge.TIMEFORMAT)
+    doc.save()
 
 
 def wait_a_random_time():

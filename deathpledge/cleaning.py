@@ -45,7 +45,10 @@ def split_comma_delimited_fields(home):
 
 
 def parse_number(s):
-    return float(s.split()[0].replace(',', '').replace('$', '').replace('+', ''))
+    try:
+        return float(s.split()[0].replace(',', '').replace('$', '').replace('+', ''))
+    except AttributeError:
+        return s
 
 
 def convert_numbers(home):
@@ -96,11 +99,11 @@ def split_fee_frequency(home):
         try:
             fee, freq = val.split('/')
         except (AttributeError, ValueError):
-            logger.exception(f'Failed to split {key}: {val}')
+            fee = val
         else:
-            home[key] = parse_number(fee)
             home[f'{key}_frequency'] = freq
             logger.debug(f'Field {key} split and converted')
+        home[key] = parse_number(fee)
 
 
 def parse_address(home):
@@ -121,3 +124,7 @@ def parse_homescout_date(home):
     parsed_datetime = support.coerce_date_string_to_date(date_added)
     formatted_datetime = parsed_datetime.strftime(TIMEFORMAT)
     home['new_on_homescout'] = formatted_datetime
+
+
+def convert_status_case(home):
+    home['status'] = home['status'].title()

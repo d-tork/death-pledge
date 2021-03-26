@@ -109,24 +109,32 @@ class Home(dict):
         so cleaning can happen or fail to happen without disrupting the flow.
         For example, a home fetched from the database would not need cleaning.
         """
+        self.logger.debug(f'Cleaning {self.docid}')
         cleaning_funcs = [
             cleaning.split_comma_delimited_fields,
             cleaning.convert_numbers,
             cleaning.split_fee_frequency,
             cleaning.parse_address,
             cleaning.parse_homescout_date,
+            cleaning.convert_status_case,
         ]
         for fn in cleaning_funcs:
             try:
                 fn(self)
             except (AttributeError, ValueError, KeyError) as e:
-                self.logger.warning(f"Cleaning step '{fn}' failed: {e}")
+                self.logger.warning(f"Cleaning step '{fn}' failed for {self.docid}: {e}")
                 continue
 
     def enrich(self):
         """Add additional values from external sources."""
-        enrich.add_bing_maps_data(self)
-        enrich.add_tether(self)
+        try:
+            enrich.add_bing_maps_data(self)
+        except:
+            self.logger.exception('Bing enriching failed.')
+        try:
+            enrich.add_tether(self)
+        except KeyError:
+            self.logger.exception('Could not add tether; likely no geocoords.')
 
     def get_geocoords(self):
         try:

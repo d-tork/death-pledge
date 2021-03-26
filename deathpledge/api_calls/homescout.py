@@ -21,6 +21,10 @@ from deathpledge import classes
 logger = logging.getLogger(__name__)
 
 
+class HomeSoldException(Exception):
+    pass
+
+
 class HomeScoutWebsite(classes.WebDataSource):
     """Container for Homescout website and access methods for scraping the self."""
 
@@ -45,6 +49,7 @@ class HomeScoutWebsite(classes.WebDataSource):
     def _enter_website_credentials(self):
         login_link = self.webdriver.find_elements_by_class_name('action-link')[1]
         login_link.click()
+        self._wait_for_login_fields()
 
         inputs = self.webdriver.find_elements_by_class_name('login-textbox')
         email_field, password_field = inputs[6:8]
@@ -53,6 +58,11 @@ class HomeScoutWebsite(classes.WebDataSource):
         password_field.send_keys(self._config['password'])
         login_button = self.webdriver.find_element(By.CLASS_NAME, 'login-button')
         login_button.click()
+
+    def _wait_for_login_fields(self):
+        login_form = self.webdriver.find_element_by_class_name('login-form')
+        WebDriverWait(self.webdriver, 15).until(EC.visibility_of(login_form))
+        self.logger.debug('login text boxes loaded')
 
     def _wait_for_successful_signin(self):
         mystuff = self.webdriver.find_element_by_class_name('mystuff-link')
@@ -88,7 +98,7 @@ class HomeScoutWebsite(classes.WebDataSource):
             TimeoutException: If listing details don't appear within 10 sec after navigation.
 
         """
-        self.logger.info(f'scraping URL: {url}')
+        self.logger.debug(f'scraping URL: {url}')
         if not scrape.url_is_valid(url):
             raise ValueError()
 
@@ -232,6 +242,9 @@ class HomeScoutSoup(BeautifulSoup):
         """Add box details to home instance."""
         self.logger.debug('Getting main box details')
         price, status = self._get_price_and_status()
+        if int(price.replace(',', '')) == 0:
+            raise HomeSoldException('Price set to zero, indicating a sold home.')
+
         address, citystate = self._get_address()
         vitals = self._get_vitals()
 
@@ -242,7 +255,6 @@ class HomeScoutSoup(BeautifulSoup):
             'beds': vitals.beds,
             'baths': vitals.baths,
             'sqft': vitals.sqft,
-            'badge': status,
             'status': status,
             'list_price': price
         }
@@ -263,6 +275,8 @@ class HomeScoutSoup(BeautifulSoup):
                 continue
             attrib_name = self._slugify(attrib_name)
             quick_data[attrib_name] = attrib_value
+        description = self.find('div', attrs={'class': 'feature-display'})
+        quick_data['description'] = description.text
         return quick_data
 
     def _get_estimated_value(self) -> dict:

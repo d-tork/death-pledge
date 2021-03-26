@@ -25,8 +25,8 @@ def main():
 
     with database.DatabaseClient() as cloudant:
         update_sold.update_sold(google_creds=google_creds, db_client=cloudant)
-        check_new_and_active_from_google(google_creds=google_creds, db_client=cloudant)
-        check_and_scrape_homescout(db_client=cloudant, max_pages=args.pages, quiet=True)
+        check_new_and_active_from_google(google_creds=google_creds, db_client=cloudant, quiet=False)
+        check_and_scrape_homescout(db_client=cloudant, max_pages=args.pages, quiet=False)
         gs.refresh_url_sheet(google_creds, db_client=cloudant)
         update_sold.refresh_sold_list(google_creds=google_creds, db_client=cloudant)
     return
@@ -46,7 +46,7 @@ def parse_commandline_arguments():
     return parser.parse_args()
 
 
-def check_new_and_active_from_google(google_creds, db_client):
+def check_new_and_active_from_google(google_creds, db_client, **kwargs):
     """Go through google sheet to update actives and scrape new URLs."""
     urls = gs.get_url_dataframe(google_creds)
     to_scrape = urls.loc[urls['next_action'] == 'scrape']
@@ -54,7 +54,7 @@ def check_new_and_active_from_google(google_creds, db_client):
     logger.info(f'{len(to_scrape)} new rows to be scraped')
 
     if not to_scrape.empty:
-        scraped_homes, _ = scrape2.scrape_from_url_df(urls=to_scrape, quiet=True)
+        scraped_homes, _ = scrape2.scrape_from_url_df(urls=to_scrape, **kwargs)
         database.bulk_upload(
             docs=scraped_homes,
             db_name=deathpledge.RAW_DATABASE_NAME,

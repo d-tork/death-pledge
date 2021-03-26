@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='death-pledge',
-    version='2021.02.12',
+    version='2021.03.26',
     author='Daniel Torkelson',
     packages=find_packages(include=['deathpledge', 'deathpledge.*']),
     install_requires=[
@@ -18,6 +18,7 @@ setup(
         'PyYAML',
         'scipy',
         'selenium',
+        'tqdm',
         'usaddress',
         ],
     extras_require={

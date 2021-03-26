@@ -57,11 +57,12 @@ def push_changes_to_db(sold_df, db_client):
                 update_sale_price(row, db_doc)
                 update_sold_date(row, db_doc)
                 db_doc['probably_sold'] = False
+                logger.info(f'Sale info updated in doc {row.mls_number}')
             if row.notes:
                 update_notes(row, db_doc)
+                logger.info(f'Notes updated in doc {row.mls_number}')
             support.update_modified_date(db_doc)
             db_doc.save()
-            logger.info(f'Sale info updated in doc {row.mls_number}')
         finally:
             sleep(2)
 

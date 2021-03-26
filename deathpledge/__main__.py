@@ -29,7 +29,7 @@ def main():
         gs.refresh_url_sheet(google_creds, db_client=cloudant)
         check_and_scrape_homescout(db_client=cloudant, max_pages=args.pages, quiet=True)
         gs.refresh_url_sheet(google_creds, db_client=cloudant)
-        update_sold.update_sold(google_creds=google_creds, db_client=cloudant)
+        update_sold.refresh_sold_list(google_creds=google_creds, db_client=cloudant)
     return
 
 

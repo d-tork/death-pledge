@@ -74,6 +74,7 @@ def scrape_from_url_df(urls, *args, **kwargs) -> tuple:
         list: homes which failed the scrape because they are probably sold
 
     """
+    logger.info(f'Scraping {len(urls)} urls...')
     scraped_homes = []
     closed_homes = []
     with SeleniumDriver(*args, **kwargs) as wd:

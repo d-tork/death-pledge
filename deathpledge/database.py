@@ -105,6 +105,7 @@ def get_single_doc(doc_id, db_name, client):
 
 def get_bulk_docs(doc_ids: list, db_name: str, client: Cloudant.iam) -> dict:
     """Fetch multiple docs from the database."""
+    logger.info(f'Bulk getting {len(doc_ids)} docs...')
     db = client[db_name]
     result = db.all_docs(keys=doc_ids, include_docs=True)
     raw_rows = rate_limit_pull(result['rows'], est_doc_count=len(doc_ids))
@@ -123,6 +124,7 @@ def get_view(client, view: str) -> dict:
 
 
 def get_doc_list(client: Cloudant.iam, db_name: str, **kwargs) -> list:
+    logger.info('Getting doc list...')
     db = client[db_name]
     result_collection = Result(db.all_docs, include_docs=False)
     return [*rate_limit_pull(result_collection, **kwargs)]
@@ -151,6 +153,7 @@ def get_active_doc_ids(client: Cloudant.iam, db_name: str, **kwargs) -> dict:
         dict: Mapping of docid to doc
 
     """
+    logger.info('Getting active doc ids from database...')
     db = client[db_name]
     selector = {
         'doctype': 'home',
@@ -175,6 +178,7 @@ def bulk_upload(docs: list, db_name: str, client: Cloudant.iam):
     it's being updated).
 
     """
+    logger.info(f'Bulk uploading {len(docs)} docs to {db_name}...')
     for doc in docs:
         try:
             doc['_id'] = doc.docid

@@ -42,6 +42,7 @@ def get_sold_dataframe(google_creds):
 
 def push_changes_to_db(sold_df, db_client):
     """Update database docs with sold date and price."""
+    logger.info('Pushing manual sale updates to database')
     clean_db = db_client[deathpledge.DATABASE_NAME]
     for row in sold_df.itertuples(index=False):
         try:

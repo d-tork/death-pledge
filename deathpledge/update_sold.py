@@ -3,6 +3,7 @@ import pandas as pd
 from googleapiclient.discovery import build
 import logging
 from time import sleep
+from tqdm import tqdm
 
 import deathpledge
 from deathpledge.api_calls import google_sheets as gs
@@ -44,7 +45,9 @@ def push_changes_to_db(sold_df, db_client):
     """Update database docs with sold date and price."""
     logger.info('Pushing manual sale updates to database')
     clean_db = db_client[deathpledge.DATABASE_NAME]
+    pbar = tqdm(total=len(sold_df))
     for row in sold_df.itertuples(index=False):
+        pbar.update(1)
         try:
             db_doc = clean_db[row.mls_number]
         except KeyError:
@@ -57,7 +60,7 @@ def push_changes_to_db(sold_df, db_client):
             if row.sale_price and row.sold:
                 update_sale_price(row, db_doc)
                 update_sold_date(row, db_doc)
-                logger.info(f'Sale info updated in doc {row.mls_number}')
+                logger.debug(f'Sale info updated in doc {row.mls_number}')
             if row.notes:
                 update_notes(row, db_doc)
             db_doc['checked'] = True
@@ -82,7 +85,7 @@ def update_notes(row, doc):
         logger.debug(f'Notes are unchanged for {row.mls_number}')
     else:
         doc['notes'] = row.notes
-        logger.info(f'Notes updated in doc {row.mls_number}')
+        logger.debug(f'Notes updated in doc {row.mls_number}')
 
 
 def refresh_sold_list(google_creds, db_client):

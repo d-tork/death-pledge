@@ -63,7 +63,7 @@ def check_new_and_active_from_google(google_creds, db_client, **kwargs):
         process_and_save(scraped_homes, db_client=db_client)
     if not to_check.empty:
         checked = check.check_urls_for_changes(urls=to_check)
-        update_checked_listings(listings=checked, db_client=db_client)
+        database.bulk_upload(checked, db_name=deathpledge.DATABASE_NAME, client=db_client)
 
 
 def process_and_save(homes: list, db_client: database.Cloudant.iam):
@@ -82,10 +82,6 @@ def process_and_save(homes: list, db_client: database.Cloudant.iam):
         database.bulk_upload(docs=homes,
                              db_name=deathpledge.DATABASE_NAME,
                              client=db_client)
-
-
-def update_checked_listings(listings, db_client):
-    database.bulk_upload(listings, db_name=deathpledge.DATABASE_NAME, client=db_client)
 
 
 def check_and_scrape_homescout(db_client, **kwargs):

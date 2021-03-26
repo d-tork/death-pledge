@@ -60,7 +60,6 @@ def push_changes_to_db(sold_df, db_client):
                 logger.info(f'Sale info updated in doc {row.mls_number}')
             if row.notes:
                 update_notes(row, db_doc)
-                logger.info(f'Notes updated in doc {row.mls_number}')
             support.update_modified_date(db_doc)
             db_doc.save()
         finally:
@@ -77,7 +76,12 @@ def update_sold_date(row, doc):
 
 
 def update_notes(row, doc):
-    doc['notes'] = row.notes
+    prev_notes = doc.get('notes')
+    if row.notes == prev_notes:
+        logger.debug(f'Notes are unchanged for {row.mls_number}')
+    else:
+        doc['notes'] = row.notes
+        logger.info(f'Notes updated in doc {row.mls_number}')
 
 
 def refresh_sold_list(google_creds, db_client):

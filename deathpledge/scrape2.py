@@ -13,6 +13,7 @@ import subprocess
 import random
 from time import sleep
 from datetime import datetime
+from tqdm import tqdm
 
 import deathpledge
 from deathpledge import support, classes, cleaning
@@ -78,7 +79,9 @@ def scrape_from_url_df(urls, *args, **kwargs) -> tuple:
     with SeleniumDriver(*args, **kwargs) as wd:
         homescout = hs.HomeScoutWebsite(webdriver=wd.webdriver)
 
+        pbar = tqdm(total=len(urls))
         for row in urls.itertuples(index=False):
+            pbar.update(1)
             if not url_is_valid(row.url):
                 logger.warning(f'URL {row.url} is not valid')
                 continue

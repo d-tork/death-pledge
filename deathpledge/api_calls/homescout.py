@@ -92,7 +92,7 @@ class HomeScoutWebsite(classes.WebDataSource):
             TimeoutException: If listing details don't appear within 10 sec after navigation.
 
         """
-        self.logger.info(f'scraping URL: {url}')
+        self.logger.debug(f'scraping URL: {url}')
         if not scrape.url_is_valid(url):
             raise ValueError()
 

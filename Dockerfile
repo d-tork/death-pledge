@@ -3,7 +3,7 @@ FROM ubuntu:20.04
 ARG GIT_HASH
 ENV GIT_HAS=${GIT_HASH:-dev}
 
-RUN apt-get update -y && DEBIAN_FRONTEND=noninteractive apt-get install python3.7 python3-pip firefox -y
+RUN apt-get update -y && DEBIAN_FRONTEND=noninteractive apt-get install git python3.7 python3-pip firefox -y
 
 WORKDIR ./death-pledge
 

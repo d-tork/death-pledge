@@ -5,7 +5,6 @@ cachetools==4.1.1
 certifi==2020.11.8
 chardet==3.0.4
 cloudant==2.14.0
--e git+git@github.com:d-tork/death-pledge.git@8d26186b665102cffac4a2057ccf521ea386b8c6#egg=death_pledge
 Django==3.1.4
 fake-useragent==0.1.11
 future==0.18.2

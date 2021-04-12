@@ -126,11 +126,18 @@ def create_sold_df_for_gsheet(sold_view: dict) -> pd.DataFrame:
     df = pd.DataFrame.from_dict(
         sold_view, orient='index',
         columns=['added_date', 'mls_number', 'full_address', 'list_price',
-            'sale_price', 'sold', 'notes']
+                 'sale_price', 'sold', 'notes']
     )
+    df = filter_for_virginia(df)  # TODO: temporary
     df['added_date'] = pd.to_datetime(df['added_date']).dt.strftime('%m/%d/%Y')
     df = df.set_index('added_date')
     return df
+
+
+def filter_for_virginia(df: pd.DataFrame):
+    """Retain only listings from VA, as a temporary triage measure."""
+    va_listings = df['mls_number'].str.startswith('VA')
+    return df.loc[va_listings].copy()
 
 
 def test_fill():

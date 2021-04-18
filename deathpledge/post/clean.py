@@ -107,7 +107,7 @@ class HomeData(object):
         zero_for_null_cols = ['garage_capacity', 'fireplaces', 'city_tax', 'county_tax', 'total_taxes']
         self._fill_zero_for_null(zero_for_null_cols)
         self._downcast_floats_to_int()
-        self._convert_yn_cols_to_bool(['garage'])
+        self._convert_yn_cols_to_bool(['pool_description', 'garage'])
 
     def _str_col_yes_if_something(self):
         str_cols_for_bool = ['common_walls', 'heating', 'cooling', 'laundry']

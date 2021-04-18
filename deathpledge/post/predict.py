@@ -110,10 +110,13 @@ class FeatureColumns(object):
                  'days_on_market',
                  'county_tax',
                  'city_tax',
-                 'levels_count']
+                 'levels_count',
+                 'price_sqft']
     boolean = ['has_hoa',
                'basement',
                'air_conditioning',
+               'has_common_walls',
+               'pool_description',
                'has_common_walls',
                'has_laundry']
 

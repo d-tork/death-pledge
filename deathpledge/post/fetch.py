@@ -4,6 +4,7 @@ import pandas as pd
 from cloudant.result import QueryResult
 from cloudant.query import Query
 import logging
+from os import path
 
 import deathpledge
 from deathpledge import database as db
@@ -23,7 +24,7 @@ def get_homes_from_cloudant() -> list:
                       selector={'doctype': 'home', 'scraped_source': 'Homescout'},
                       use_index='homeIndex')
         result_collection = QueryResult(query)
-    rows = db.rate_limit_pull(result_collection[:100], est_doc_count=100)
+    rows = db.rate_limit_pull(result_collection, est_doc_count=900)
     return rows
 
 
@@ -39,6 +40,8 @@ def sample():
     df = get_dataframe_from_docs(rows)
     print(df.head())
     print(df['scraped_source'].value_counts())
+    raw_outpath = path.join(deathpledge.PROJ_PATH, 'data', '01-raw.csv')
+    df.to_csv(raw_outpath, index=False)
 
 
 if __name__ == '__main__':

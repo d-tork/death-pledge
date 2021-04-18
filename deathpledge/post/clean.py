@@ -2,6 +2,7 @@
 import pandas as pd
 import numpy as np
 import logging
+import os
 
 from deathpledge import PROJ_PATH
 from deathpledge.post import fetch
@@ -171,11 +172,10 @@ def sample():
     # df = fetch.get_dataframe_from_docs(docs)
     with open('cloudant_db.pickle', 'rb') as f:
         df = pickle.load(f)
+    raw_data_file = os.path.join(PROJ_PATH, 'data', '01-raw.csv')
+    df = pd.read_csv(raw_data_file, index_col=None)
     home_data = HomeData(df)
-    home_data.address_cloudant_issues()
-    home_data.address_realscout_homescout_join()
-    home_data.apply_transformations()
-    home_data.handle_outliers()
+    home_data.run_all_cleaning()
     logger.debug('break point here')
     return home_data
 

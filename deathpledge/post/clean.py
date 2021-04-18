@@ -156,6 +156,7 @@ class HomeData(object):
         self._fix_garage_capacity_outliers()
         self._fix_tax_outliers('city_tax', 'total_taxes')
         self._fix_zero_sqft()
+        self._fix_zero_price_per_sqft()
 
     def _fix_garage_capacity_outliers(self):
         """Garage capacity for a couple homes is insane (the parking garage spaces)"""
@@ -182,6 +183,14 @@ class HomeData(object):
         median_value = self.df[col].median()
         outliers = self.df[col].loc[self.df[col] == 0].tolist()
         self.df[col].replace(outliers, median_value, inplace=True)
+
+    def _fix_zero_price_per_sqft(self):
+        """Some price/sqft is 0, so recalculate with raw values."""
+        col = 'price_sqft'
+        to_fix = self.df[col] == 0
+        calculated_price_sqft = self.df['list_price'] / self.df['sqft']
+        self.df.loc[to_fix, col] = np.NaN
+        self.df[col].fillna(calculated_price_sqft, inplace=True)
 
 
 def sample():

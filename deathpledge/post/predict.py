@@ -53,8 +53,8 @@ class SalePricePredictor(object):
 
     @staticmethod
     def _drop_null_rows_and_cols(df):
-        df.dropna(axis=0, inplace=True, subset=['first_leg', 'commute_time', 'first_walk'])
-        df.dropna(axis=1, inplace=True)
+        df.dropna(axis=0, how='any', inplace=True, subset=['first_leg', 'commute_time', 'first_walk'])
+        df.dropna(axis=1, how='any', inplace=True)
 
     def _split_data(self):
         target_col = ['sale_price']

@@ -101,7 +101,8 @@ class HomeData(object):
 
     @staticmethod
     def _explode_list_series(s):
-        df = s.apply(pd.Series)
+        list_from_s = [eval(x) for x in s]
+        df = pd.DataFrame(list_from_s)
         return df
 
     def _fill_zero_for_null(self, cols):

@@ -42,6 +42,7 @@ def sample():
     print(df['scraped_source'].value_counts())
     raw_outpath = path.join(deathpledge.PROJ_PATH, 'data', '01-raw.csv')
     df.to_csv(raw_outpath, index=False)
+    return df
 
 
 if __name__ == '__main__':

@@ -7,7 +7,9 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.linear_model import LinearRegression
 from sklearn import metrics
+from os import path
 
+import deathpledge
 from deathpledge.post import feature
 
 
@@ -130,10 +132,13 @@ class FeatureColumns(object):
 
 def sample():
     df = feature.sample()
+    print(df.shape)
     sale_price = SalePricePredictor(df)
     sale_price.model_sale_price()
     active_predicted = sale_price.predict_for_active()
     print(active_predicted[['mls_number', 'list_price', 'predicted_price']].head())
+    outfile = path.join(deathpledge.PROJ_PATH, 'data', '04-predicted.csv')
+    active_predicted.to_csv(outfile, index=False)
 
 
 if __name__ == '__main__':

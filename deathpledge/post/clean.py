@@ -118,14 +118,19 @@ class HomeData(object):
 
     def _add_exploded_fields(self, col):
         df = self.df.copy()
-        df = df.reset_index().join(self._explode_list_series(df[col]), sort=True)
+        exploded_series = self._explode_list_series(df[col])
+        df = df.reset_index().join(exploded_series, sort=True)
         df.drop(columns=[col, 'index'], inplace=True)
         self.df = df
 
     @staticmethod
     def _explode_list_series(s):
-        list_from_s = [eval(x) for x in s]
-        df = pd.DataFrame(list_from_s)
+        try:
+            list_from_s = [eval(x) for x in s]
+        except TypeError:
+            df = s.apply(pd.Series)
+        else:
+            df = pd.DataFrame(list_from_s)
         return df
 
     def _fill_zero_for_null(self, cols):
@@ -200,10 +205,9 @@ class HomeData(object):
 
 
 def sample():
-    # docs = fetch.get_homes_from_cloudant()
-    # df = fetch.get_dataframe_from_docs(docs)
-    raw_data_file = os.path.join(PROJ_PATH, 'data', '01-raw.csv')
-    df = pd.read_csv(raw_data_file, index_col=None)
+    df = fetch.sample()
+    # raw_data_file = os.path.join(PROJ_PATH, 'data', '01-raw.csv')
+    # df = pd.read_csv(raw_data_file, index_col=None)
     home_data = HomeData(df)
     home_data.run_all_cleaning()
     logger.debug('break point here')

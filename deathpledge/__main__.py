@@ -50,7 +50,7 @@ def check_new_and_active_from_google(google_creds, db_client, **kwargs):
     """Go through google sheet to update actives and scrape new URLs."""
     urls = gs.get_url_dataframe(google_creds)
     to_scrape = urls.loc[urls['next_action'] == 'scrape']
-    to_check = urls.loc[urls['next_action'] == 'check'].head(100)
+    to_check = urls.loc[urls['next_action'] == 'check'].head(25)
     logger.info(f'{len(to_scrape)} new rows to be scraped')
 
     if not to_scrape.empty:

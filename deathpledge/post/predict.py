@@ -46,10 +46,7 @@ class SalePricePredictor(object):
     @staticmethod
     def _downcast_all_numeric_cols(df):
         for col in df:
-            try:
-                df[col] = pd.to_numeric(df[col], downcast='integer')
-            except ValueError:
-                continue
+            df[col] = pd.to_numeric(df[col], downcast='integer', errors='ignore')
 
     def model_sale_price(self):
         self.X_train, self.X_test, self.y_train, self.y_test = self._split_data()

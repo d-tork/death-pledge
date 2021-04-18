@@ -131,6 +131,7 @@ class HomeData(object):
         for col in ['county_tax', 'city_tax', 'total_taxes', 'estimated_value']:
             self.df[col] = self.df[col].map(str).str.replace('$', '')
             self.df[col] = self.df[col].map(str).str.replace(',', '')
+            self.df[col] = pd.to_numeric(self.df[col], errors='coerce')
 
     def _downcast_floats_to_int(self):
         for col in self.df:

@@ -91,8 +91,6 @@ class HomeData(object):
     def apply_transformations(self):
         self._str_col_yes_if_something()
         self._add_exploded_fields('parsed_address')
-        zero_for_null_cols = ['garage_capacity', 'fireplaces', 'city_tax']
-        self._fill_zero_for_null(zero_for_null_cols)
         drop_cols = ['total_garage_and_parking_spaces', 'StreetNamePostDirectional', 'StreetNamePreType',
                      'StreetNamePreDirectional', 'OccupancyIdentifier', 'StreetNamePostType',
                      'green_information', 'waterfront_features', 'water_body_type', 'body_of_water_information',
@@ -100,11 +98,13 @@ class HomeData(object):
                      'building_sites']
         self.df.drop(columns=drop_cols, errors='ignore', inplace=True)
         self._parse_currency_fields()
+        zero_for_null_cols = ['garage_capacity', 'fireplaces', 'city_tax', 'county_tax', 'total_taxes']
+        self._fill_zero_for_null(zero_for_null_cols)
         self._downcast_floats_to_int()
         self._convert_yn_cols_to_bool(['garage'])
 
     def _str_col_yes_if_something(self):
-        str_cols_for_bool = """common_walls heating cooling laundry""".split()
+        str_cols_for_bool = ['common_walls', 'heating', 'cooling', 'laundry']
         for col in str_cols_for_bool:
             new_colname = f'has_{col}'
             s = self.df[col].fillna('')
@@ -127,11 +127,10 @@ class HomeData(object):
             self.df[col].fillna(0, inplace=True)
 
     def _parse_currency_fields(self):
-        """county_tax sometimes has currency symbols"""
+        """Remove currency symbols."""
         for col in ['county_tax', 'city_tax', 'total_taxes', 'estimated_value']:
             self.df[col] = self.df[col].map(str).str.replace('$', '')
             self.df[col] = self.df[col].map(str).str.replace(',', '')
-            self.df[col].fillna(0, inplace=True)
 
     def _downcast_floats_to_int(self):
         for col in self.df:

@@ -28,7 +28,7 @@ class SalePricePredictor(object):
     def __init__(self, df: pd.DataFrame):
         self.logger = logging.getLogger(f'{__name__}.{type(self).__name__}')
         self.df = df
-        self.sold = self._get_sold_homes(df)
+        self.sold = self._prepare_modeling_dataset()
         self.lr = LinearRegression()
         self.feature_cols = (FeatureColumns.categorical
                              + FeatureColumns.numerical
@@ -38,26 +38,27 @@ class SalePricePredictor(object):
              ('continuous', StandardScaler(), FeatureColumns.numerical)],
             remainder='passthrough')
 
-    @staticmethod
-    def _get_sold_homes(df):
-        return df.loc[df['sold'].notna()].copy()
-
-    def model_sale_price(self):
-        self._drop_null_rows_and_cols(self.sold)
-        X_train, X_test, y_train, y_test = self._split_data()
-        X_train_tx, X_test_tx = self._transform_X_features(X_train, X_test)
-        self.lr.fit(X_train_tx, y_train)
-        lr_score = self.lr.score(X_test_tx, y_test)
-        self.logger.info(f'LinReg score: {lr_score:.3f}')
-        print(f'LinReg score: {lr_score:.3f}')
-
     def _drop_null_rows_and_cols(self, df: pd.DataFrame):
         df.dropna(axis=0, how='any', inplace=True, subset=['first_leg', 'commute_time', 'first_walk'])
         cols_before = set(df.columns)
         df.dropna(axis=1, how='any', inplace=True)
         cols_after = set(df.columns)
         cols_dropped = cols_before - cols_after
-        self.logger.info(f'Columns dropped for having null values:\t\n{cols_dropped}')
+        self.logger.warning(f'Columns dropped for having null values:\t\n{cols_dropped}')
+
+    def _prepare_modeling_dataset(self) -> pd.DataFrame:
+        """Filter for labeled rows (sold homes) and drop all irrelevant nulls."""
+        sold = self.df.loc[self.df['sold'].notna()].copy()
+        self._drop_null_rows_and_cols(sold)
+        return sold
+
+    def model_sale_price(self):
+        X_train, X_test, y_train, y_test = self._split_data()
+        X_train_tx, X_test_tx = self._transform_X_features(X_train, X_test)
+        self.lr.fit(X_train_tx, y_train)
+        lr_score = self.lr.score(X_test_tx, y_test)
+        self.logger.info(f'LinReg score: {lr_score:.3f}')
+        print(f'LinReg score: {lr_score:.3f}')
 
     def _split_data(self):
         target_col = ['sale_price']
@@ -72,7 +73,6 @@ class SalePricePredictor(object):
 
     def predict_for_active(self) -> pd.DataFrame:
         for_sale = self.df.loc[self.df.status.str.lower().str.contains('active')].copy()
-        self._drop_null_rows_and_cols(for_sale)
         X_for_sale = for_sale[self.feature_cols]
         X_for_sale_transformed = self.column_transformer.transform(X_for_sale)
         for_sale_pred = self.lr.predict(X_for_sale_transformed)

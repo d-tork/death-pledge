@@ -1,7 +1,9 @@
 """Engineer features for analysis."""
 import pandas as pd
 import numpy as np
+from os import path
 
+import deathpledge
 from deathpledge.post import clean
 
 
@@ -45,6 +47,8 @@ def sample():
     home_data = clean.sample()
     add_engineered_features(home_data)
     print(home_data.df.head())
+    outfile = path.join(deathpledge.PROJ_PATH, 'data', '03-feature.csv')
+    home_data.df.to_csv(outfile, index=False)
     return home_data.df
 
 

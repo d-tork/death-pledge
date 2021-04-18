@@ -12,19 +12,6 @@ from deathpledge.post import feature
 
 
 class SalePricePredictor(object):
-    cols = [
-        'mls_number', 'full_address',
-        'list_price', 'new_on_homescout', 'status',
-        'beds', 'baths', 'full_bathrooms', 'sqft', 'basement',
-        'structure_type', 'architectural_style', 'year_built', 'levels_count', 'new_construction',
-        'acres', 'fireplaces', 'air_conditioning', 'garage_capacity', 'has_laundry',
-        'has_common_walls',
-        'county', 'PlaceName', 'StateName', 'ZipCode',
-        'hoa_fee', 'has_hoa', 'county_tax', 'condocoop_fee', 'city_tax', 'total_taxes',
-        'commute_time', 'first_leg', 'first_walk', 'tether',
-        'sold', 'sale_price', 'estimated_value',
-    ]
-
     def __init__(self, df: pd.DataFrame):
         self.logger = logging.getLogger(f'{__name__}.{type(self).__name__}')
         self.df = df

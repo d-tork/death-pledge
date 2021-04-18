@@ -8,7 +8,7 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.linear_model import LinearRegression
 from sklearn import metrics
 
-import feature
+from deathpledge.post import feature
 
 
 class SalePricePredictor(object):

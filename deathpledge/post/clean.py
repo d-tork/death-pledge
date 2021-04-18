@@ -3,7 +3,8 @@ import pandas as pd
 import numpy as np
 import logging
 
-import fetch
+from deathpledge import PROJ_PATH
+from deathpledge.post import fetch
 
 logger = logging.getLogger(__name__)
 

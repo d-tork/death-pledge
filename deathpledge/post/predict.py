@@ -38,6 +38,13 @@ class SalePricePredictor(object):
              ('continuous', StandardScaler(), FeatureColumns.numerical)],
             remainder='passthrough')
 
+    def _prepare_modeling_dataset(self) -> pd.DataFrame:
+        """Filter for labeled rows (sold homes) and drop all irrelevant nulls."""
+        sold = self.df.loc[self.df['sold'].notna()].copy()
+        self._drop_null_rows_and_cols(sold)
+        self._downcast_all_numeric_cols(sold)
+        return sold
+
     def _drop_null_rows_and_cols(self, df: pd.DataFrame):
         df.dropna(axis=0, how='any', inplace=True, subset=['first_leg', 'commute_time', 'first_walk'])
         cols_before = set(df.columns)
@@ -46,11 +53,13 @@ class SalePricePredictor(object):
         cols_dropped = cols_before - cols_after
         self.logger.warning(f'Columns dropped for having null values:\t\n{cols_dropped}')
 
-    def _prepare_modeling_dataset(self) -> pd.DataFrame:
-        """Filter for labeled rows (sold homes) and drop all irrelevant nulls."""
-        sold = self.df.loc[self.df['sold'].notna()].copy()
-        self._drop_null_rows_and_cols(sold)
-        return sold
+    @staticmethod
+    def _downcast_all_numeric_cols(df):
+        for col in df:
+            try:
+                df[col] = pd.to_numeric(df[col], downcast='integer')
+            except ValueError:
+                continue
 
     def model_sale_price(self):
         X_train, X_test, y_train, y_test = self._split_data()

@@ -51,10 +51,13 @@ class SalePricePredictor(object):
         self.logger.info(f'LinReg score: {lr_score:.3f}')
         print(f'LinReg score: {lr_score:.3f}')
 
-    @staticmethod
-    def _drop_null_rows_and_cols(df):
+    def _drop_null_rows_and_cols(self, df: pd.DataFrame):
         df.dropna(axis=0, how='any', inplace=True, subset=['first_leg', 'commute_time', 'first_walk'])
+        cols_before = set(df.columns)
         df.dropna(axis=1, how='any', inplace=True)
+        cols_after = set(df.columns)
+        cols_dropped = cols_before - cols_after
+        self.logger.info(f'Columns dropped for having null values:\t\n{cols_dropped}')
 
     def _split_data(self):
         target_col = ['sale_price']

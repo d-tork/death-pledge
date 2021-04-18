@@ -113,7 +113,7 @@ class HomeData(object):
     def _add_exploded_fields(self, col):
         df = self.df.copy()
         df = df.reset_index().join(self._explode_list_series(df[col]), sort=True)
-        df.drop(columns=[col], inplace=True)
+        df.drop(columns=[col, 'index'], inplace=True)
         self.df = df
 
     @staticmethod
@@ -192,6 +192,8 @@ def sample():
     home_data = HomeData(df)
     home_data.run_all_cleaning()
     logger.debug('break point here')
+    outfile = os.path.join(PROJ_PATH, 'data', '02-clean.csv')
+    home_data.df.to_csv(outfile, index=False)
     return home_data
 
 

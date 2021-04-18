@@ -31,6 +31,7 @@ class HomeData(object):
         self._fill_has_hoa()
         self._fill_new_construction()
         self._fill_estimated_value()
+        self._fill_additional_laundry()
         self._yes_no_to_boolean()
         self._calculate_levels_count()
 
@@ -54,11 +55,16 @@ class HomeData(object):
         self.df['estimated_value'].fillna(self.df['list_price'], inplace=True)
 
     def _fill_additional_laundry(self):
-        """Some listings mention laundry in description, but not in laundry field."""
+        """Some listings mention laundry in description, but not in laundry field.
+
+        If 'Common', then it's false.
+        """
         laundry_in_desc = self.df['description'].str.lower().str.contains('laundry')
         laundry_in_appliances = self.df['appliances'].apply(self._eval_appliances_for_laundry)
         any_laundry = (laundry_in_desc | laundry_in_appliances)
-        self.df['laundry'].fillna(any_laundry, inplace=True)
+        self.df['has_laundry'] = any_laundry
+        common_laundry = self.df['laundry'].str.lower().str.contains('common').fillna(False)
+        self.df.loc[common_laundry, 'has_laundry'] = False
 
     @staticmethod
     def _eval_appliances_for_laundry(s: str) -> bool:

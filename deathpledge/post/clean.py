@@ -55,8 +55,25 @@ class HomeData(object):
 
     def _fill_additional_laundry(self):
         """Some listings mention laundry in description, but not in laundry field."""
-        laundry_in_desc = self.df['description'].str.contains('laundry')
-        self.df['laundry'].fillna(laundry_in_desc)
+        laundry_in_desc = self.df['description'].str.lower().str.contains('laundry')
+        laundry_in_appliances = self.df['appliances'].apply(self._eval_appliances_for_laundry)
+        any_laundry = (laundry_in_desc | laundry_in_appliances)
+        self.df['laundry'].fillna(any_laundry, inplace=True)
+
+    @staticmethod
+    def _eval_appliances_for_laundry(s: str) -> bool:
+        """Look for laundry-related terms in the appliances string."""
+        try:
+            appliance_list = eval(s)
+        except TypeError:
+            return False
+        else:
+            if 'washer' in [x.lower() for x in appliance_list]:
+                return True
+            elif any([x for x in appliance_list if 'dryer' in x.lower()]):
+                return True
+            else:
+                return False
 
     def _yes_no_to_boolean(self):
         # TODO: this should come later, some of these may be gone or renamed

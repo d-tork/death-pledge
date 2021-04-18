@@ -168,11 +168,8 @@ class HomeData(object):
 
 
 def sample():
-    import pickle
     # docs = fetch.get_homes_from_cloudant()
     # df = fetch.get_dataframe_from_docs(docs)
-    with open('cloudant_db.pickle', 'rb') as f:
-        df = pickle.load(f)
     raw_data_file = os.path.join(PROJ_PATH, 'data', '01-raw.csv')
     df = pd.read_csv(raw_data_file, index_col=None)
     home_data = HomeData(df)

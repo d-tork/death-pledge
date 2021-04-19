@@ -56,6 +56,26 @@ class SalePricePredictor(object):
         self.lr.fit(X_train_tx, self.y_train)
         self.score_model(X_test_tx)
 
+    def model_with_xgboost(self):
+        X_train_tx, X_test_tx = self._transform_X_features()
+        xg_model = XGBRegressor(random_state=0)
+        parameters = {
+            'model__n_estimators': [100, 120, 150, 200],
+            'model__learning_rate': [0.02, 0.05, 0.07]
+        }
+        search = GridSearchCV(estimator=xg_model, param_grid=parameters, cv=3)
+        search.fit(X_train_tx, self.y_train)
+        print('-' * 25)
+        print(f'Best parameters {search.best_params_}')
+        print(
+            f'Mean cross-validated accuracy score of the best_estimator: ',
+            f'{search.best_score_:.3f}'
+        )
+        print('-' * 25)
+        print(f'XGBoost score: {search.score(X_train_tx, self.y_train)}')
+        y_pred = search.predict(X_test_tx)
+        print('Mean absolute error: ', metrics.mean_absolute_error(self.y_test, y_pred))
+
     def _split_data(self):
         target_col = ['sale_price']
         X = self.sold[self.feature_cols]
@@ -137,6 +157,7 @@ def sample():
     print(active_predicted[['mls_number', 'list_price', 'predicted_price']].head())
     outfile = path.join(deathpledge.PROJ_PATH, 'data', '04-predicted.csv')
     active_predicted.to_csv(outfile, index=False)
+    sale_price.model_with_xgboost()
 
 
 if __name__ == '__main__':

@@ -54,14 +54,7 @@ class SalePricePredictor(object):
         self.X_train, self.X_test, self.y_train, self.y_test = self._split_data()
         X_train_tx, X_test_tx = self._transform_X_features()
         self.lr.fit(X_train_tx, self.y_train)
-        # self.import_model_from_file()
         self.score_model(X_test_tx)
-
-    def import_model_from_file(self):
-        filename = path.join(deathpledge.PROJ_PATH, 'notebook', 'model.pickle')
-        with open(filename, 'rb') as f:
-            model = pickle.load(f)
-        self.lr = model
 
     def _split_data(self):
         target_col = ['sale_price']

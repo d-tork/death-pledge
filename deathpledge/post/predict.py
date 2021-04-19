@@ -52,8 +52,8 @@ class SalePricePredictor(object):
     def model_sale_price(self):
         self.X_train, self.X_test, self.y_train, self.y_test = self._split_data()
         X_train_tx, X_test_tx = self._transform_X_features()
-        # self.lr.fit(X_train_tx, self.y_train)
-        self.import_model_from_file()
+        self.lr.fit(X_train_tx, self.y_train)
+        # self.import_model_from_file()
         self.score_model(X_test_tx)
 
     def import_model_from_file(self):
@@ -131,7 +131,6 @@ class FeatureColumns(object):
                'air_conditioning',
                'has_common_walls',
                'pool_description',
-               'has_common_walls',
                'has_laundry']
 
 

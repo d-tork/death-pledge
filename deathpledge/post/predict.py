@@ -42,7 +42,7 @@ class SalePricePredictor(object):
         df.dropna(axis=1, how='any', inplace=True)
         cols_after = set(df.columns)
         cols_dropped = cols_before - cols_after
-        self.logger.warning(f'Columns dropped for having null values:\t\n{cols_dropped}')
+        self.logger.info(f'Columns dropped for having null values:\t\n{cols_dropped}')
 
     @staticmethod
     def _downcast_all_numeric_cols(df):
@@ -66,7 +66,7 @@ class SalePricePredictor(object):
         target_col = ['sale_price']
         X = self.sold[self.feature_cols]
         y = self.sold[target_col]
-        return train_test_split(X, y)
+        return train_test_split(X, y, train_size=0.8, random_state=70)
 
     def _transform_X_features(self):
         X_train_transformed = self.column_transformer.fit_transform(self.X_train)

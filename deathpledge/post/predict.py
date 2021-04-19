@@ -2,11 +2,12 @@
 import pandas as pd
 import numpy as np
 import logging
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.linear_model import LinearRegression
 from sklearn import metrics
+from xgboost import XGBRegressor
 from os import path
 import pickle
 

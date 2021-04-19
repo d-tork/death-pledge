@@ -60,8 +60,8 @@ class SalePricePredictor(object):
         X_train_tx, X_test_tx = self._transform_X_features()
         xg_model = XGBRegressor(random_state=0)
         parameters = {
-            'model__n_estimators': [100, 120, 150, 200],
-            'model__learning_rate': [0.02, 0.05, 0.07]
+            'n_estimators': [100, 120, 150, 200],
+            'learning_rate': [0.02, 0.05, 0.07]
         }
         search = GridSearchCV(estimator=xg_model, param_grid=parameters, cv=3)
         search.fit(X_train_tx, self.y_train)
@@ -72,15 +72,17 @@ class SalePricePredictor(object):
             f'{search.best_score_:.3f}'
         )
         print('-' * 25)
-        print(f'XGBoost score: {search.score(X_train_tx, self.y_train)}')
+        print(f'XGBoost train score: {search.score(X_train_tx, self.y_train)}')
+        print(f'XGBoost test score: {search.score(X_test_tx, self.y_test)}')
         y_pred = search.predict(X_test_tx)
         print('Mean absolute error: ', metrics.mean_absolute_error(self.y_test, y_pred))
+        return search
 
     def _split_data(self):
         target_col = ['sale_price']
         X = self.sold[self.feature_cols]
         y = self.sold[target_col]
-        return train_test_split(X, y, train_size=0.8, random_state=70)
+        return train_test_split(X, y, train_size=0.8, random_state=72)
 
     def _transform_X_features(self):
         X_train_transformed = self.column_transformer.fit_transform(self.X_train)
@@ -107,12 +109,12 @@ class SalePricePredictor(object):
         print(f'Mean Squared Error (MSE): {metrics.mean_squared_error(self.y_test, y_pred):.4}')
         print(f'Root Mean Squared Error (RMSE): {np.sqrt(metrics.mean_squared_error(self.y_test, y_pred))}')
 
-    def predict_for_active(self) -> pd.DataFrame:
+    def predict_for_active(self, estimator) -> pd.DataFrame:
         for_sale = self.df.loc[self.df.status.str.lower().str.contains('active')].copy()
         self._drop_null_rows_and_cols(for_sale)
         X_for_sale = for_sale[self.feature_cols]
         X_for_sale_transformed = self.column_transformer.transform(X_for_sale)
-        for_sale_pred = self.lr.predict(X_for_sale_transformed)
+        for_sale_pred = estimator.predict(X_for_sale_transformed)
         predictions = pd.Series(list(for_sale_pred)).apply(pd.Series)
         final = for_sale.reset_index(drop=True).join(predictions)
         final.rename(columns={0: 'predicted_price'}, inplace=True)
@@ -153,11 +155,11 @@ def sample():
     print(df.shape)
     sale_price = SalePricePredictor(df)
     sale_price.model_sale_price()
-    active_predicted = sale_price.predict_for_active()
+    xgb_model = sale_price.model_with_xgboost()
+    active_predicted = sale_price.predict_for_active(estimator=xgb_model)
     print(active_predicted[['mls_number', 'list_price', 'predicted_price']].head())
     outfile = path.join(deathpledge.PROJ_PATH, 'data', '04-predicted.csv')
     active_predicted.to_csv(outfile, index=False)
-    sale_price.model_with_xgboost()
 
 
 if __name__ == '__main__':

@@ -2,12 +2,14 @@
 import pandas as pd
 import numpy as np
 import logging
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.linear_model import LinearRegression
 from sklearn import metrics
+from xgboost import XGBRegressor
 from os import path
+import pickle
 
 import deathpledge
 from deathpledge.post import feature
@@ -41,7 +43,7 @@ class SalePricePredictor(object):
         df.dropna(axis=1, how='any', inplace=True)
         cols_after = set(df.columns)
         cols_dropped = cols_before - cols_after
-        self.logger.warning(f'Columns dropped for having null values:\t\n{cols_dropped}')
+        self.logger.info(f'Columns dropped for having null values:\t\n{cols_dropped}')
 
     @staticmethod
     def _downcast_all_numeric_cols(df):
@@ -54,11 +56,33 @@ class SalePricePredictor(object):
         self.lr.fit(X_train_tx, self.y_train)
         self.score_model(X_test_tx)
 
+    def model_with_xgboost(self):
+        X_train_tx, X_test_tx = self._transform_X_features()
+        xg_model = XGBRegressor(random_state=0)
+        parameters = {
+            'n_estimators': [100, 120, 150, 200],
+            'learning_rate': [0.02, 0.05, 0.07]
+        }
+        search = GridSearchCV(estimator=xg_model, param_grid=parameters, cv=3)
+        search.fit(X_train_tx, self.y_train)
+        print('-' * 25)
+        print(f'Best parameters {search.best_params_}')
+        print(
+            f'Mean cross-validated accuracy score of the best_estimator: ',
+            f'{search.best_score_:.3f}'
+        )
+        print('-' * 25)
+        print(f'XGBoost train score: {search.score(X_train_tx, self.y_train)}')
+        print(f'XGBoost test score: {search.score(X_test_tx, self.y_test)}')
+        y_pred = search.predict(X_test_tx)
+        print('Mean absolute error: ', metrics.mean_absolute_error(self.y_test, y_pred))
+        return search
+
     def _split_data(self):
         target_col = ['sale_price']
         X = self.sold[self.feature_cols]
         y = self.sold[target_col]
-        return train_test_split(X, y)
+        return train_test_split(X, y, train_size=0.8, random_state=72)
 
     def _transform_X_features(self):
         X_train_transformed = self.column_transformer.fit_transform(self.X_train)
@@ -85,12 +109,12 @@ class SalePricePredictor(object):
         print(f'Mean Squared Error (MSE): {metrics.mean_squared_error(self.y_test, y_pred):.4}')
         print(f'Root Mean Squared Error (RMSE): {np.sqrt(metrics.mean_squared_error(self.y_test, y_pred))}')
 
-    def predict_for_active(self) -> pd.DataFrame:
+    def predict_for_active(self, estimator) -> pd.DataFrame:
         for_sale = self.df.loc[self.df.status.str.lower().str.contains('active')].copy()
         self._drop_null_rows_and_cols(for_sale)
         X_for_sale = for_sale[self.feature_cols]
         X_for_sale_transformed = self.column_transformer.transform(X_for_sale)
-        for_sale_pred = self.lr.predict(X_for_sale_transformed)
+        for_sale_pred = estimator.predict(X_for_sale_transformed)
         predictions = pd.Series(list(for_sale_pred)).apply(pd.Series)
         final = for_sale.reset_index(drop=True).join(predictions)
         final.rename(columns={0: 'predicted_price'}, inplace=True)
@@ -123,16 +147,16 @@ class FeatureColumns(object):
                'air_conditioning',
                'has_common_walls',
                'pool_description',
-               'has_common_walls',
                'has_laundry']
 
 
 def sample():
-    df = feature.sample()
+    df = feature.sample(online=False)
     print(df.shape)
     sale_price = SalePricePredictor(df)
     sale_price.model_sale_price()
-    active_predicted = sale_price.predict_for_active()
+    xgb_model = sale_price.model_with_xgboost()
+    active_predicted = sale_price.predict_for_active(estimator=xgb_model)
     print(active_predicted[['mls_number', 'list_price', 'predicted_price']].head())
     outfile = path.join(deathpledge.PROJ_PATH, 'data', '04-predicted.csv')
     active_predicted.to_csv(outfile, index=False)

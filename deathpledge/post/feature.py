@@ -43,8 +43,8 @@ def handle_nulls(df: pd.DataFrame):
     return df
 
 
-def sample():
-    home_data = clean.sample()
+def sample(**kwargs):
+    home_data = clean.sample(**kwargs)
     add_engineered_features(home_data)
     print(home_data.df.head())
     outfile = path.join(deathpledge.PROJ_PATH, 'data', '03-feature.csv')

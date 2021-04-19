@@ -20,6 +20,7 @@ setup(
         'selenium',
         'tqdm',
         'usaddress',
+        'xgboost'
         ],
     extras_require={
         'dev': ['pytest', 'wheel']

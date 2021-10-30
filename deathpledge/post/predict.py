@@ -151,7 +151,7 @@ class FeatureColumns(object):
 
 
 def sample():
-    df = feature.sample(online=False)
+    df = feature.sample(online=True)
     print(df.shape)
     sale_price = SalePricePredictor(df)
     sale_price.model_sale_price()

@@ -48,6 +48,11 @@ python deathpledge --process
 ## Rebuilding and using the Docker image
 ```
 docker build -t deathpledge:latest .
+
+# or 
+
+export GIT_HASH=$(git rev-parse HEAD)
+docker build --build-arg GIT_HASH=${GIT_HASH::7} -t deathpledge:latest .
 ```
 
 The entrypoint is the `deathpledge` module, so the `run` command accepts any command line arg that

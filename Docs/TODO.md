@@ -25,7 +25,7 @@ there's not much information available to to me on those things prior to the vis
 - [ ] add a verdict field where I can say yay or nay and overrule the total score ranking and the sold
 badge (essentially it would become inactive even when not sold. _Ideally_ I would find where the ranking went
 wrong, but sometimes it's as simple as I hate everything about the layout of the house, but that can't be
-represented in data avilable to me.
+represented in data available to me.
     - the question then becomes: how do I deal with those no's properly? Removed from the list? Score
     reduced to zero? Or just greyed out and left out of the "active" filter view?
 - [x] add JBAB to local driving (to balance out Myer and Belvoir)
@@ -51,6 +51,25 @@ it, scoring it.
 w/ that one highlighted
 
 * Need to be scraping a lot, lot more
+
+### 28 Nov 2020 - Next steps
+* Create Cloudant views for A) all houses I've pulled and B) all _active_ houses. These are the
+two groups I need to run ranking algorithms on, with more emphasis on B.
+* Scoring and ranking _really_ need to be separate from processing. I can't continue to reprocess
+100% of listings because it takes 30 min. Just get cleaning to a good place and then focus on 
+scoring from a Cloudant view.
+* In a potential web interface, plotly, bokeh, or FacetGrid, highlight a chosen house in a
+visualization of _all_ houses. Univariate and bivariate charts, no more than that. 
+
+(Sketches of two charts. The first, a bell curve with x-axis 'price' and y-axis '%', and a vertical
+line just right of the median and labeled 'house XYZ'. The second, a scatterplot with a high
+positive correlation and x-axis 'price' and y-axis 'sqft'; a single point is bolded and labeled 
+'house XYZ'.)
+
+* How to speed up processing? What's the bottleneck? Probably enrichment (calls to Bing), could be 
+the sleep time (1 sec x 100s of listings), but I think that's necessary for my rate limits. But 
+definitely take advantage of bulk gets to see if that helps. All raw docs could easily be held in
+memory and doled out, just don't try to hold every home instance in memory.
 
 ### Containerizing
 ![Containerizing diagram](img/Containerizing_deathpledge.jpg)
